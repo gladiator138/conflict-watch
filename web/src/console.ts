@@ -12,6 +12,8 @@ const CSS = `
 .rail a { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:8px; color:var(--tx2); text-decoration:none; font:600 13px var(--mono); letter-spacing:.1em; }
 .rail a:hover { color: var(--tx); background: rgba(79,209,224,.06); }
 .rail a.on { color: var(--teal); background: rgba(79,209,224,.12); box-shadow: inset 2px 0 0 var(--teal); }
+.rail-g { font: 700 10.5px var(--mono); letter-spacing:.22em; color: var(--tx3); padding: 14px 12px 4px; }
+.rail-g:first-child { padding-top: 2px; }
 .rail .k { margin-top:auto; font: 500 11px var(--mono); color: var(--tx3); padding: 8px 12px; line-height:1.7; }
 .page { padding: 26px 30px 40px; }
 .page h2 { font-size: 34px; margin: 0 0 4px; }
@@ -19,19 +21,20 @@ const CSS = `
 .radar { width: 14px; height: 14px; border-radius:50%; border:1px solid var(--teal); position:relative; overflow:hidden; }
 .radar::after { content:""; position:absolute; inset:0; background: conic-gradient(rgba(79,209,224,.8), transparent 30%); animation: spin 2.4s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg) } }
-@media (max-width: 980px) { .con { grid-template-columns: 1fr; } .rail { position: static; height:auto; flex-direction:row; overflow-x:auto; } .rail .k { display:none; } .page { padding: 18px 16px; } }
+@media (max-width: 980px) { .con { grid-template-columns: 1fr; } .rail { position: static; height:auto; flex-direction:row; overflow-x:auto; } .rail .k, .rail-g { display:none; } .page { padding: 18px 16px; } }
 @media print { .con { display:block; padding:0; } .rail { display:none; } .page { padding:0; } .panel { border:1px solid #999; background:#fff; color:#000; break-inside: avoid; } .print-only { display:block !important; } }
 .print-only { display:none; }
 `;
 
-const PAGES = [["brief", "◉", "BRIEF"], ["theatre", "✪", "THEATRE"], ["map", "◎", "MAP"], ["area", "⌖", "AREA"], ["forecast", "↗", "FORECAST"], ["warning", "⚠", "WARNING"],
-  ["whatif", "⚗", "WHAT-IF"], ["scorecard", "▦", "SCORECARD"], ["dq", "✓", "DATA QUALITY"], ["about", "ⓘ", "ABOUT"]] as const;
+const PAGES = [["brief", "◉", "BRIEF", "DECIDE"], ["theatre", "✪", "THEATRE", "DECIDE"], ["warning", "⚠", "WARNING", "DECIDE"],
+  ["map", "◎", "MAP", "EXPLORE"], ["area", "⌖", "AREA", "EXPLORE"], ["forecast", "↗", "FORECAST", "EXPLORE"], ["whatif", "⚗", "WHAT-IF", "EXPLORE"],
+  ["scorecard", "▦", "SCORECARD", "VERIFY"], ["dq", "✓", "DATA QUALITY", "VERIFY"], ["about", "ⓘ", "ABOUT", "VERIFY"]] as const;
 
 export function renderConsole(D: Data) {
   const F = D.facts;
   document.head.insertAdjacentHTML("beforeend", `<style>${CSS}</style>`);
   document.body.insertAdjacentHTML("beforeend", `${strip(F)}${navBar(F, "console")}
-    <div class="con"><nav class="rail" aria-label="Console pages">${PAGES.map(([id, ic, l]) => `<a href="#${id}" data-p="${id}"><span>${ic}</span>${l}</a>`).join("")}
+    <div class="con"><nav class="rail" aria-label="Console pages">${PAGES.map(([id, ic, l, g], i) => `${i === 0 || PAGES[i - 1][3] !== g ? `<div class="rail-g">${g}</div>` : ""}<a href="#${id}" data-p="${id}"><span>${ic}</span>${l}</a>`).join("")}
       <div class="k">CTRL/⌘ K · command<br>/ · search areas<br><span style="display:flex;gap:8px;align-items:center"><span class="radar"></span>WATCH ACTIVE</span></div></nav>
       <div class="page" id="page"></div></div>
     <div class="palette" id="pal" role="dialog" aria-label="Command palette"><div class="box"><input id="pal-i" placeholder="Jump to a page or area…" aria-label="Search"><ul id="pal-l"></ul></div></div>
@@ -132,12 +135,26 @@ export function renderConsole(D: Data) {
   let deferred: any = null;
   addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferred = e; });
 
+  // Summary header: the page's headline numbers and the order it supports, above the detail.
+  const hot = F.scorecard.reduce((n: number, x: Score) => n + x.hotspots, 0);
+  const SUM: Record<string, { n: [string, string][]; line?: string }> = {
+    warning: { n: [[`${F.warning.lift}×`, "better than chance"], [`${(F.warning.p10 * 10).toFixed(1)} of 10`, "flagged areas escalate each month"], [String(hot), `areas at ${Math.round(F.rules.hot_p * 100)}% or more now`]], line: "SENSE" },
+    map: { n: [[String(F.warning.areas), "areas tracked"], [String(F.warning.countries), "countries"], [String(hot), "hotspots now"]], line: "SENSE" },
+    forecast: { n: [[`−${F.forecasting.mae_pooled}%`, "error vs \"no change\""], [`${F.forecasting.coverage.all}%`, "of 2026 outcomes inside the range"], [`${F.forecasting.direction}%`, "direction called right"]] },
+    scorecard: { n: [[String(F.scorecard.filter((x: Score) => x.rating === "RED").length), "RED"], [String(F.scorecard.filter((x: Score) => x.rating === "AMBER").length), "AMBER"], [String(F.scorecard.filter((x: Score) => x.rating === "GREEN").length), "GREEN"]], line: "WARN" },
+    dq: { n: [[String(D.dq.length), "checks logged"], [String(D.dq.filter((r) => +r.rows_affected > 0).length), "found something to act on"], [String(D.dq.filter((r) => +r.rows_affected === 0).length), "passed clean"]] },
+  };
+  const sumbar = (pg: string) => { const x = SUM[pg]; if (!x) return;
+    const r = x.line ? F.recommendations.find((q: any) => q.line === x.line) : null;
+    P.querySelector(".sub")?.insertAdjacentHTML("afterend", `<div class="sumbar">${x.n.map(([v, l]) => `<div class="sb-n"><b>${v}</b><span>${l}</span></div>`).join("")}${r ? `<div class="sb-a"><span class="mono">${r.line}</span><div>${r.action.split(". ")[0]}.<em>${r.lead} · ${r.when}</em></div></div>` : ""}</div>`); };
+
   const route = () => {
     const h = decodeURIComponent(location.hash.replace(/^#(console\/?)?/, "")) || "brief";
     const [id, qs] = h.split("?");
     const pg = pages[id] ? id : "brief";
     $$(".rail a").forEach((a) => a.classList.toggle("on", a.dataset.p === pg));
-    pages[pg](new URLSearchParams(qs ?? ""));
+    pages[pg](new URLSearchParams(qs ?? "")); sumbar(pg);
+    if (!matchMedia("(prefers-reduced-motion: reduce)").matches) P.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: document.documentElement.classList.contains("pres") ? 120 : 260, easing: "cubic-bezier(.2,.7,.2,1)" });
     scrollTo(0, 0); setTimeout(resizeAll, 50);
   };
   addEventListener("hashchange", route);

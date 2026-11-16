@@ -11,10 +11,12 @@ gsap.registerPlugin(ScrollTrigger);
 const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const CHAPTERS = [
-  ["hero", "Four wars"], ["bluf", "BLUF"], ["india", "India"], ["signatures", "Signatures"], ["front", "The front"],
-  ["afpak", "Two fronts"], ["media", "Headlines"], ["gdelt", "GDELT"], ["displacement", "Displacement"], ["prediction", "Prediction"],
+  ["hero", "Four wars"], ["bluf", "BLUF"], ["india", "India"], ["signatures", "Signatures"], ["afpak", "Two fronts"],
+  ["front", "The front"], ["media", "Headlines"], ["gdelt", "GDELT"], ["displacement", "Displacement"], ["prediction", "Prediction"],
   ["warning", "Early warning"], ["econ", "Second front"], ["decision", "Decision room"], ["recs", "Recommendations"], ["method", "Limits & method"], ["closing", "Close"],
 ] as const;
+/** Chapters shown only when "Full evidence" is on. The briefing itself is the other nine. */
+const DEEP = new Set(["signatures", "media", "gdelt", "displacement", "econ", "decision", "method"]);
 
 function countUp(root: ParentNode = document) {
   $$("[data-count]", root).forEach((e) => {
@@ -38,7 +40,9 @@ export function renderStory(D: Data) {
 
   document.body.insertAdjacentHTML("beforeend", `
   ${strip(F)} ${navBar(F, "story")}
-  <nav class="dots" aria-label="Chapters">${CHAPTERS.map(([id, l]) => `<a href="#${id}" title="${l}" aria-label="${l}"></a>`).join("")}</nav>
+  <div class="prog" aria-hidden="true"><i id="prog"></i></div>
+  <nav class="dots" aria-label="Chapters">${CHAPTERS.map(([id, l]) => `<a href="#${id}" data-l="${l}" aria-label="${l}"${DEEP.has(id) ? ' class="deep"' : ""}></a>`).join("")}</nav>
+  <button class="btn deepbtn no-print" id="deep-t" aria-pressed="false" title="Show or hide the seven supporting chapters (E)">FULL EVIDENCE · OFF</button>
   <main id="main">
   <section class="ch" id="hero" aria-label="Four wars, one exposed neighbour">
     <canvas id="globe" aria-label="Globe of conflict deaths 2014 to 2026, coloured by conflict"></canvas>
@@ -92,8 +96,21 @@ export function renderStory(D: Data) {
     </div>
   </div></section>
 
+  <section class="ch" id="afpak"><div class="wrap">
+    <div class="eyebrow">BORDERS · INDIA'S WESTERN NEIGHBOUR</div>
+    <h2 class="title reveal">Pakistan fights on two fronts.</h2>
+    <div class="grid g2" style="margin-top:8px">
+      <div class="panel"><div class="ph"><span class="t">Afghanistan–Pakistan state clashes (deaths / month)</span></div><div class="chart" id="dy-ch" style="height:300px"></div>
+        <div class="ph" style="margin-top:6px"><span class="t">Why we harmonise FATA</span><div class="seg" id="fata-seg"><button data-v="raw">RAW LABELS</button><button data-v="harm" class="on">HARMONISED</button></div></div>
+        <div class="chart short" id="fata-ch" style="height:240px"></div>
+        <p class="small muted" id="fata-note"></p></div>
+      <div><div class="mapbox" id="afpak-map" style="height:470px"></div>
+        <div class="sowhat" style="margin-top:14px"><b>SO WHAT</b>${tag("domain")} With the Pakistan Army committed in the west, watch for diversionary LoC activity and TTP / IS-K spill-over. ${tag("data")} KP deaths have risen every year since 2021; interstate clashes peaked at <b>${fmt(mil.afpak_dyad["2026-03"])}</b> deaths in Mar 2026.</div></div>
+    </div>
+  </div></section>
+
   <section class="ch" id="front"><div class="wrap">
-    <div class="eyebrow">FINDING 2 · RUSSIA–UKRAINE</div>
+    <div class="eyebrow">SUSTAINMENT · RUSSIA–UKRAINE</div>
     <h2 class="title reveal">The front is widening, not moving.</h2>
     <p class="lede reveal">Donetsk's share of located events fell from <b style="color:var(--tx)">${mil.donetsk[0]}%</b> (2022) to <b style="color:var(--tx)">${mil.donetsk[1]}%</b> (2026). Zaporizhzhia, Dnipropetrovsk, Sumy and Belgorod rose. ${tag("data")}</p>
     <div class="grid g2" style="margin-top:12px">
@@ -109,19 +126,6 @@ export function renderStory(D: Data) {
         <p class="small muted">${mil.caveat} Ratio ${mil.attrition.filter((a: any) => [2022, 2025, 2026].includes(a.year)).map((a: any) => `${a.ratio}:1 (${a.year})`).join(" → ")}. US–Iran 2026: Iran ${fmt(mil.usir_2026.iran)} vs coalition ${mil.usir_2026.coalition}.</p></div>
     </div>
     <div class="sowhat reveal" style="margin-top:16px"><b>SO WHAT</b>${tag("domain")} A wide, static front rewards long-range strike, counter-drone and logistics depth over manoeuvre. Deaths inside Russia peaked at ${fmt(mil.russia_inside_peak.deaths)} (${mil.russia_inside_peak.year}).</div>
-  </div></section>
-
-  <section class="ch" id="afpak"><div class="wrap">
-    <div class="eyebrow">FINDING 3 · INDIA'S WESTERN NEIGHBOUR</div>
-    <h2 class="title reveal">Pakistan fights on two fronts.</h2>
-    <div class="grid g2" style="margin-top:8px">
-      <div class="panel"><div class="ph"><span class="t">Afghanistan–Pakistan state clashes (deaths / month)</span></div><div class="chart" id="dy-ch" style="height:300px"></div>
-        <div class="ph" style="margin-top:6px"><span class="t">Why we harmonise FATA</span><div class="seg" id="fata-seg"><button data-v="raw">RAW LABELS</button><button data-v="harm" class="on">HARMONISED</button></div></div>
-        <div class="chart short" id="fata-ch" style="height:240px"></div>
-        <p class="small muted" id="fata-note"></p></div>
-      <div><div class="mapbox" id="afpak-map" style="height:470px"></div>
-        <div class="sowhat" style="margin-top:14px"><b>SO WHAT</b>${tag("domain")} With the Pakistan Army committed in the west, watch for diversionary LoC activity and TTP / IS-K spill-over. ${tag("data")} KP deaths have risen every year since 2021; interstate clashes peaked at <b>${fmt(mil.afpak_dyad["2026-03"])}</b> deaths in Mar 2026.</div></div>
-    </div>
   </div></section>
 
   <section class="ch" id="media"><div class="wrap">
@@ -531,10 +535,44 @@ export function renderStory(D: Data) {
     const [id, q] = h.split("?"); const p = new URLSearchParams(q ?? "");
     if (id === "whatif" && q) WI.set(p.get("c") ?? "afpak", +(p.get("shock") ?? 30), +(p.get("m") ?? 3));
     if (id === "warning" && q) W.set(p.get("month") ?? undefined, p.get("thr") ? +p.get("thr")! : undefined, (p.get("mode") as any) ?? undefined);
-    const t = document.getElementById(id); if (t) setTimeout(() => t.scrollIntoView({ behavior: REDUCE ? "auto" : "smooth" }), 50);
+    const t = document.getElementById(id);
+    if (t && t.closest(".ch.deep") && document.documentElement.classList.contains("deep-off")) document.getElementById("deep-t")?.click();
+    if (t) setTimeout(() => t.scrollIntoView({ behavior: REDUCE ? "auto" : "smooth" }), 50);
   };
   addEventListener("hashchange", applyHash);
-  setTimeout(() => { ScrollTrigger.refresh(); applyHash(); resizeAll(); }, 300);
+  // ---- Progressive disclosure. Everything is laid out once at full size (so maps and charts measure correctly),
+  //      then supporting material is folded away: seven "deep" chapters, and second-level blocks inside the briefing.
+  const root = document.documentElement;
+  const refresh = () => { ScrollTrigger.refresh(); resizeAll(); };
+  const setDeep = (on: boolean) => { root.classList.toggle("deep-off", !on); const b = $("#deep-t"); b.textContent = `FULL EVIDENCE · ${on ? "ON" : "OFF"}`; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); refresh(); };
+  $("#deep-t").addEventListener("click", () => setDeep(root.classList.contains("deep-off")));
+  addEventListener("keydown", (e) => { const tg = (e.target as HTMLElement).tagName; if (tg === "INPUT" || tg === "SELECT" || tg === "TEXTAREA" || e.metaKey || e.ctrlKey) return; if (e.key === "e" || e.key === "E") setDeep(root.classList.contains("deep-off")); });
+  const L2: Record<string, () => (Element | null | undefined)[]> = {
+    bluf: () => [$$("#bluf .wrap > .grid.g4")[1]],
+    india: () => { const k = $$("#india .grid.g2 > .kpi"); return [k[2], k[4], k[5], $("#india .grid.g2 + p")]; },
+    afpak: () => { const p = $$("#afpak .grid.g2 > .panel")[0]; return [$$(".ph", p)[1], $("#fata-ch"), $("#fata-note")]; },
+    front: () => [$$("#front .grid.g2 > .panel")[1]],
+    prediction: () => [$$("#prediction .grid.g4 > .kpi")[3], $("#prediction .wrap > .grid.g2"), $("#prediction .wrap > p.small")],
+    warning: () => [$$("#warning .grid.g4 > .kpi")[3]],
+    recs: () => [$("#recs .wrap > .panel")],
+  };
+  const foldL2 = () => Object.entries(L2).forEach(([id, pick]) => {
+    const sec = document.getElementById(id); if (!sec) return;
+    const els = pick().filter(Boolean) as HTMLElement[]; if (!els.length) return;
+    els.forEach((e) => e.classList.add("l2")); sec.classList.add("l2-closed");
+    const b = document.createElement("button"); b.className = "btn l2btn no-print"; b.setAttribute("aria-expanded", "false"); b.textContent = "SHOW EVIDENCE ▾";
+    b.addEventListener("click", () => { const open = sec.classList.toggle("l2-closed") === false; b.textContent = open ? "HIDE EVIDENCE ▴" : "SHOW EVIDENCE ▾"; b.setAttribute("aria-expanded", String(open));
+      if (open && !REDUCE) gsap.fromTo(els, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.05, ease: "power2.out", clearProps: "transform,opacity" });
+      refresh(); });
+    sec.querySelector("h2.title")?.insertAdjacentElement("afterend", b);
+  });
+  ScrollTrigger.create({ trigger: "#main", start: "top top", end: "bottom bottom", onUpdate: (st) => { $("#prog").style.transform = `scaleX(${st.progress})`; } });
+  setTimeout(() => {
+    const h = decodeURIComponent(location.hash.slice(1)).split("?")[0];
+    CHAPTERS.forEach(([id]) => { if (DEEP.has(id)) document.getElementById(id)?.classList.add("deep"); });
+    foldL2(); setDeep(DEEP.has(h) || h === "whatif" || h === "lab");
+    applyHash(); resizeAll();
+  }, 300);
 
   presenter(CHAPTERS.map((c) => c[0]), F);
 }

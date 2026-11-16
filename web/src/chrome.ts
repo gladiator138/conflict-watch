@@ -5,15 +5,17 @@ import LOGO_R from "./img/mcte.png";    // MCTE formation sign, top right
 
 export const strip = (F: any) => `<div class="strip" role="note"><span>UNCLASSIFIED — COMPETITION DATA ONLY</span><span class="sep">·</span><span>DATA AS OF 30 SEP 2026</span><span class="sep">·</span><span>RUN ${F.run_id}</span></div>`;
 
-export const navBar = (F: any, mode: "story" | "console") => `<header class="nav">
+export const navBar = (F: any, mode: "story" | "console" | "command") => `<header class="nav">
   <img class="logo" src="${LOGO_L}" alt="Corps of Signals" />
   <div class="brand"><span class="dot"></span>CONFLICT WATCH</div>
   <div class="ragstrip">${F.scorecard.map((s: any) => `<span class="chip-rag" style="color:${RAG_COLOR[s.rating]}" title="${s.name}: ${s.rating}">${s.short} ${s.rating}</span>`).join("")}</div>
   <div class="grow"></div>
   <span class="mono small muted hide-sm" id="net"></span>
-  ${mode === "story" ? `<a class="btn" href="console/index.html" id="to-console">OPS CONSOLE ▸</a>` : `<a class="btn" href="../index.html" id="to-story">◂ STORY</a>`}
+  ${mode === "command" ? `<a class="btn" href="#bluf">BRIEFING ▸</a><a class="btn" href="console/index.html" id="to-console">OPS CONSOLE ▸</a>`
+    : mode === "story" ? `<a class="btn" href="#cmd" id="to-cmd">◂ COMMAND VIEW</a><a class="btn" href="console/index.html" id="to-console">OPS CONSOLE ▸</a>`
+    : `<a class="btn" href="../index.html" id="to-story">◂ COMMAND VIEW</a>`}
   <button class="btn hide-sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
-  <button class="btn hide-sm" id="pres" aria-label="Presenter mode (P)">P</button>
+  <button class="btn hide-sm" id="pres" aria-label="Presentation mode: larger text, shorter animations, timer (P)" title="Presentation mode (P)">P</button>
   <img class="logo" src="${LOGO_R}" alt="MCTE formation sign" />
 </header>`;
 
@@ -34,6 +36,14 @@ export function initTheme() {
       location.reload();
     }
   });
+  // Presentation mode: larger text and shorter animations for screen sharing. Persists across the three views.
+  const root = document.documentElement;
+  try { if (localStorage.getItem("cw-pres") === "1") root.classList.add("pres"); } catch {}
+  const pres = () => { const on = root.classList.toggle("pres"); try { localStorage.setItem("cw-pres", on ? "1" : "0"); } catch {}
+    document.getElementById("pres")?.classList.toggle("on", on); dispatchEvent(new Event("resize")); };
+  document.addEventListener("click", (e) => { if ((e.target as HTMLElement).closest("#pres")) pres(); });
+  addEventListener("keydown", (e) => { const tg = (e.target as HTMLElement).tagName; if (tg === "INPUT" || tg === "SELECT" || tg === "TEXTAREA" || e.metaKey || e.ctrlKey) return; if (e.key === "p" || e.key === "P") pres(); });
+  setTimeout(() => document.getElementById("pres")?.classList.toggle("on", root.classList.contains("pres")), 0);
   const net = () => { const e = document.getElementById("net"); if (e) e.innerHTML = navigator.onLine ? "● ONLINE" : `<span style="color:var(--amber)">● OFFLINE</span>`; };
   addEventListener("online", net); addEventListener("offline", net); setTimeout(net, 500);
 }
@@ -60,22 +70,27 @@ export function presenter(ids: string[], F: any) {
   let on = false, t0 = 0, iv: any = null;
   const timer = document.createElement("div"); timer.className = "timer"; timer.setAttribute("aria-live", "off"); document.body.appendChild(timer);
   const bc = "BroadcastChannel" in window ? new BroadcastChannel("cw-notes") : null;
-  const cur = () => { let best = 0; ids.forEach((id, i) => { const e = document.getElementById(id); if (e && e.getBoundingClientRect().top < innerHeight * 0.5) best = i; }); return best; };
-  const go = (i: number) => { const id = ids[Math.max(0, Math.min(ids.length - 1, i))]; document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); bc?.postMessage({ id, note: NOTES[id] ?? "" }); };
+  const all = ids;
+  const vis = () => all.filter((id) => { const e = document.getElementById(id); return !!e && e.getClientRects().length > 0; });
+  const cur = () => { ids = vis(); let best = 0; ids.forEach((id, i) => { const e = document.getElementById(id); if (e && e.getBoundingClientRect().top < innerHeight * 0.5) best = i; }); return best; };
+  const go = (i: number) => { ids = vis(); const id = ids[Math.max(0, Math.min(ids.length - 1, i))]; document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); bc?.postMessage({ id, note: NOTES[id] ?? "" }); };
   const tick = () => {
     const s = Math.floor((Date.now() - t0) / 1000), m = Math.floor(s / 60), left = 15 * 60 - s;
     timer.textContent = `${left < 0 ? "+" : ""}${String(Math.floor(Math.abs(left) / 60)).padStart(2, "0")}:${String(Math.abs(left) % 60).padStart(2, "0")}`;
     timer.classList.toggle("amber", m >= 12 && m < 14); timer.classList.toggle("red", m >= 14);
   };
-  const toggle = () => { on = !on; timer.classList.toggle("on", on); document.getElementById("pres")?.classList.toggle("on", on);
-    if (on) { t0 = Date.now(); tick(); iv = setInterval(tick, 1000); } else clearInterval(iv); };
+  const toggle = () => { on = !on; timer.classList.toggle("on", on);
+    if (on) { let s = 0; try { s = +(sessionStorage.getItem("cw-t0") ?? 0); } catch {} t0 = s || Date.now(); try { sessionStorage.setItem("cw-t0", String(t0)); } catch {} tick(); iv = setInterval(tick, 1000); }
+    else { clearInterval(iv); try { sessionStorage.removeItem("cw-t0"); } catch {} } };
   document.getElementById("pres")?.addEventListener("click", toggle);
+  if (document.documentElement.classList.contains("pres")) toggle();
   addEventListener("keydown", (e) => {
     const tg = (e.target as HTMLElement).tagName; if (tg === "INPUT" || tg === "SELECT" || tg === "TEXTAREA" || e.metaKey || e.ctrlKey) return;
     if (e.key === "p" || e.key === "P") toggle();
     else if (e.key === "n" || e.key === "N") openNotes(ids);
     else if (on && (e.key === "ArrowDown" || e.key === "ArrowRight" || e.key === "PageDown")) { e.preventDefault(); go(cur() + 1); }
     else if (on && (e.key === "ArrowUp" || e.key === "ArrowLeft" || e.key === "PageUp")) { e.preventDefault(); go(cur() - 1); }
+    else if (on && /^[1-9]$/.test(e.key)) { e.preventDefault(); go(+e.key - 1); }
   });
   let last = -1;
   addEventListener("scroll", () => { const c = cur(); if (c !== last) { last = c; bc?.postMessage({ id: ids[c], note: NOTES[ids[c]] ?? "" }); } }, { passive: true });

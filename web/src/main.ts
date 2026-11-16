@@ -3,6 +3,8 @@ import { loadData } from "./data";
 import { initTheme } from "./chrome";
 
 const isConsole = () => document.body.dataset.mode === "console" || /^#console/.test(location.hash);
+/** Three views: Commander (landing, no hash or #cmd), Story (any chapter hash), Console. */
+const mode = () => (isConsole() ? "console" : location.hash && location.hash !== "#" && location.hash !== "#cmd" ? "story" : "command");
 
 function preloader() {
   const pre = document.getElementById("pre")!;
@@ -36,14 +38,15 @@ async function boot() {
   const P = preloader();
   try {
     const D = await loadData(P.progress);
-    if (isConsole()) (await import("./console")).renderConsole(D);
-    else (await import("./story")).renderStory(D);
+    const was = mode();
+    if (was === "console") (await import("./console")).renderConsole(D);
+    else if (was === "story") (await import("./story")).renderStory(D);
+    else (await import("./commander")).renderCommander(D);
     if (D.inline) {
       document.querySelectorAll<HTMLAnchorElement>("#to-console").forEach((a) => (a.href = "#console"));
-      document.querySelectorAll<HTMLAnchorElement>("#to-story").forEach((a) => (a.href = "#hero"));
-      let was = isConsole();
-      addEventListener("hashchange", () => { if (isConsole() !== was) { was = isConsole(); location.reload(); } });
+      document.querySelectorAll<HTMLAnchorElement>("#to-story").forEach((a) => (a.href = "#cmd"));
     }
+    addEventListener("hashchange", () => { if (mode() !== was) location.reload(); });
     P.done();
   } catch (e) {
     console.error(e);

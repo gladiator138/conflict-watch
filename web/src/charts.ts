@@ -17,10 +17,10 @@ const charts = new Set<echarts.ECharts>();
 export function base(): any {
   return {
     backgroundColor: "transparent",
-    textStyle: { fontFamily: "Inter, system-ui, sans-serif", color: C.tx2(), fontSize: 14 },
-    animationDuration: 900, animationEasing: "cubicOut",
+    textStyle: { fontFamily: "Inter, system-ui, sans-serif", color: C.tx2(), fontSize: document.documentElement.classList.contains("pres") ? 16 : 14 },
+    animationDuration: document.documentElement.classList.contains("pres") ? 350 : 800, animationEasing: "cubicOut", animationDurationUpdate: 300,
     grid: { left: 64, right: 26, top: 62, bottom: 48, containLabel: false },
-    tooltip: { trigger: "axis", backgroundColor: "rgba(5,7,10,.94)", borderColor: "#2B4763", textStyle: { color: "#F5F5F7", fontFamily: "JetBrains Mono", fontSize: 13 },
+    tooltip: { trigger: "axis", backgroundColor: "rgba(5,7,10,.96)", borderColor: "#2B4763", borderWidth: 1, padding: [8, 12], extraCssText: "border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.45)", textStyle: { color: "#F5F5F7", fontFamily: "JetBrains Mono", fontSize: 13 },
       axisPointer: { lineStyle: { color: "#4FD1E0", type: "dashed" }, crossStyle: { color: "#4FD1E0" } } },
     legend: { top: 4, left: "center", textStyle: { color: C.tx(), fontFamily: "JetBrains Mono", fontSize: 12 }, icon: "roundRect", itemWidth: 12, itemHeight: 8 },
     toolbox: { right: 0, top: 0, iconStyle: { borderColor: C.tx2() }, feature: { saveAsImage: { title: "PNG", backgroundColor: light() ? "#fff" : "#05070A", pixelRatio: 2 } } },
