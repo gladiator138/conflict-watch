@@ -97,7 +97,7 @@ export function renderCommander(D: Data) {
     const maxP = Math.max(...watch.map((a) => a.p), 0.01);
     const head = brief
       ? `<span style="color:${RAG_COLOR[brief.rating]}">${T.short} theatre: ${brief.rating} ${brief.arrow}</span>, ${brief.trend}.`
-      : (["RED", "AMBER", "GREEN"] as const).filter((r) => count(r)).map((r, i) => `<span style="color:${RAG_COLOR[r]}">${i ? words[count(r)].toLowerCase() : words[count(r)]} at ${r}</span>`).join(", ") + ".";
+      : "";
     const tile = (s: Score, isCtx: boolean) => { const col = RAG_COLOR[s.rating], m = D.monthly[s.id];
       return `<button class="tile" data-ev="c:${s.id}" style="--rag:${col}" aria-label="${s.name}: ${s.rating}. Forecast ${fmt(s.forecast)} deaths in ${s.month}. Open evidence.">
         <div class="tile-n">${s.name}${isCtx ? " · context" : ""}</div>
@@ -117,7 +117,7 @@ export function renderCommander(D: Data) {
       <div>
         <div class="eyebrow">${brief ? `${T.name.toUpperCase()} · ${brief.dtg}` : `CHIEF OF DEFENCE STAFF · ALL THEATRES · ${S[0].month.toUpperCase()}`}
           ${brief ? `<span class="chipx">NOTIONAL</span>${brief.synthetic ? `<span class="chipx syn">SYNTHETIC DRILL</span>` : ""}` : ""}</div>
-        <h1 class="cmd-t">${head}</h1>
+        ${head ? `<h1 class="cmd-t">${head}</h1>` : ""}
       </div>
       <div class="cmd-hr">
         ${hasT ? `<button class="btn" id="cmd-role" title="Change the view (V)">VIEW · ${role} ▾</button>` : ""}
