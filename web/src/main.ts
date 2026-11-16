@@ -3,6 +3,7 @@ import { loadData } from "./data";
 import { initTheme } from "./chrome";
 
 const isConsole = () => document.body.dataset.mode === "console" || /^#console/.test(location.hash);
+const isStoryOnly = () => /^#(hero|bluf|india|signatures|front|afpak|media|gdelt|displacement|prediction|econ|decision|recs|method|closing)\b/.test(location.hash);
 /** Three views: Commander (landing, no hash or #cmd), Story (any chapter hash), Console. */
 const mode = () => (isConsole() ? "console" : location.hash && location.hash !== "#" && location.hash !== "#cmd" ? "story" : "command");
 
@@ -46,7 +47,9 @@ async function boot() {
       document.querySelectorAll<HTMLAnchorElement>("#to-console").forEach((a) => (a.href = "#console"));
       document.querySelectorAll<HTMLAnchorElement>("#to-story").forEach((a) => (a.href = "#cmd"));
     }
-    addEventListener("hashchange", () => { if (mode() !== was) location.reload(); });
+    // Inside the console, page links are plain hashes (#theatre, #map): they must not be read as story chapters.
+    const next = () => (was === "console" && location.hash !== "#cmd" && !isStoryOnly() ? "console" : mode());
+    addEventListener("hashchange", () => { if (next() !== was) location.reload(); });
     P.done();
   } catch (e) {
     console.error(e);

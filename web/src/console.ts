@@ -152,9 +152,12 @@ export function renderConsole(D: Data) {
     P.querySelector(".sub")?.insertAdjacentHTML("afterend", `<div class="sumbar">${x.n.map(([v, l]) => `<div class="sb-n"><b>${v}</b><span>${l}</span></div>`).join("")}${r ? `<div class="sb-a"><span class="mono">${r.line}</span><div>${r.action.split(". ")[0]}.<em>${r.lead} · ${r.when}</em></div></div>` : ""}</div>`); };
 
   const route = () => {
+    if (location.hash === "#cmd") return;  // leaving for the Commander view; main.ts reloads
     const h = decodeURIComponent(location.hash.replace(/^#(console\/?)?/, "")) || "brief";
     const [id, qs] = h.split("?");
     const pg = pages[id] ? id : "brief";
+    // Keep the "#console/" prefix in the single-file build so a refresh reopens the console, not the story.
+    if (D.inline && !/^#console/.test(location.hash)) history.replaceState(null, "", "#console/" + h);
     $$(".rail a").forEach((a) => a.classList.toggle("on", a.dataset.p === pg));
     pages[pg](new URLSearchParams(qs ?? "")); sumbar(pg);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) P.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: document.documentElement.classList.contains("pres") ? 120 : 260, easing: "cubic-bezier(.2,.7,.2,1)" });
