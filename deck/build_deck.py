@@ -23,7 +23,7 @@ from pptx.util import Emu, Inches, Pt
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from src import config as C  # noqa: E402
-from deck import hud  # noqa: E402
+from deck import charts, gifs, hud  # noqa: E402
 
 FIG = ROOT / "outputs" / "figures"
 SHOT = ROOT / "deck" / "shots"
@@ -265,7 +265,7 @@ def picture(slide, path, x, y, w, h, frame=False, caption=None, cap_color=CYAN):
     return px, py, pw, ph
 
 
-def table(slide, x, y, w, rows, col_w, header_fill=CYAN, header_color=BG, size=12, row_h=0.42,
+def table(slide, x, y, w, rows, col_w, header_fill=rgb("123A55"), header_color=CYAN, size=13, row_h=0.42,
           first_col_color=None, fills=None):
     nr, nc = len(rows), len(rows[0])
     shp = slide.shapes.add_table(nr, nc, Inches(x), Inches(y), Inches(w), Inches(row_h * nr))
@@ -285,7 +285,7 @@ def table(slide, x, y, w, rows, col_w, header_fill=CYAN, header_color=BG, size=1
                 c.fill.fore_color.rgb = hf
             else:
                 c.fill.fore_color.rgb = (fills[i][j] if fills and fills[i][j] is not None
-                                         else (PANEL if i % 2 else PANEL2))
+                                         else (rgb("0C1D2F") if i % 2 else rgb("11283F")))
             c.margin_left = c.margin_right = Inches(0.08)
             c.margin_top = c.margin_bottom = Inches(0.03)
             c.vertical_anchor = MSO_ANCHOR.MIDDLE
@@ -365,6 +365,9 @@ GD = json.loads((TB / "gdelt_summary.json").read_text())
 GS = pd.read_csv(TB / "gdelt_signals.csv").set_index(["case", "month"])
 
 
+CD0 = json.loads((DF / "chart_data.json").read_text())
+
+
 def _ci(c):
     return f"{c[0] * 100:.0f}% to {c[1] * 100:.0f}%".replace("-", "−")
 
@@ -372,7 +375,10 @@ RAGC = {"RED": RED, "AMBER": AMBER, "GREEN": TEAL}
 
 # =========================================================================== 1 COVER
 s = new_slide(footer=False)
-picture(s, DF / "map.png", 6.3, 1.0, 6.75, 5.6)
+_rg, _rb = gifs.radar_gif(BGS["cover"], int(hud.W * 0.72), int(hud.H * 0.5), 660)
+s.shapes.add_picture(str(_rg), Inches(_rb[0] / 200), Inches(_rb[1] / 200), Inches((_rb[2] - _rb[0]) / 200),
+                     Inches((_rb[3] - _rb[1]) / 200))
+kicker_lbl(s, 6.6, 6.55, 6.4, f"SYSTEM ONLINE  ·  4 CONFLICTS  ·  222 AREAS  ·  RUN {RUN_ID}", color=CYAN, size=10)
 kicker_lbl(s, 0.6, 0.55, 12, "DATA ANALYTICS COMPETITION 2026", size=13)
 text(s, 0.6, 1.55, 5.6, 1.2, "CONFLICT WATCH", size=52, bold=True)
 text(s, 0.6, 2.75, 5.3, 1.6, "When and where will conflict deaths rise next, and what does it mean for India?",
@@ -411,7 +417,7 @@ notes(s, "Three messages. One: the threat picture. Two: India is already inside 
 
 # =========================================================================== 3 WHY IT MATTERS
 s = new_slide("WHY IT MATTERS", "The 2026 war reached the Gulf, Hormuz and Sri Lankan waters")
-picture(s, DF / "map.png", 0.55, 1.4, 7.4, 4.85, frame=False)
+picture(s, gifs.pulse_gif(DF / "map.png", CD0["map_pulses"]), 0.55, 1.4, 7.4, 4.85, frame=False)
 kicker_lbl(s, 8.25, 1.42, 4.5, "WHERE IT TOUCHES INDIA  [DATA]", color=TEXT3, size=11)
 kpi_row(s, 8.25, 1.78, 4.53, 0.82, f"{int(usir_ts.get(2026, 0))}", "countries with US–Iran war deaths in 2026, "
         f"up from {int(usir_ts.get(2025, 0))} in 2025", color=RED)
@@ -428,39 +434,32 @@ notes(s, "This is why the question matters to us. These are counts from the comp
          "The 9 million diaspora figure is domain knowledge and is marked as such.")
 
 # =========================================================================== 4 APPROACH
-s = new_slide("OUR APPROACH   |   HOW WE WENT ABOUT THE PROBLEM", "One operational question, five sub-questions, four rules we held to")
-box(s, 0.55, 1.45, 4.15, 3.85, line=AMBER, lw=1.5)
+s = new_slide("OUR APPROACH   |   HOW WE WENT ABOUT THE PROBLEM", "One operational question, broken into five sub-questions")
+box(s, 0.55, 1.45, 4.15, 4.75, line=AMBER, lw=1.5)
 kicker_lbl(s, 0.8, 1.68, 3.7, "THE QUESTION WE ASKED", color=AMBER, size=11)
-text(s, 0.8, 2.05, 3.7, 1.9, "When and where will conflict deaths rise next, and what does it mean for India?",
-     size=22, bold=True)
-text(s, 0.8, 3.85, 3.7, 1.3, ["Operational, not descriptive: a forecast can be scored on withheld data and turned "
+text(s, 0.8, 2.1, 3.7, 2.2, "When and where will conflict deaths rise next, and what does it mean for India?",
+     size=26, bold=True)
+text(s, 0.8, 4.6, 3.7, 1.3, ["Operational, not descriptive: a forecast can be scored on withheld data and turned "
      "into tasking for ISR, plans and logistics."], size=13, color=TEXT3)
 QS = [("Q1", "activity", "How intense is each war, and how is it changing?", "Monthly panels, tempo, lethality, seasons", "6"),
-      ("Q2", "crosshair", "How are the wars fought: attrition, fronts, spread?", "Dyads, located events, theatre spread", "7–8"),
-      ("Q3", "trending-up", "Can we forecast deaths better than simple rules?", "7 models, back-test 2022–25, 2026 withheld", "11"),
-      ("Q4", "radar", "Can we warn which districts escalate next month?", "Sub-national classifier, watch-list", "12"),
-      ("Q5", "flag", "What does it mean for India?", "Exposure analysis + labelled domain reasoning", "3, 15")]
+      ("Q2", "crosshair", "How are the wars fought: attrition, fronts, spread?", "Dyads, located events, theatre spread", "7–9"),
+      ("Q3", "trending-up", "Can we forecast deaths better than simple rules?", "7 models, back-test 2022–25, 2026 withheld", "12–13"),
+      ("Q4", "radar", "Can we warn which districts escalate next month?", "Sub-national classifier, watch-list", "14"),
+      ("Q5", "flag", "What does it mean for India?", "Exposure analysis + labelled domain reasoning", "3, 18–19")]
 for i, (q, ic, qq, mth, sl) in enumerate(QS):
-    y = 1.45 + i * 0.78
-    box(s, 4.9, y, 7.88, 0.68)
-    s.shapes.add_picture(str(hud.icon(ic, "4FD6E8")), Inches(5.0), Inches(y + 0.08), Inches(0.52), Inches(0.52))
-    text(s, 5.6, y, 0.55, 0.68, q, size=15, bold=True, color=CYAN, anchor=MSO_ANCHOR.MIDDLE)
-    text(s, 6.15, y + 0.05, 4.9, 0.34, qq, size=14, bold=True)
-    text(s, 6.15, y + 0.36, 4.9, 0.3, mth, size=11.5, color=TEXT3)
-    text(s, 11.2, y, 1.45, 0.68, f"SLIDE {sl}", size=10, bold=True, color=AMBER, align=PP_ALIGN.RIGHT,
+    y = 1.45 + i * 0.97
+    box(s, 4.9, y, 7.88, 0.86)
+    s.shapes.add_picture(str(hud.icon(ic, "4FD6E8")), Inches(5.0), Inches(y + 0.1), Inches(0.66), Inches(0.66))
+    text(s, 5.72, y, 0.6, 0.86, q, size=17, bold=True, color=CYAN, anchor=MSO_ANCHOR.MIDDLE)
+    text(s, 6.35, y + 0.08, 5.15, 0.4, qq, size=15.5, bold=True)
+    text(s, 6.35, y + 0.48, 5.15, 0.32, mth, size=13, color=TEXT3)
+    text(s, 11.5, y, 1.15, 0.86, f"SLIDE {sl}", size=10, bold=True, color=AMBER, align=PP_ALIGN.RIGHT,
          anchor=MSO_ANCHOR.MIDDLE)
     spaced(s.shapes[-1], 120)
-RULES = [("lock", "2026 WITHHELD", "Every choice made on 2022–25; 2026 scored once"),
+_RULES = [("lock", "2026 WITHHELD", "Every choice made on 2022–25; 2026 scored once"),
          ("scale", "BEAT SIMPLE RULES", "Every model faces the 'no change' rule, and we show where it lost"),
          ("badge-check", "DATA vs DOMAIN", "Each claim tagged: computed from the files, or expert reasoning"),
          ("git-branch", "ONE COMMAND", f"Rebuilds every number; run ID {RUN_ID} on every output")]
-for i, (ic, h, d) in enumerate(RULES):
-    x = 0.55 + i * 3.08
-    box(s, x, 5.45, 2.95, 0.8, fill=PANEL2)
-    s.shapes.add_picture(str(hud.icon(ic, "35C2A6")), Inches(x + 0.1), Inches(5.55), Inches(0.58), Inches(0.58))
-    text(s, x + 0.75, 5.5, 2.15, 0.3, h, size=11, bold=True, color=TEAL)
-    spaced(s.shapes[-1], 120)
-    text(s, x + 0.75, 5.78, 2.15, 0.45, d, size=10.5, color=TEXT2)
 sowhat(s, "We framed it as a commander would: where to look next month, and how far to trust the answer.",
        label="APPROACH")
 notes(s, "How we went about it. One operational question, broken into five sub-questions, each answered by a method "
@@ -471,7 +470,7 @@ notes(s, "How we went about it. One operational question, broken into five sub-q
 s = new_slide("DATA AND PIPELINE", "From raw files to a monthly warning: one reproducible pipeline")
 box(s, 1.05, 1.98, 11.25, 0.045, fill=CYAN, line=None, shape=MSO_SHAPE.RECTANGLE)
 glow(s.shapes[-1], "4FD6E8", rad=6, alpha=55)
-STAGES = [("database", "INGEST", f"{ov.events.sum():,} UCDP events + UNHCR, IDMC, UNRWA, World Bank"),
+STAGES = [("database", "INGEST", f"{ov.events.sum():,} UCDP GED 26.1 events + UNHCR, IDMC, UNRWA, World Bank"),
           ("filter", "CLEAN", f"{len(dq)} checks logged; raw kept beside every fix"),
           ("layers", "FEATURES", "4 conflicts + 222 area series × 153 months; 9 families"),
           ("scan-search", "EXPLORE", "Military lens + India exposure; DATA / DOMAIN tags"),
@@ -484,35 +483,59 @@ for i, (ic, h, d) in enumerate(STAGES):
     text(s, cx - 0.85, 2.5, 1.7, 0.3, h, size=13, bold=True, color=CYAN, align=PP_ALIGN.CENTER)
     spaced(s.shapes[-1], 150)
     text(s, cx - 0.86, 2.82, 1.72, 0.85, d, size=11, color=TEXT2, align=PP_ALIGN.CENTER)
-kpi(s, 0.55, 3.85, 2.35, 2.35, f"{ov.events.sum():,}", "conflict events", "UCDP GED 26.1 2014–25 + Candidate Jan–Sep 2026",
-    color=AMBER, numsize=30)
-kpi(s, 3.05, 3.85, 2.35, 2.35, f"{len(dq)}", "quality checks", "Estimate repairs, month splitting, FATA→KP, outlet names",
-    color=CYAN, numsize=30)
-kpi(s, 5.55, 3.85, 2.35, 2.35, "2026", "withheld test", "Every design choice made on 2022–25 back-test only",
-    color=TEAL, numsize=30)
-picture(s, SHOT / "page01.png", 8.15, 3.9, 4.6, 2.0, frame=True, caption="DASHBOARD  |  COMMANDER'S BRIEF")
+kicker_lbl(s, 0.55, 3.95, 12, "FOUR RULES WE HELD TO", color=TEXT3, size=11)
+for i, (ic, h, d) in enumerate(_RULES):
+    x = 0.55 + i * 3.08
+    box(s, x, 4.35, 2.95, 1.85, fill=PANEL2)
+    s.shapes.add_picture(str(hud.icon(ic, "35C2A6")), Inches(x + 0.15), Inches(4.5), Inches(0.75), Inches(0.75))
+    text(s, x + 1.0, 4.6, 1.9, 0.5, h, size=14, bold=True, color=TEAL)
+    spaced(s.shapes[-1], 100)
+    text(s, x + 0.18, 5.35, 2.65, 0.8, d, size=13, color=TEXT2)
 sowhat(s, "Every number on these slides is regenerated by one command and matches the dashboard.",
        label="REPRODUCIBLE")
 notes(s, "Only the official participant package is used. Key cleaning decisions: 692 out-of-order estimates "
          "repaired in new columns, 731 multi-month records spread by day so they don't fake spikes, FATA merged "
          "into KP so the 2018 boundary change doesn't fake a collapse. 2026 provisional data is the test set.")
 
-# =========================================================================== 5 FINDING 1 INTENSITY
+# =========================================================================== 6 FINDING 1 INTENSITY
+CD = json.loads((DF / "chart_data.json").read_text())
+CASEC = {"Russia–Ukraine": "FF4D5E", "Israel–Hamas": "A794FF", "Afghanistan–Pakistan": "F0B03A", "US–Iran": "4FD6E8"}
+SHORT = {"Russia–Ukraine": "RU–UA", "Israel–Hamas": "Israel–Hamas", "Afghanistan–Pakistan": "Af–Pak", "US–Iran": "US–Iran"}
+
+
+def chart_panel(slide, x, y, w, h):
+    """Dark HUD panel behind a native chart."""
+    p = box(slide, x, y, w, h, fill=rgb("0A1A2B"), line=BORDER, radius=0.03)
+    brackets(slide, x - 0.05, y - 0.05, w + 0.1, h + 0.1, arm=0.18, t=0.03)
+    return p
+
+
 s = new_slide("FINDING 1   |   CONFLICT", "Four different threat signatures: attrition, spikes, creep, decline")
-picture(s, DF / "monthly_deaths.png", 0.55, 1.4, 8.3, 4.8, frame=False)
+mo = CD["monthly"]
+cats = [pd.Timestamp(m).strftime("%b %Y") for m in mo["months"]]
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.line(s, 0.65, 1.48, 8.1, 4.65, cats, [dict(name=SHORT[c], values=mo["series"][c], color=CASEC[c], width=2.25)
+                                              for c in C.CASES],
+            title="Deaths per month, 2014 to Sep 2026 (log scale)", log_y=True, cat_skip=24, size=13)
 kpi_side(s, 9.1, 1.4, 3.68, 1.12, f"{ov.loc['Russia–Ukraine', 'deaths_best'] / 1000:,.0f}k",
-         "Russia–Ukraine recorded deaths since 2014; 4–11k every month since 2023", color=CYAN)
+         "Russia–Ukraine recorded deaths since 2014; 4–11k every month since 2023", color=RED)
 kpi_side(s, 9.1, 2.62, 3.68, 1.12, f"{ov.loc['US–Iran', 'peak_month_deaths']:,}",
-         "US–Iran deaths in Mar 2026: a war with no build-up", color=RED)
-kpi_side(s, 9.1, 3.84, 3.68, 1.12, "Since 2021", "Af–Pak deaths rising every year (TTP, then interstate)", color=TEAL,
+         "US–Iran deaths in Mar 2026: a war with no build-up", color=CYAN)
+kpi_side(s, 9.1, 3.84, 3.68, 1.12, "Since 2021", "Af–Pak deaths rising every year (TTP, then interstate)", color=AMBER,
          numsize=26)
-kpi_side(s, 9.1, 5.06, 3.68, 1.12, "~130 / mo", "Israel–Hamas in 2026, after 11,211 in Oct 2023", color=AMBER,
+kpi_side(s, 9.1, 5.06, 3.68, 1.12, "~130 / mo", "Israel–Hamas in 2026, after 11,211 in Oct 2023", color=VIOLET,
          numsize=26)
 sowhat(s, "One warning rule cannot fit all four: we forecast level, trend and spread separately.")
 
-# =========================================================================== 6 FINDING 2 FRONTS
+# =========================================================================== 7 FINDING 2 FRONTS
 s = new_slide("FINDING 2   |   MILITARY LENS", "Ukraine: the front is widening, not moving")
-picture(s, DF / "front_geography.png", 0.55, 1.4, 8.3, 4.8)
+fr = CD["front"]
+PAL = ["FF4D5E", "F0B03A", "4FD6E8", "35C2A6", "A794FF", "7FA7D9", "E98AA0", "C9B458", "6FCF97", "B0BEC5", "3A5878"]
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, [str(y) for y in fr["years"]],
+               [dict(name=a, values=fr["share"][a], color=PAL[i % len(PAL)]) for i, a in enumerate(fr["areas"])],
+               title="Share of located events by area, 2021–2026", percent=True, num_fmt="0%", gap=45, size=12,
+               cat_size=14)
 kpi_side(s, 9.1, 1.4, 3.68, 1.12, f"{don22:.0f}% → {don26:.0f}%", "Donetsk's share of located events, 2022 → 2026",
          color=AMBER, numsize=26)
 kpi_side(s, 9.1, 2.62, 3.68, 1.12, "10,358", "deaths recorded inside Russia in 2024 (Kursk, Belgorod)", color=RED)
@@ -524,22 +547,44 @@ sowhat(s, "A wide static front rewards long-range fires, counter-drone and EW: l
 notes(s, "Recorded attrition ratios are an upper bound of reporting: Ukrainian OSINT documents Russian losses more "
          "fully. We say so in the report. The fog-of-war share is itself a finding from cleaning.")
 
-# =========================================================================== 7 FINDING 3 AFPAK
+# =========================================================================== 8 FINDING 3a AFPAK INTERSTATE
+s = new_slide("FINDING 3   |   INDIA'S WESTERN NEIGHBOUR", "Pakistan now fights Afghanistan directly")
+it = CD["interstate"]
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, it["months"], [dict(name="Deaths", values=it["deaths"], color="FF4D5E")],
+               title="Afghan vs Pakistani state-on-state clashes: deaths per month, 2022–Sep 2026", legend=False,
+               gap=30, cat_skip=6, size=13)
+kpi_side(s, 9.1, 1.4, 3.68, 2.3, "411", "deaths in Afghan vs Pakistani state clashes in a single month, Mar 2026",
+         color=RED, numsize=44)
+kpi_side(s, 9.1, 3.9, 3.68, 2.3, "Oct 2025", "first month of direct interstate fighting in the data", color=AMBER,
+         numsize=40)
+sowhat(s, "A new state-on-state front opened on Pakistan's west in Oct 2025, and it is the deadliest part of Af–Pak.")
+
+# =========================================================================== 9 FINDING 3b AFPAK PROVINCES
 s = new_slide("FINDING 3   |   INDIA'S WESTERN NEIGHBOUR", "Pakistan now fights on two fronts in the west")
-picture(s, DF / "afpak_interstate.png", 0.55, 1.4, 8.3, 2.5)
-picture(s, DF / "afpak_provinces.png", 0.55, 3.95, 8.3, 2.35)
-kpi_side(s, 9.1, 1.4, 3.68, 1.12, "411", "deaths in Afghan vs Pakistani state clashes, Mar 2026", color=RED)
-kpi_side(s, 9.1, 2.62, 3.68, 1.12, "Oct 2025", "first month of direct interstate fighting in the data", color=AMBER,
-         numsize=26)
-kpi_side(s, 9.1, 3.84, 3.68, 1.12, "3 of top 3", "escalation hotspots for Oct 2026: Kandahar, Balochistan, Kunar",
-         color=AMBER, numsize=26)
-kpi_side(s, 9.1, 5.06, 3.68, 1.12, f"{ip.loc['Afghanistan–Pakistan', 'events_covered_share']:.0%}",
-         "of Af–Pak events carry an Indian source (mainly PTI); almost none elsewhere", color=CYAN)
+apv = CD["afpak_prov"]
+PAL2 = ["F0B03A", "4FD6E8", "35C2A6", "A794FF", "FF4D5E", "E98AA0", "3A5878"]
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, [str(y) for y in apv["years"]],
+               [dict(name=a.replace("Khyber Pakhtunkwa", "Khyber Pakhtunkhwa"), values=apv["deaths"][a],
+                     color=PAL2[i % len(PAL2)]) for i, a in enumerate(apv["areas"])],
+               title="Deaths per year by province (FATA merged into KP)", stacked=True, gap=45, size=12, cat_size=14)
+kpi_side(s, 9.1, 1.4, 3.68, 2.3, "3 of top 3", "escalation hotspots for Oct 2026 are Af–Pak: Kandahar, Balochistan, Kunar",
+         color=AMBER, numsize=40)
+kpi_side(s, 9.1, 3.9, 3.68, 2.3, f"{ip.loc['Afghanistan–Pakistan', 'events_covered_share']:.0%}",
+         "of Af–Pak events carry an Indian source (mainly PTI); almost none elsewhere", color=CYAN, numsize=44)
 sowhat(s, "A Pakistan Army committed in the west raises the risk of diversion along the LoC. Watch west too. [Domain]")
 
-# =========================================================================== 8 FINDING 4 MEDIA
+# =========================================================================== 10 FINDING 4 MEDIA
 s = new_slide("FINDING 4   |   ORIGINAL INDEX", "Media attention follows incidents, not lethality, and does not warn")
-picture(s, DF / "media_scatter.png", 0.55, 1.4, 8.3, 4.8)
+me = CD["media"]
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.scatter(s, 0.62, 1.48, 4.1, 4.65, [dict(name=SHORT[c], xs=me[c]["events"], ys=me[c]["sources"], color=CASEC[c])
+                                          for c in C.CASES], title="References vs EVENTS: tight",
+               x_title="events per month", y_title="source references per month", size=11)
+charts.scatter(s, 4.72, 1.48, 4.1, 4.65, [dict(name=SHORT[c], xs=me[c]["deaths"], ys=me[c]["sources"], color=CASEC[c])
+                                          for c in C.CASES], title="References vs DEATHS: loose",
+               x_title="deaths per month", size=11)
 kpi_side(s, 9.1, 1.4, 3.68, 1.12, f"{stats.media_elasticity_events:.2f} vs {stats.media_elasticity_deaths:.2f}",
          "elasticity of source references to events vs to deaths", color=CYAN, numsize=26)
 kpi_side(s, 9.1, 2.62, 3.68, 1.12, f"p = {stats.media_lead_p:.2f}", "Attention Gap Index does not lead next month's "
@@ -550,9 +595,18 @@ kpi_side(s, 9.1, 5.06, 3.68, 1.12, f"R² {stats.media_r2:.2f}", "one mass-casual
          numsize=26)
 sowhat(s, "Headline volume is not an indicator. In UCDP's record, West Asia coverage rests on non-Indian wires.")
 
-# =========================================================================== 9 FINDING 5 DISPLACEMENT
+# =========================================================================== 11 FINDING 5 DISPLACEMENT
 s = new_slide("FINDING 5   |   HUMANITARIAN", "Displacement follows onset and spread, and it is women and children")
-picture(s, DF / "displacement.png", 0.55, 1.4, 8.3, 4.8)
+dp = CD["displacement"]
+dyrs = sorted({y for v in dp.values() for y in v["years"] if y >= 2015})
+DPC = {"Ukraine": "4FD6E8", "Afghanistan": "F0B03A", "Palestine": "A794FF", "Pakistan": "35C2A6", "Iran": "FF4D5E",
+       "Russia": "B0BEC5"}
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.line(s, 0.65, 1.48, 8.1, 4.65, [str(y) for y in dyrs],
+            [dict(name=k, values=[dict(zip(v["years"], v["total"])).get(y) for y in dyrs], color=DPC[k], width=3,
+                  marker=True) for k, v in dp.items()],
+            title="Displaced people by origin, millions (year-end)", num_fmt="0.0",
+            size=13)
 kpi_side(s, 9.1, 1.4, 3.68, 1.12, "8.9M", "Ukrainians displaced end-2025: 5.2M refugees + 3.7M IDPs", color=CYAN)
 kpi_side(s, 9.1, 2.62, 3.68, 1.12, "72%", "of Ukrainian refugees are women or children (Afghanistan 63%)", color=AMBER)
 kpi_side(s, 9.1, 3.84, 3.68, 1.12, "10%", "of Afghan refugees are under five", color=RED)
@@ -560,22 +614,54 @@ kpi_side(s, 9.1, 5.06, 3.68, 1.12, f"ρ = {stats.link_spearman:.2f}", "monthly d
          "change", color=TEAL, numsize=26)
 sowhat(s, "Trigger HADR on escalation flags, not death tolls; stock paediatric and maternal supplies.")
 
-# =========================================================================== 10 PREDICTION
+
+# =========================================================================== 12–13 PREDICTION (two slides)
+def forecast_chart(slide, case):
+    fc = CD["forecast"][case]
+    col = CASEC[case]
+    chart_panel(slide, 0.55, 1.4, 8.3, 4.8)
+    charts.line(slide, 0.65, 1.48, 8.1, 4.65, fc["months"], [
+        dict(name="Actual", values=fc["actual"], color="FFFFFF", width=3, marker=True),
+        dict(name="Forecast, 2026 withheld test", values=fc["pred"], color=col, width=3.5, dash=True, marker=True),
+        dict(name="80% interval", values=fc["lo"], color=col, width=1.25, dash=True),
+        dict(name="80% interval (high)", values=fc["hi"], color=col, width=1.25, dash=True),
+        dict(name="Forward forecast Oct–Dec 2026", values=fc["fut"], color="F0B03A", width=3.5, marker=True),
+        dict(name="Forward 80% (low)", values=fc["fut_lo"], color="F0B03A", width=1.25, dash=True),
+        dict(name="Forward 80% (high)", values=fc["fut_hi"], color="F0B03A", width=1.25, dash=True)],
+        title=f"{case}: deaths per month, actual vs 1-month-ahead forecast", cat_skip=3, size=12)
+    # legend: keep the three meaningful entries only
+    lg_el = slide.shapes[-1].chart.legend._element
+    from lxml import etree as _et
+    for idx in (3, 5, 6):
+        le = _et.SubElement(lg_el, "{http://schemas.openxmlformats.org/drawingml/2006/chart}legendEntry")
+        _et.SubElement(le, "{http://schemas.openxmlformats.org/drawingml/2006/chart}idx", val=str(idx))
+        _et.SubElement(le, "{http://schemas.openxmlformats.org/drawingml/2006/chart}delete", val="1")
+        lp = lg_el.find("{http://schemas.openxmlformats.org/drawingml/2006/chart}legendPos")
+        lp.addnext(le)
+
+
 s = new_slide("FINDING 6   |   PREDICTION", "Forecasts beat simple rules on 2026 data the model never saw")
-picture(s, DF / "forecast_ru.png", 0.55, 1.4, 8.3, 2.45)
-picture(s, DF / "forecast_afpak.png", 0.55, 3.9, 8.3, 2.45)
-kpi_side(s, 9.1, 1.4, 3.68, 1.12, f"−{pooled:.0f}%", f"1-month error vs 'no change' (RU–UA −{red['Russia–Ukraine']:.0f}%, "
-         f"Israel–Hamas −{red['Israel–Hamas']:.0f}%)", color=CYAN)
-kpi_side(s, 9.1, 2.62, 3.68, 1.12, f"{cov80:.0f}%", "of 2026 outcomes inside the 80% interval", color=TEAL)
-kpi_side(s, 9.1, 3.84, 3.68, 1.12, "72%", "of 2026 conflict-months: direction of change called right", color=AMBER)
-kpi_side(s, 9.1, 5.06, 3.68, 1.12, "Ensemble", "ETS + 3-mo mean + LightGBM-Δ, chosen on 2022–25 only", color=VIOLET,
-         numsize=26)
+forecast_chart(s, "Russia–Ukraine")
+kpi_side(s, 9.1, 1.4, 3.68, 2.3, f"−{pooled:.0f}%", f"1-month error vs the 'no change' rule on unseen 2026 data "
+         f"(RU–UA −{red['Russia–Ukraine']:.0f}%, Israel–Hamas −{red['Israel–Hamas']:.0f}%)", color=CYAN, numsize=48)
+kpi_side(s, 9.1, 3.9, 3.68, 2.3, f"{cov80:.0f}%", "of 2026 outcomes fell inside the 80% interval", color=TEAL,
+         numsize=48)
 sowhat(s, "Use the forecast as a planning baseline with honest bands; the 95% tail carries the outbreak risk.")
 notes(s, "Protocol: fit on data to Dec 2025, freeze, score Jan–Sep 2026. Track A: one month ahead rolling. "
          "Track B: up to nine months blind. LightGBM predicts the change in log deaths, because trees cannot "
          "extrapolate beyond training levels. That is why a level model could never forecast the 2022 invasion.")
 
-# =========================================================================== 11 EARLY WARNING
+s = new_slide("FINDING 6   |   PREDICTION", "The same method, on India's western neighbour")
+forecast_chart(s, "Afghanistan–Pakistan")
+kpi_side(s, 9.1, 1.4, 3.68, 2.3, "72%", "of 2026 conflict-months: the direction of change called right", color=AMBER,
+         numsize=48)
+kpi_side(s, 9.1, 3.9, 3.68, 2.3, "Ensemble", "ETS + 3-month mean + LightGBM-Δ, chosen on the 2022–25 back-test only",
+         color=VIOLET, numsize=36)
+_ra = rag.loc["Afghanistan–Pakistan"]
+sowhat(s, f"Af–Pak forecast for Oct 2026: {_ra.forecast_next:,.0f} deaths (80%: {_ra.pi80_lo:,.0f}–{_ra.pi80_hi:,.0f}). "
+          "Plan on the band, not the point.")
+
+# =========================================================================== 14 EARLY WARNING
 s = new_slide("FINDING 7   |   EARLY WARNING", "A district-level watch-list, one month ahead")
 picture(s, SHOT / "ops_warning.png", 0.62, 1.48, 7.3, 4.11, frame=True, caption="OPS SITE   |   EARLY WARNING REPLAY, MAR 2026")
 kpi_side(s, 8.3, 1.4, 4.48, 1.12, f"AUC {lg.ROC_AUC:.2f}", f"on 2026 withheld months (rule of thumb {rule.ROC_AUC:.2f}; "
@@ -587,23 +673,41 @@ kpi_side(s, 8.3, 5.06, 4.48, 1.12, "Contagion", "top signals: own intensity, cou
          color=TEAL, numsize=26)
 sowhat(s, "ISR and analyst effort can be tasked on predicted risk before the escalation, not after.")
 
-# =========================================================================== GDELT (new, labelled)
-s = new_slide("FINDING 8   |   SECOND SOURCE: GDELT (NEW)", "News-coded events see past UCDP's cut-off, but do not lead it")
-picture(s, FIG / "27_gdelt_vs_ucdp.png", 0.55, 1.4, 7.75, 4.8)
+# =========================================================================== 15–16 GDELT (new, labelled; two slides)
 _gm, _gw = GD["monthly"]["by_case"], GD["weekly"]
 _nov = GS.loc[("US–Iran", "2026-11")]
-kpi_side(s, 8.55, 1.4, 4.23, 1.12, f"ρ {_gm['US–Iran']['rho_change']:.2f} / {_gm['Afghanistan–Pakistan']['rho_change']:.2f}",
-         "GDELT tracks UCDP month to month for US–Iran / Af–Pak; not for RU–UA or Israel–Hamas", color=CYAN, numsize=24)
-kpi_side(s, 8.55, 2.62, 4.23, 1.12, f"p = {_gw['lead_p']:.2f}", "GDELT a week earlier adds nothing: a nowcast, not a "
-         "leading indicator", color=AMBER, numsize=24)
-kpi_side(s, 8.55, 3.84, 4.23, 1.12, f"{_gm['US–Iran']['articles_per_death']:,.0f} vs {_gm['Russia–Ukraine']['articles_per_death']:,.0f}",
-         "articles per UCDP death, US–Iran vs RU–UA: the attention gap again", color=VIOLET, numsize=24)
-kpi_side(s, 8.55, 5.06, 4.23, 1.12, f"{_nov.violent_change_vs_prev:+.0%}", "US–Iran violent events per day, 1–12 Nov "
-         "vs Oct 2026: the one rising signal", color=RED, numsize=24)
-sowhat(s, "Use GDELT to watch spike wars past UCDP's lag (US–Iran now). It does not change the submitted model numbers.")
+s = new_slide("FINDING 8   |   SECOND SOURCE: GDELT (NEW)", "News-coded events track UCDP only in the spike wars")
+_ord = sorted(C.CASES, key=lambda c: _gm[c]["rho_change"])
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, [SHORT[c] for c in _ord],
+               [dict(name="ρ", values=[round(_gm[c]["rho_change"], 2) for c in _ord], color="35C2A6")],
+               title="Month-on-month agreement of GDELT with UCDP deaths (Spearman ρ, Feb–Sep 2026)", horizontal=True,
+               legend=False, gap=55, labels=True, label_fmt="0.00", num_fmt="0.0", y_min=-0.5, y_max=1.0, size=14,
+               cat_size=16, label_size=16,
+               point_colors=["35C2A6" if _gm[c]["rho_change"] >= 0.5 else "5E7B99" for c in _ord])
+kpi_side(s, 9.1, 1.4, 3.68, 2.3, f"p = {_gw['lead_p']:.2f}", "GDELT a week EARLIER adds nothing: a nowcast, not a "
+         "leading indicator", color=AMBER, numsize=40)
+kpi_side(s, 9.1, 3.9, 3.68, 2.3, f"{_gm['US–Iran']['articles_per_death']:,.0f} vs {_gm['Russia–Ukraine']['articles_per_death']:,.0f}",
+         "articles per UCDP death, US–Iran vs RU–UA: the attention gap again", color=VIOLET, numsize=36)
+sowhat(s, "GDELT is a second source for spike wars only. It does not change the submitted model numbers.")
 notes(s, f"GDELT: {GD['coverage']['events']:,} dyad-coded events, Feb to 12 Nov 2026, gap 1-16 May. Media reports, not incidents. "
       "Same-week fit is significant, week-ahead is not, and out of sample neither beats persistence, so it stays out of the "
-      "submitted model. Its value: Oct-Nov 2026 situational awareness. US-Iran threats and violence up in early Nov.")
+      "submitted model.")
+
+s = new_slide("FINDING 8   |   SECOND SOURCE: GDELT (NEW)", "News sees past UCDP's September cut-off: US–Iran is rising")
+_mlab = {"2026-09": "Sep (last UCDP month)", "2026-10": "Oct", "2026-11": "1–12 Nov"}
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, list(_mlab.values()),
+               [dict(name=SHORT[c], values=[round(float(GS.loc[(c, m)].violent_pd), 1) for m in _mlab], color=CASEC[c])
+                for c in C.CASES],
+               title="GDELT violent events per covered day, after UCDP ends", gap=70, labels=True, label_fmt="0",
+               size=13, cat_size=15, label_size=12)
+kpi_side(s, 9.1, 1.4, 3.68, 2.3, f"{_nov.violent_change_vs_prev:+.0%}", "US–Iran violent events per day, 1–12 Nov vs Oct "
+         "2026: the one rising signal", color=RED, numsize=48)
+_oct = GS.loc[("US–Iran", "2026-10")]
+kpi_side(s, 9.1, 3.9, 3.68, 2.3, f"{_oct.threats_pd:.0f} → {_nov.threats_pd:.0f}", "US–Iran threat events per day, "
+         "Oct → early Nov, while the scorecard is AMBER", color=AMBER, numsize=40)
+sowhat(s, "Watch US–Iran now: news-coded violence and threats rose in early November, past UCDP's lag.")
 
 # =========================================================================== LIVE DEMO SLIDE
 s = new_slide("LIVE DEMONSTRATION   |   CONFLICT WATCH OPS SITE", "A briefing site and an ops console the jury can drive")
@@ -622,38 +726,42 @@ sowhat(s, "Live at conflictmonitor2026.streamlit.app  ·  offline single-file ba
 notes(s, "Switch to the browser. Story: globe, Af-Pak card flip, fog-of-war toggle, FATA switch, forecast PLAY, "
          "warning replay Mar 2026, what-if Af-Pak +30% x 3 = 359, scorecard lab reset. Then OPS CONSOLE, Ctrl+K Kandahar.")
 
-# =========================================================================== 12 RECOMMENDATIONS
-s = new_slide("RECOMMENDATIONS   |   OPERATIONAL DESIGN", "Four lines of effort for the Armed Forces: sense, warn, shield, sustain")
-box(s, 0.55, 1.4, 2.6, 4.85, fill=PANEL, line=AMBER, lw=1.25)
-kicker_lbl(s, 0.75, 1.58, 2.3, "COMMANDER'S INTENT", size=11)
-text(s, 0.75, 1.98, 2.25, 3.0, "See escalation coming a month out, protect Indians and interests in the "
-     "strike envelope, and keep our platforms supplied.", size=15, bold=True)
-text(s, 0.75, 5.3, 2.25, 0.8, "Each line traces to a finding and to the dashboard.", size=11, color=TEXT3)
-loe = [("SENSE", "ISR", CYAN, "Task ISR and analysts on the monthly sub-national watch-list. Build Indian OSINT on Gulf, "
-         "Iran and Red Sea.", "LEAD: DIA / Service intelligence"),
-       ("WARN", "I&W", AMBER, "Adopt the Af–Pak interstate dyad and KP/Balochistan hotspot probabilities as standing LoC "
-        "indicators. Publish the RAG monthly.", "LEAD: HQ IDS, Northern / Western Comds"),
-       ("SHIELD", "NEO / IOR", RED, "Keep Gulf NEO plans current while US–Iran is AMBER; belligerent-movement picture in "
-        "the IOR.", "LEAD: HQ IDS, Navy, IAF, MEA"),
-       ("SUSTAIN", "ENDURANCE", TEAL, "Buffer spares for Russian- and Israeli-origin platforms; HADR kits for women, "
-        "children, under-fives.", "LEAD: MoD, DPSUs, NDMA")]
-for i, (h, sub, col, body, lead) in enumerate(loe):
-    y = 1.4 + i * 1.23
-    sh = box(s, 3.35, y, 1.75, 1.13, fill=col, line=None, shape=MSO_SHAPE.PENTAGON)
-    text(s, 3.4, y + 0.22, 1.5, 0.4, h, size=18, bold=True, color=BG, align=PP_ALIGN.CENTER)
-    text(s, 3.4, y + 0.62, 1.5, 0.3, sub, size=10, bold=True, color=BG, align=PP_ALIGN.CENTER)
-    box(s, 5.2, y, 5.3, 1.13)
-    text(s, 5.38, y + 0.1, 5.0, 0.7, body, size=13, color=WHITE)
-    text(s, 5.38, y + 0.8, 5.0, 0.3, lead, size=11, color=col, bold=True)
-box(s, 10.65, 1.4, 2.13, 4.85, line=BORDER)
-kicker_lbl(s, 10.82, 1.58, 1.9, "END STATE", color=TEXT3, size=11)
-for i, (n, l) in enumerate([("1 month", "warning lead time"), ("Top 10", "areas tasked monthly"),
-                            ("0", "Indians stranded"), ("RAG", "brief every month")]):
-    text(s, 10.82, 2.0 + i * 1.03, 1.85, 0.45, n, size=22, bold=True, color=AMBER)
-    text(s, 10.82, 2.45 + i * 1.03, 1.85, 0.4, l, size=12, color=TEXT2)
+# =========================================================================== 18–19 RECOMMENDATIONS (two slides)
+loe = [("SENSE", "ISR", CYAN, "4FD6E8", "eye", "Task ISR and analysts on the monthly sub-national watch-list. Build Indian "
+        "OSINT on the Gulf, Iran and the Red Sea.", "LEAD: DIA / Service intelligence", "1 month", "warning lead time"),
+       ("WARN", "I&W", AMBER, "F0B03A", "siren", "Adopt the Af–Pak interstate dyad and KP / Balochistan hotspot "
+        "probabilities as standing LoC indicators. Publish the RAG monthly.", "LEAD: HQ IDS, Northern / Western Comds",
+        "Top 10", "areas tasked monthly"),
+       ("SHIELD", "NEO / IOR", RED, "FF4D5E", "shield-check", "Keep Gulf NEO plans current while US–Iran is AMBER, with a "
+        "belligerent-movement picture in the IOR.", "LEAD: HQ IDS, Navy, IAF, MEA", "0", "Indians stranded"),
+       ("SUSTAIN", "ENDURANCE", TEAL, "35C2A6", "package", "Buffer spares for Russian- and Israeli-origin platforms; HADR "
+        "kits for women, children and under-fives.", "LEAD: MoD, DPSUs, NDMA", "RAG", "brief every month")]
+
+
+def loe_card(slide, x, y, w, h, item):
+    name, sub, col, hexc, ic, body, lead, n, nl = item
+    box(slide, x, y, w, h, line=col, lw=1.5)
+    node(slide, x + 0.3, y + 0.3, 1.0, ic, colour=col, hexcol=hexc)
+    text(slide, x + 1.5, y + 0.3, w - 1.7, 0.5, name, size=30, bold=True, color=col)
+    kicker_lbl(slide, x + 1.5, y + 0.86, w - 1.7, sub, color=TEXT3, size=11)
+    text(slide, x + 0.3, y + 1.55, w - 0.6, 1.9, body, size=21, color=WHITE)
+    text(slide, x + 0.3, y + h - 1.05, w - 0.6, 0.35, lead, size=13, bold=True, color=col)
+    text_glow(text(slide, x + 0.3, y + h - 0.68, 1.6, 0.5, n, size=24, bold=True, color=col), hexc, rad=8, alpha=35)
+    text(slide, x + 1.95, y + h - 0.6, w - 2.2, 0.4, nl, size=13, color=TEXT2)
+
+
+s = new_slide("RECOMMENDATIONS   |   OPERATIONAL DESIGN", "Sense and warn: see escalation coming a month out")
+loe_card(s, 0.55, 1.4, 6.0, 4.8, loe[0])
+loe_card(s, 6.78, 1.4, 6.0, 4.8, loe[1])
+sowhat(s, "Commander's intent: see it coming, protect Indians in the strike envelope, keep our platforms supplied.",
+       label="INTENT")
+
+s = new_slide("RECOMMENDATIONS   |   OPERATIONAL DESIGN", "Shield and sustain: protect Indians, keep platforms supplied")
+loe_card(s, 0.55, 1.4, 6.0, 4.8, loe[2])
+loe_card(s, 6.78, 1.4, 6.0, 4.8, loe[3])
 sowhat(s, "The SENSE and WARN lines need no new platform: the model and dashboard already exist.", label="BOTTOM LINE")
 
-# =========================================================================== 13 WHO / WHEN
+# =========================================================================== 20 WHO / WHEN
 s = new_slide("RECOMMENDATIONS   |   EXECUTION", "Who does what, by when")
 rows = [["Agency", "NOW (0–30 DAYS)", "BY 90 DAYS", "6–12 MONTHS"],
         ["DIA / Service Int", "Task ISR on the top-10 watch-list", "Indian OSINT cell for Gulf, Iran, Red Sea",
@@ -666,21 +774,26 @@ rows = [["Agency", "NOW (0–30 DAYS)", "BY 90 DAYS", "6–12 MONTHS"],
          "Escort and evacuation readiness"],
         ["MoD / DPSUs / NDMA", "Audit critical spares (Russian, Israeli)", "Buffer-stock plan",
          "Indigenise; HADR kits for women and children"]]
-table(s, 0.55, 1.45, 12.23, rows, [2.6, 3.21, 3.21, 3.21], header_fill=[PANEL2, RED, AMBER, TEAL],
-      header_color=WHITE, size=14, row_h=0.78, first_col_color=CYAN)
+table(s, 0.55, 1.45, 12.23, rows, [2.6, 3.21, 3.21, 3.21], header_fill=[rgb("12304A"), rgb("5A1C26"), rgb("5A4512"), rgb("0F4A40")],
+      header_color=WHITE, size=15, row_h=0.8, first_col_color=CYAN)
 sowhat(s, "Column one is tasking and a briefing format. It can start this month.", label="BOTTOM LINE")
 
-# =========================================================================== 14 LIMITS
-s = new_slide("LIMITS AND VALIDATION", "What the analysis cannot claim, and why the headline numbers still hold")
-lim = [("Reported deaths", "UCDP records reported violence; access shapes coverage"),
-       ("Provisional 2026", "Candidate data are revised, usually upward"),
-       ("No location", "92% of 2026 RU–UA deaths are country-level only"),
-       ("Wars are decisions", "No death-count model foresees Feb 2022 or Feb 2026")]
-for i, (h, d) in enumerate(lim):
-    y = 1.4 + i * 1.2
-    box(s, 0.55, y, 4.3, 1.08)
-    text(s, 0.75, y + 0.12, 3.9, 0.4, h, size=18, bold=True, color=AMBER)
-    text(s, 0.75, y + 0.52, 3.9, 0.5, d, size=13, color=TEXT2)
+# =========================================================================== 21 LIMITS
+s = new_slide("LIMITS AND VALIDATION", "What the analysis cannot claim")
+lim = [("Reported deaths", "UCDP records reported violence; access shapes coverage", "newspaper"),
+       ("Provisional 2026", "Candidate data are revised, usually upward", "timer"),
+       ("No location", "92% of 2026 RU–UA deaths are country-level only", "map-pin"),
+       ("Wars are decisions", "No death-count model foresees Feb 2022 or Feb 2026", "swords")]
+for i, (h, d, ic) in enumerate(lim):
+    x, y = 0.55 + (i % 2) * 6.23, 1.45 + (i // 2) * 2.45
+    box(s, x, y, 6.0, 2.25)
+    node(s, x + 0.35, y + 0.55, 1.1, ic, colour=AMBER, hexcol="F0B03A")
+    text(s, x + 1.75, y + 0.45, 4.0, 0.55, h, size=26, bold=True, color=AMBER)
+    text(s, x + 1.75, y + 1.1, 4.0, 0.9, d, size=17, color=TEXT2)
+sowhat(s, "So we warn on spread and hotspots, and we show uncertainty instead of hiding it.", label="LIMITS")
+
+# =========================================================================== 22 VALIDATION
+s = new_slide("LIMITS AND VALIDATION", "Why the headline numbers still hold")
 _RB = ROB["by_conflict"]
 _clear = [k for k, v in _RB.items() if v["ci"][0] > 0]
 _SH = {"Russia–Ukraine": "RU–UA", "Israel–Hamas": "Israel–Hamas", "Afghanistan–Pakistan": "Af–Pak", "US–Iran": "US–Iran"}
@@ -695,7 +808,7 @@ rows = [["Headline result", "Internal check", "Why it still holds"],
          "Ranks well; scores run high at the top, so use as a ranking"],
         ["Fronts widening", "Located events only", "Same in events and deaths"],
         ["Media ≠ warning", "Lead test p = 0.50", "Holds with fixed effects"]]
-table(s, 5.1, 1.4, 7.68, rows, [2.1, 2.7, 2.88], size=12, row_h=0.78, first_col_color=WHITE)
+table(s, 0.55, 1.45, 12.23, rows, [3.0, 4.3, 4.93], size=15, row_h=0.8, first_col_color=WHITE)
 sowhat(s, "Uncertainty is shown, not hidden. Nine test months is a small sample, and we say where the evidence is thin.",
        label="VALIDATION")
 

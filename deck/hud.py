@@ -101,13 +101,15 @@ def _footer_rule(im, y=1395):
     return im
 
 
-def _radar(im, cx, cy, rings=5, step=120, colour="4FD6E8"):
+def _radar(im, cx, cy, rings=5, step=120, colour="4FD6E8", sweep=True):
     d = ImageDraw.Draw(im)
     for k in range(1, rings + 1):
         r = k * step
         d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=_hex(colour, 34 if k % 2 else 22), width=2)
     d.line([(cx - rings * step, cy), (cx + rings * step, cy)], fill=_hex(colour, 26), width=2)
     d.line([(cx, cy - rings * step), (cx, cy + rings * step)], fill=_hex(colour, 26), width=2)
+    if not sweep:          # the cover's sweep is an animated GIF (deck/gifs.py)
+        return im
     # sweep wedge
     g = Image.new("RGBA", im.size, (0, 0, 0, 0))
     gd = ImageDraw.Draw(g)
@@ -127,7 +129,7 @@ def backgrounds() -> dict:
     out["content"] = _scan(_footer_rule(im))
     im = _grid(_base("0B1C2E", "04090F"), alpha=20)
     im = _glow(im, [W * 0.45, H * 0.05, W * 1.05, H * 0.95], "1B6A86", 240, 150)
-    im = _radar(im, int(W * 0.72), int(H * 0.5), rings=6, step=110)
+    im = _radar(im, int(W * 0.72), int(H * 0.5), rings=6, step=110, sweep=False)
     out["cover"] = _scan(_brackets(im, alpha=200))
     im = _grid(_base("081522", "04090F"), alpha=12)
     out["plain"] = _scan(_footer_rule(_brackets(im, alpha=110)))
@@ -173,8 +175,9 @@ FADE = '<p:transition xmlns:p="{p}" spd="med"><p:fade/></p:transition>'.replace(
 EFFECT = {  # name -> (presetID, presetSubtype, filter)
     "fade": (10, 0, "fade"),
     "wipe_left": (22, 8, "wipe(left)"),
-    "wipe_up": (22, 4, "wipe(up)"),
-    "wipe_down": (22, 1, "wipe(down)"),
+    "wipe_up": (22, 4, "wipe(down)"),      # "from bottom": columns grow up from the axis
+    "wipe_down": (22, 1, "wipe(up)"),      # "from top"
+    "zoom": (53, 16, "fade"),              # fade + zoom from the centre: KPI numbers pop in
 }
 
 
@@ -187,13 +190,24 @@ class _Ids:
         return self.n
 
 
+def _zoom_xml(ids, spid):
+    out = ""
+    for a in ("ppt_w", "ppt_h"):
+        out += (f'<p:anim calcmode="lin" valueType="num"><p:cBhvr><p:cTn id="{ids()}" dur="550" fill="hold"/>'
+                f'<p:tgtEl><p:spTgt spid="{spid}"/></p:tgtEl><p:attrNameLst><p:attrName>{a}</p:attrName>'
+                f'</p:attrNameLst></p:cBhvr><p:tavLst><p:tav tm="0"><p:val><p:fltVal val="0"/></p:val></p:tav>'
+                f'<p:tav tm="100000"><p:val><p:strVal val="#{a}"/></p:val></p:tav></p:tavLst></p:anim>')
+    return out
+
+
 def _effect_xml(ids, spid, kind, delay, dur):
     pid, sub, flt = EFFECT[kind]
+    zoom = _zoom_xml(ids, spid) if kind == "zoom" else ""
     return (f'<p:par><p:cTn id="{ids()}" presetID="{pid}" presetClass="entr" presetSubtype="{sub}" fill="hold" '
             f'nodeType="withEffect"><p:stCondLst><p:cond delay="{delay}"/></p:stCondLst><p:childTnLst>'
             f'<p:set><p:cBhvr><p:cTn id="{ids()}" dur="1" fill="hold"><p:stCondLst><p:cond delay="0"/></p:stCondLst>'
             f'</p:cTn><p:tgtEl><p:spTgt spid="{spid}"/></p:tgtEl><p:attrNameLst><p:attrName>style.visibility'
-            f'</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>'
+            f'</p:attrName></p:attrNameLst></p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>{zoom}'
             f'<p:animEffect transition="in" filter="{flt}"><p:cBhvr><p:cTn id="{ids()}" dur="{dur}"/>'
             f'<p:tgtEl><p:spTgt spid="{spid}"/></p:tgtEl></p:cBhvr></p:animEffect></p:childTnLst></p:cTn></p:par>')
 
@@ -244,8 +258,26 @@ def _plan(shapes):
     return steps
 
 
+def _chart_kind(sh):
+    name = str(sh.chart.chart_type)
+    if "BAR" in name:                               # horizontal bars grow from the left axis
+        return "wipe_left", 1100
+    if "COLUMN" in name:                            # columns grow up from zero
+        return "wipe_up", 1100
+    return "wipe_left", 1500                        # lines and scatters draw left to right
+
+
+def _big_number(sh):
+    if not sh.has_text_frame or not sh.text_frame.text.strip() or len(sh.text_frame.text) > 14:
+        return False
+    return any(r.font.size is not None and r.font.size.pt >= 22
+               for p_ in sh.text_frame.paragraphs for r in p_.runs)
+
+
 def _kind(step):
     first = step[0]
+    if getattr(first, "has_chart", False) and first.has_chart:
+        return _chart_kind(first)
     if first.shape_type == 13:                      # picture
         return "wipe_left", 650
     if getattr(first, "has_table", False) and first.has_table:
@@ -280,6 +312,16 @@ def finish(prs, meta: dict):
         plan = []
         for k, st in enumerate(steps):
             kind, dur = _kind(st)
-            plan.append((300 + k * gap, [(sh.shape_id, kind if j == 0 else "fade", dur) for j, sh in enumerate(st)]))
+            items = []
+            for j, sh in enumerate(st):
+                big = _big_number(sh)
+                if j == 0:
+                    items.append((sh.shape_id, "zoom" if (kind == "fade" and big) else kind, dur))
+                elif getattr(sh, "has_chart", False) and sh.has_chart:
+                    ck, cdur = _chart_kind(sh)          # a chart inside its panel still grows from zero
+                    items.append((sh.shape_id, ck, cdur))
+                else:
+                    items.append((sh.shape_id, "zoom" if big else "fade", 550 if big else dur))
+            plan.append((300 + k * gap, items))
         tr.addnext(etree.fromstring(_timing(plan)))
     return prs
