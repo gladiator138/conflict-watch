@@ -36,6 +36,12 @@ abl = pd.read_csv(TB / "ablation_lgb.csv")
 import json  # noqa: E402
 ROB = json.loads((TB / "robustness.json").read_text())
 RUN_ID = (TB / "run_id.txt").read_text().strip()
+X = json.loads((TB / "extra_sources.json").read_text())
+X9, X10, X11, X12, XG, XO = X["D9"], X["D10"], X["D11"], X["D12"], X["GDELT"], X["GDELT_OCT"]
+GDS = json.loads((TB / "gdelt_summary.json").read_text())
+_mpd = X12["media_per_death_feb_apr_2026"]
+_pw = XG["prewar"]
+_lp = XG["weekly_lead_p_by_case"]
 RB, RP, REW = ROB["by_conflict"], ROB["pooled"], ROB["early_warning"]
 _SH = {"Russia–Ukraine": "Russia–Ukraine", "Israel–Hamas": "Israel–Hamas", "Afghanistan–Pakistan": "Af–Pak", "US–Iran": "US–Iran"}
 _clear = [_SH[k] for k in C.CASES if RB[k]["ci"][0] > 0]
@@ -56,7 +62,7 @@ RC = {"RED": "#FF4D5E", "AMBER": "#F0B03A", "GREEN": "#35C2A6"}
 CSS = """
 @page { size: A4; margin: 8mm 10mm; }
 * { box-sizing: border-box; }
-body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #1b2733; font-size: 9.4pt; line-height: 1.3; margin: 0; }
+body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #1b2733; font-size: 9.4pt; line-height: 1.24; margin: 0; }
 .hdr { background: #07131F; color: #fff; padding: 9px 14px 10px 14px; border-radius: 6px; }
 .hdr .k { color: #F0B03A; font-weight: 700; letter-spacing: 2px; font-size: 8pt; }
 .hdr h1 { margin: 2px 0 2px 0; font-size: 18pt; }
@@ -99,8 +105,8 @@ BRAND_CSS = "position:relative;padding-left:24mm;padding-right:24mm;min-height:1
 brief = f"""
 <div class="hdr" style="{BRAND_CSS}">{{BRAND}}<div class="k">COMMANDER'S BRIEF &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026 &nbsp;|&nbsp; AS OF 30 SEP 2026</div>
 <h1>Conflict Watch: where deaths rise next, and what it means for India</h1>
-<div class="m">Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh &nbsp;·&nbsp; Source: official competition package (UCDP, UNHCR, IDMC,
-UNRWA, World Bank) &nbsp;·&nbsp; <span class="d">DATA</span> computed from the files &nbsp;
+<div class="m">Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh &nbsp;·&nbsp; Source: all twelve issued files (UCDP, UNHCR, IDMC,
+UNRWA, World Bank, GDELT, ACLED-style) &nbsp;·&nbsp; <span class="d">DATA</span> computed from the files &nbsp;
 <span class="o">DOMAIN</span> expert reasoning</div></div>
 
 <h2>BOTTOM LINE UP FRONT</h2>
@@ -127,15 +133,15 @@ Recorded losses: Iran 1,274 vs Israel–US 11. <span class="d">DATA</span></li>
 <h2>INDIA IMPACT</h2>
 <table><tr><th style="width:18%">Theatre</th><th style="width:44%">Evidence <span class="d">DATA</span></th><th>Implication <span class="o">DOMAIN</span></th></tr>
 <tr><td><b>Western front</b></td><td>Af–Pak interstate clashes since Oct 2025; deaths in Pakistan areas adjoining India rose 2 → 52 (2022–25)</td><td>Pakistan Army stretched west: risk of diversionary LoC activity, TTP/IS-K spill-over</td></tr>
-<tr><td><b>Gulf / Hormuz</b></td><td>5 Gulf states struck in 2026 (25 events); 299 deaths on Iran's Hormuz/Chabahar coast; 945 deaths in Yemen in 2025</td><td>~9M diaspora needs NEO readiness; crude/LPG via Hormuz; Chabahar and INSTC exposed</td></tr>
+<tr><td><b>Gulf / Hormuz</b></td><td>5 Gulf states struck in 2026 (25 events); 299 deaths on Iran's Hormuz/Chabahar coast; 945 deaths in Yemen in 2025</td><td>Large Indian diaspora needs NEO readiness; Gulf energy via Hormuz; Chabahar and INSTC exposed</td></tr>
 <tr><td><b>IOR</b></td><td>104 killed in one strike off Sri Lanka, 4 Mar 2026</td><td>Belligerents operating in India's maritime neighbourhood</td></tr>
 <tr><td><b>Supply chains</b></td><td>RU–UA at 4–11k deaths/month; Israel at war since 2023</td><td>Spares and deliveries for Russian- and Israeli-origin platforms at risk</td></tr>
-<tr><td><b>Information</b></td><td>Indian outlets cover 17% of Af–Pak events, about 0% elsewhere; media volume does not lead escalation (p = {stats.media_lead_p:.2f})</td><td>India's open-source picture of West Asia is borrowed; do not warn on headlines</td></tr>
+<tr><td><b>Information</b></td><td>In UCDP's record, Indian outlets appear in 17% of Af–Pak events, about 0% elsewhere; media volume does not lead escalation (p = {stats.media_lead_p:.2f})</td><td>The record of West Asia rests on non-Indian wires: build Indian coverage; do not warn on headlines</td></tr>
 </table>
 
 <h2>RECOMMENDATIONS</h2>
 <table><tr><th style="width:12%">Line</th><th>Action</th><th style="width:21%">Lead <span class="o">DOMAIN</span></th><th style="width:11%">When</th></tr>
-<tr><td><b>SENSE</b></td><td>Task ISR and analysts on the monthly sub-national watch-list; build Indian OSINT for Gulf, Iran, Red Sea</td><td>DIA, Service intelligence</td><td>Now / 90 days</td></tr>
+<tr><td><b>SENSE</b></td><td>Task ISR and analysts on the monthly sub-national watch-list; track countries hit as a spread indicator</td><td>DIA, Service intelligence</td><td>Now / 90 days</td></tr>
 <tr><td><b>WARN</b></td><td>Adopt the Af–Pak dyad and KP/Balochistan hotspot probabilities as LoC I&amp;W; publish the RAG monthly</td><td>HQ IDS, N &amp; W Comds</td><td>Now</td></tr>
 <tr><td><b>SHIELD</b></td><td>Keep Gulf NEO plans current while US–Iran is AMBER; belligerent-movement picture in the IOR</td><td>HQ IDS, Navy, IAF, MEA</td><td>Now / 90 days</td></tr>
 <tr><td><b>SUSTAIN</b></td><td>Buffer and indigenise critical spares; HADR kits for women, children, under-fives</td><td>MoD, DPSUs, NDMA</td><td>6–12 months</td></tr>
@@ -145,11 +151,11 @@ Recorded losses: Iran 1,274 vs Israel–US 11. <span class="d">DATA</span></li>
 <ul>
 <li>Forecasts trained to Dec 2025, scored on Jan–Sep 2026: error −{pooled:.0f}% vs naive (RU–UA −{red['Russia–Ukraine']:.0f}%,
 Israel–Hamas −{red['Israel–Hamas']:.0f}%); {cov80:.0f}% of outcomes inside the 80% interval. Escalation top-10 list
-{lg.precision_at_10 / lg.base_rate:.1f}× better than random.</li>
+{lg.precision_at_10 / lg.base_rate:.1f}× better than random. 90% interval on the gain: {_ci(RP['ci'])}; US–Iran bands held only {RB['US–Iran']['coverage80']:.0%}.</li>
 <li>UCDP counts <i>reported</i> deaths; 2026 data are provisional; 92% of 2026 RU–UA deaths lack a location; decisions to
 start a war (Feb 2022, Feb 2026) are not predictable from death counts.</li>
 </ul>
-<div class="foot">UNCLASSIFIED – COMPETITION DATA ONLY &nbsp;|&nbsp; Full method: Conflict Watch analysis report &nbsp;|&nbsp; Live: Conflict Watch dashboard</div>
+<div class="foot">UNCLASSIFIED – COMPETITION DATA ONLY &nbsp;|&nbsp; RUN {RUN_ID} &nbsp;|&nbsp; Full method: analysis report</div>
 """
 (OUT / "Commanders_Brief.html").write_text(page("Commander's Brief – Conflict Watch", brief.replace("{BRAND}", brand_corners(16))))
 
@@ -170,6 +176,20 @@ QA = [
          "fatality components, and widen the band to min/max. Raw values are kept."),
         ("Why merge FATA into KP?", "Pakistan merged them in 2018. Without harmonising, FATA would show a fake collapse "
          "and KP a fake surge exactly at the boundary change."),
+        ("Did you use all the issued datasets?", "Yes, all twelve, each with an ID (D1–D12). The report's Appendix C scans "
+         "its own text and confirms each file is cited in both the data section and the findings. The pre-joined panels were "
+         f"audited first: the country-month panel stops UCDP at {X11['latest_ucdp_month']} (it shows Iran with "
+         f"{X11['iran_ucdp_deaths_feb_apr_2026']} deaths in the 2026 war) and keys GDELT on event date, so we rebuilt those joins."),
+        ("What did the Middle East (ACLED-style) data add?", "What UCDP cannot see: protest violence and non-lethal activity. "
+         f"Iran lost {X9['iran_unrest_deaths_dec25_jan26']:,} people to unrest in Dec 2025–Jan 2026, and strategic developments "
+         f"ran {X9['iran_strategic_pre_2026']['ratio']:.1f}× their norm in the four weeks before the war. It also confirms the Gulf "
+         f"spread ({X9['gulf_violent_events']['H1_2025']} → {X9['gulf_violent_events']['H1_2026']} violent events) and agrees "
+         f"with UCDP on Israel–Palestine deaths (monthly ρ = {X9['israel_palestine_rho']:.2f}). The same signs did not precede "
+         f"the June 2025 war ({X9['iran_strategic_pre_2025']['ratio']:.1f}×), so we recommend a trial."),
+        ("What did the 1989–2025 UCDP file add?", f"Base rates from 37 years: {X10['persist_10k']['share_next_ge_1k']:.0%} of "
+         f"{X10['persist_10k']['n']} focus-country years with ≥10,000 deaths were followed by at least 1,000 more, which supports "
+         f"RED for Russia–Ukraine. It also shows the Af–Pak case holds only {X10['afpak_case_share_of_afghanistan']:.0%} of "
+         "Afghanistan's recorded deaths, so our Af–Pak forecasts describe the cross-border and TTP war."),
         ("2026 data are provisional; is the test fair?", "It is the hardest, most realistic test: operational users always "
          "work on provisional data. Revisions usually go upward, which makes our holdout error conservative."),
     ]),
@@ -229,10 +249,18 @@ QA = [
          "a laptop with no internet calls and a bundled map outline. One command rebuilds everything in about 4 minutes."),
         ("Can it be updated monthly?", "Drop in the new UCDP month and rerun. The 'live re-train' page refits LightGBM-Δ "
          "in about 2 seconds."),
-        ("Why add GDELT, and why is it not in your model?", "UCDP stops at Sep 2026; GDELT runs to 12 Nov. We tested "
-         "it as new, separately labelled work. It moves with UCDP month to month only in spike wars (US–Iran ρ 0.86, "
-         "Af–Pak 0.93; not RU–UA or Israel–Hamas). A week earlier it adds nothing (p 0.55), and it did not beat "
-         "persistence out of sample. So it is a nowcast for situational awareness, not a forecast input."),
+        ("What did the GDELT files add?", f"An independent test on 13.5 million media records. Media volume did not rise "
+         f"before the Feb 2026 war ({_pw['events_per_day'][0]:,.0f} vs {_pw['events_per_day'][1]:,.0f} reports a day on Iran vs "
+         f"the US or Israel, p = {_pw['events_p']:.2f}), which confirms our UCDP finding. The character of coverage did shift in "
+         f"the last week (Goldstein {_pw['goldstein'][0]:+.2f} to {_pw['goldstein'][1]:+.2f}, p = {_pw['goldstein_p']:.3f}), but "
+         f"that is one case and we call it a hypothesis. Kuwait-located conflict reports went from {XG['kuwait_conflict_per_day'][0]:.1f} "
+         f"to {XG['kuwait_conflict_per_day'][1]:.0f} a day, confirming the Gulf spread. Its October direction agrees with our "
+         f"forecast for {XO['agree']} of {XO['of']} conflicts."),
+        ("Why is GDELT not in your model?", "It covers only Feb–Nov 2026, so there is nothing to train or back-test on. "
+         f"It moves with UCDP month to month only in spike wars (US–Iran ρ {GDS['monthly']['by_case']['US–Iran']['rho_change']:.2f}, "
+         f"Af–Pak {GDS['monthly']['by_case']['Afghanistan–Pakistan']['rho_change']:.2f}). Pooled, a week earlier it adds nothing "
+         f"(p {GDS['weekly']['lead_p']:.2f}); Af–Pak alone gives p {_lp['Afghanistan–Pakistan']:.2f}, which does not survive a "
+         "correction for four tests, and it did not beat persistence out of sample. We use it as a nowcast and never join it to UCDP events."),
         ("What does GDELT say after September?", "US–Iran violent events per day rose about 59% in 1–12 Nov over "
          "October, and threats doubled, while the scorecard is AMBER. Af–Pak and Israel–Hamas fell; RU–UA steady. "
          "GDELT counts news reports, not incidents, so treat it as a cue to look, not a casualty figure."),
@@ -260,18 +288,20 @@ speak = f"""
 <h1>Run of show, speaker split and Q&amp;A preparation</h1>
 <div class="m">Designed for a Google Meet presentation: share the deck window, then switch to the live Ops site tab for the demo. Run {RUN_ID}.</div></div>
 
-<h2>RUN OF SHOW (15-MINUTE SLOT, TARGET 14:40 + Q&amp;A)</h2>
+<h2>RUN OF SHOW (TARGET 13:45 + Q&amp;A; HARD STOP 15:00)</h2>
 <table><tr><th>Time</th><th>Slides / demo</th><th>Speaker</th><th>Key line</th></tr>
-<tr><td>0:00–2:40</td><td>1 Cover, 2 BLUF, 3 Why it matters</td><td>Maj Shivam Mehta</td><td>"Four wars, three warning signals, one exposed neighbour."</td></tr>
-<tr><td>2:40–3:50</td><td>4 Approach, 5 Data and pipeline</td><td>Capt Siddharth Sangwan</td><td>"One question, five sub-questions, four rules; one command reproduces everything."</td></tr>
-<tr><td>3:50–7:20</td><td>6–11 Findings</td><td>Maj Shivam Mehta</td><td>"The front is widening, not moving. Pakistan fights on two fronts."</td></tr>
-<tr><td>7:20–8:55</td><td>12–14 Prediction and warning</td><td>Capt Siddharth Sangwan</td><td>"−{pooled:.0f}% error on unseen data; watch-list 3.5× random."</td></tr>
-<tr><td>8:55–9:40</td><td>15–16 GDELT (new results)</td><td>Capt Siddharth Sangwan</td><td>"News sees past UCDP's cut-off. It does not see ahead."</td></tr>
-<tr><td>9:40–11:45</td><td>17 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the rating, and here is where it comes from."</td></tr>
-<tr><td>11:45–13:10</td><td>18–20 Recommendations</td><td>Capt Sahil Singh</td><td>"SENSE and WARN need no new platform."</td></tr>
-<tr><td>13:10–14:40</td><td>21–22 Limits, 23 Scorecard</td><td>Capt Sahil Singh</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
+<tr><td>0:00–1:30</td><td>1 Cover, 2 BLUF</td><td>Maj Shivam Mehta</td><td>"Error cut by {pooled:.0f}% on unseen data; RED, two AMBER, one GREEN; four tasks for India."</td></tr>
+<tr><td>1:30–3:30</td><td>3 Approach, 4 Data and pipeline, 5 Method</td><td>Capt Siddharth Sangwan</td><td>"Twelve issued files, 36 checks, joined only by country and calendar; the back-test chose the ensemble."</td></tr>
+<tr><td>3:30–5:15</td><td>6–8 Validation on withheld 2026</td><td>Capt Siddharth Sangwan</td><td>"It beats simple rules, and we show where it does not."</td></tr>
+<tr><td>5:15–7:30</td><td>9 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the RED card, and here is where it comes from."</td></tr>
+<tr><td>7:30–8:45</td><td>10–11 Finding 1: borders and the LoC</td><td>Capt Sahil Singh</td><td>"Pakistan fights on two fronts: watch the LoC more closely."</td></tr>
+<tr><td>8:45–9:45</td><td>12 Finding 2: Gulf, diaspora, sea lanes</td><td>Capt Sahil Singh</td><td>"14 countries, five Gulf states and Sri Lankan waters."</td></tr>
+<tr><td>9:45–10:45</td><td>13 Finding 3: defence sustainment</td><td>Capt Sahil Singh</td><td>"The front is widening, not moving, and the war will last."</td></tr>
+<tr><td>10:45–12:45</td><td>14–16 Recommendations</td><td>Maj Shivam Mehta</td><td>"Sense, warn, shield, sustain: SENSE and WARN need no new platform."</td></tr>
+<tr><td>12:45–13:45</td><td>17 Scorecard</td><td>Maj Shivam Mehta</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
+<tr><td>Q&amp;A</td><td>18–26 support, then backup and annex</td><td>All</td><td>Pull the slide that answers the question.</td></tr>
 </table>
-<p><b>Speaker split:</b> <b>Maj Shivam Mehta</b> opens: bottom line, why it matters for India, and the military findings. <b>Capt Siddharth Sangwan</b> covers data, models and runs the live demo. <b>Capt Sahil Singh</b> closes with recommendations, limits and the scorecard, and chairs Q&amp;A. In Q&amp;A the chair routes data and model questions to Capt Sangwan, and military and India questions to Maj Mehta. The word-for-word script is in <i>Presenter_Script.pdf</i>.</p>
+<p><b>Speaker split:</b> <b>Maj Shivam Mehta</b> opens with the bottom line and closes with the recommendations and scorecard. <b>Capt Siddharth Sangwan</b> covers approach, data, method and validation and runs the live demo. <b>Capt Sahil Singh</b> presents the three India findings and chairs Q&amp;A, routing data and model questions to Capt Sangwan and military questions to Maj Mehta. The word-for-word script is in <i>Presenter_Script.pdf</i>.</p>
 
 <h2>VIDEO-CALL CHECKLIST</h2>
 <ul>

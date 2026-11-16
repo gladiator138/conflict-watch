@@ -30,9 +30,12 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 
 ## Data
 
-Only the **official participant package** is used, and it is bundled in this repository under
+All **twelve issued files** (D1–D12) are used. The six files of the participant package (D1–D6) are bundled under
 `data/raw/for participants/` (`data/*.csv` and `documentation/`): UCDP GED 26.1 + Candidate 26.01.26.09,
 source references, UNHCR bilateral and demographics, IDMC/UNRWA reference stocks and World Bank context.
+The supplementary files are in `data/raw/extra/`: the Middle East (ACLED-style) sheet (D9), the UCDP 1989–2025 file
+(D10) and the two pre-joined panels (D11, D12). The two GDELT files (D7, D8; 5.7 GB) are reduced to daily tables
+in `data/gdelt/`, with the scripts that built them. `src/extra_sources.py` audits and uses D7–D12.
 Licences and attributions are in `data/raw/for participants/documentation/Sources_and_Licenses.md`
 (UCDP data are CC BY 4.0). Source files are read-only and are never modified.
 

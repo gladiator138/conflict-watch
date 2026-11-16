@@ -5,6 +5,7 @@
       "2014-12-27",
       "2026-06-27"
     ],
+    "iran_inflation_2025_d6": 42.1712244965444,
     "countries": 17,
     "iran_unrest_deaths_dec25_jan26": 27646,
     "iran_strategic_pre_2026": {
@@ -120,14 +121,14 @@
   },
   "GDELT": {
     "prewar": {
-      "source": "Iran vs US or Israel",
+      "source": "Iran vs the US or Israel",
       "base_days": 20,
       "last_days": 7,
       "events_per_day": [
         936.15,
         929.7142857142857
       ],
-      "events_p": 1.0,
+      "events_p": 0.9415268230965803,
       "goldstein": [
         0.70591,
         -0.09795714285714283

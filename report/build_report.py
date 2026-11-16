@@ -478,7 +478,7 @@ early Nov for Af–Pak and Israel–Hamas rest on 12 days and are not yet a tren
 **{X9['iran_unrest_deaths_dec25_jan26']:,} dead** in D9 (protests and riots), which UCDP excludes by definition (D11 shows the
 same month; Iran's UCDP deaths and protest counts are unrelated month to month, ρ = {X11['iran_ucdp_vs_protests_rho']:.2f}).
 Strategic developments in Iran then ran **{X9['iran_strategic_pre_2026']['ratio']:.1f}×** their 52-week norm in the four weeks
-before 28 Feb ({X9['iran_strategic_pre_2026']['pre4']} events). Before the Jun 2025 war they ran
+before 28 Feb ({X9['iran_strategic_pre_2026']['pre4']} events), against a backdrop of {X9['iran_inflation_2025_d6']:.0f}% inflation in 2025 (D6). Before the Jun 2025 war they ran
 {X9['iran_strategic_pre_2025']['ratio']:.1f}×: no signal. One case in two, so we recommend a **trial, not a model**.
 
 **Persistence (D10).** In 37 years of UCDP data, **{X10['persist_10k']['share_next_ge_1k']:.0%} of

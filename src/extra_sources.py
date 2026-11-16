@@ -97,7 +97,10 @@ def d9(m: pd.DataFrame, cm: pd.DataFrame) -> dict:
     u = cm[cm.conflict_case == "Israel–Hamas"].set_index("month").deaths
     k = ip.index.intersection(u.index)
     k = k[(k >= "2016-01-01") & (k <= "2026-06-01")]
+    ctx = pd.read_parquet(C.PROCESSED / "context.parquet")
+    infl = ctx[(ctx.iso3 == "IRN") & (ctx.year == 2025)].consumer_inflation_annual_pct
     return dict(rows=int(len(m)), weeks=[str(m.WEEK.min().date()), str(m.WEEK.max().date())],
+                iran_inflation_2025_d6=float(infl.iloc[0]) if len(infl) else None,
                 countries=int(m.COUNTRY.nunique()),
                 iran_unrest_deaths_dec25_jan26=int(unrest.FATALITIES.sum()),
                 iran_strategic_pre_2026=_strat(m, "Iran", WAR_2026), iran_strategic_pre_2025=_strat(m, "Iran", WAR_2025),
@@ -161,7 +164,7 @@ def gdelt_checks(events: pd.DataFrame) -> dict:
     base, last = x["2026-02-01":"2026-02-20"], x["2026-02-21":"2026-02-27"]
     out["prewar"] = dict(source=src, base_days=int(len(base)), last_days=int(len(last)),
                          events_per_day=[float(base.events.mean()), float(last.events.mean())],
-                         events_p=float(stats.mannwhitneyu(base.events, last.events).pvalue),
+                         events_p=float(stats.ttest_ind(base.events, last.events).pvalue),
                          goldstein=[float(base.goldstein_mean.mean()), float(last.goldstein_mean.mean())],
                          goldstein_p=float(stats.ttest_ind(base.goldstein_mean, last.goldstein_mean).pvalue),
                          goldstein_w=[float(base.goldstein_wmean.mean()), float(last.goldstein_wmean.mean())])
@@ -215,6 +218,11 @@ def run(cm: pd.DataFrame | None = None, events: pd.DataFrame | None = None, save
                GDELT_OCT=gdelt_october(cm))
     if save:
         (C.TAB_DIR / "extra_sources.json").write_text(json.dumps(out, indent=2, default=str))
+        # flat copy so the run ID (a hash of the CSV tables) covers these results too
+        flat = pd.json_normalize(out, sep=".").T.reset_index()
+        flat.columns = ["key", "value"]
+        flat["value"] = flat.value.map(lambda v: round(v, 6) if isinstance(v, float) else v).astype(str)
+        flat.to_csv(C.TAB_DIR / "extra_sources_checks.csv", index=False)
     return out
 
 
