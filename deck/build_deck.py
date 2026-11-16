@@ -390,6 +390,10 @@ s = new_slide(footer=False)
 _rg, _rb = gifs.radar_gif(BGS["cover"], int(hud.W * 0.72), int(hud.H * 0.5), 660)
 s.shapes.add_picture(str(_rg), Inches(_rb[0] / 200), Inches(_rb[1] / 200), Inches((_rb[2] - _rb[0]) / 200),
                      Inches((_rb[3] - _rb[1]) / 200))
+# draw the radar just above the background, under the formation logos (it stays static header, the GIF animates itself)
+_bg = next(sh for sh in s.shapes if sh.name == "!!bg")
+_bg._element.addnext(s.shapes[-1]._element)
+META[s.slide_id]["hdr"] += 1
 kicker_lbl(s, 6.6, 6.55, 6.4, f"SYSTEM ONLINE  ·  4 CONFLICTS  ·  222 AREAS  ·  RUN {RUN_ID}", color=CYAN, size=10)
 kicker_lbl(s, 0.85, 0.55, 8, "DATA ANALYTICS COMPETITION 2026", size=13)
 text(s, 0.6, 1.55, 5.6, 1.2, "CONFLICT WATCH", size=52, bold=True)
