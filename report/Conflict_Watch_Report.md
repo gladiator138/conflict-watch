@@ -19,14 +19,26 @@
 * **Forecasting works on unseen data.** Trained only on 2014–2025, the ensemble cut 1-month-ahead error against the
   "no-change" rule by **29%** on Jan–Sep 2026 (90% interval 2% to 41%). Its 80% bands held
   **83%** of 2026 outcomes overall, but only 22% for US–Iran (§7.4).
+* **All twelve issued files are used** (D1–D12, §3). Six test, widen or explain the death record; Appendix C checks
+  mechanically that each one is cited in both the method and the findings.
 * **Warning works sub-nationally.** A month ahead, the escalation classifier ranks 222 areas with ROC-AUC
   **0.79** on 2026 (rule of thumb: 0.73). Its top-10 watch-list is
   **3.5× better than random** (90% interval 2.2× to 5.0×).
-* **Limit.** No model built on death counts foresees a *decision* to go to war (Feb 2022, Feb 2026). Warning must watch
-  spread and hotspots, not media volume: references follow incidents, not lethality, and do not lead escalation.
+* **Limit.** No model built on death counts foresees a *decision* to go to war (Feb 2022, Feb 2026). Precursor signs in
+  three other files preceded the Feb 2026 war but not the Jun 2025 one (§5.6): a lead to trial, not a proven indicator.
 
-**Recommendations in brief:** task ISR on the monthly watch-list; keep Gulf NEO plans current while US–Iran is AMBER;
-treat the Af–Pak interstate dyad as a standing I&W indicator for the LoC; build Indian OSINT coverage of West Asia (§9).
+**What it means for India, and the immediate mandates (§9):**
+
+1. **LoC: WARN.** Pakistan now fights on two fronts: TTP violence, and since Oct 2025 direct Afghan–Pakistani state
+   clashes (685 deaths, Jan–Sep 2026). Adopt both as standing indicators for diversionary LoC activity.
+2. **Gulf diaspora: SHIELD.** Violent events in six Gulf states rose from 9 to
+   322 (H1 2025 → H1 2026), confirmed by a second provider. Keep Gulf NEO plans for the
+   Indian diaspora current while US–Iran is AMBER.
+3. **Sea lanes: SHIELD.** One strike killed 104 off Sri Lanka on 4 Mar 2026, and 299 died on Iran's
+   Hormuz/Chabahar coast. Build a belligerent-movement picture for the IOR; plan alternatives to Hormuz, Chabahar and INSTC.
+4. **Supply chains: SUSTAIN.** The two wars that supply India's legacy and precision arms (Russia; Israel) are both active,
+   and the 37-year base rate says RU–UA will not burn out soon (§5.6). Buffer and indigenise critical spares now.
+5. **Intelligence: SENSE.** Task ISR and analysts on the monthly top-10 watch-list, and track the number of countries hit.
 
 **Threat scorecard for Oct 2026**, built only from model outputs (rules in §8):
 
@@ -54,12 +66,42 @@ purely descriptive study because a forecast can be scored against withheld data 
 
 **[Data]** marks results computed from the competition files. **[Domain]** marks expert reasoning the files cannot prove.
 
-## 3 · Data, cleaning and imputation
+## 3 · Data strategy, integration and cleaning [D1–D12]
 
-**Sources (official participant package).** 61,055 UCDP event records (GED 26.1 for 2014–2025; provisional
-Candidate 26.01.26.09 for Jan–Sep 2026), 85,406 source references, UNHCR bilateral stocks (6,273 rows) and demographics
-(19,830), IDMC/UNRWA reference stocks (112) and World Bank context (1,764). The top-level files outside the official folder
-belong to another package and were **not** used.
+**Twelve files, one key.** Each issued file has an ID (D1–D12) that every finding cites. Providers are never joined on
+event IDs (D1 and D10 are both UCDP GED, so they are the one exception): the only cross-provider keys are country (or state
+pair) and day, week, month or year. **D1 is the fatality ground truth for the models**; the others test, widen or explain
+it. No data from outside the issue is used.
+
+| ID | Issued file | Rows | Period | What it adds | Linked by |
+|---|---|---|---|---|---|
+| D1 | conflict_events.csv (UCDP GED 26.1 + Candidate) | 61,055 | 2014 – Sep 2026 | Fatality ground truth; forecast and warning target | event_id → D2; country/admin1 + month |
+| D2 | event_sources.csv | 85,406 | 2014 – 2026 | Media attention index (AGI) | event_id → D1 |
+| D3 | bilateral_displacement_stocks.csv | 6,273 | 2014 – 2025 | Refugees abroad, hosts incl. India | origin ISO3 + year |
+| D4 | unhcr_demographics.csv | 19,830 | 2014 – 2025 | Women, children, under-fives | origin ISO3 + year |
+| D5 | displacement_reference_stocks.csv | 112 | 2014 – 2025 | IDPs (IDMC), UNRWA (kept apart) | ISO3 + year |
+| D6 | country_year_context.csv (World Bank) | 1,764 | 2014 – 2025 | Deaths per head; economic stress | ISO3 + year |
+| D7 | 4. gdelt_focus_feb_apr_2026.csv | 5,092,402 | Feb – Apr 2026 | War onset: volume and character | state pair + day |
+| D8 | 3. gdelt_focus_3gb_from_2026.csv | 8,414,836 | May – Nov 2026 | Weekly lead test; Oct–Nov nowcast | state pair + day |
+| D9 | 5. middle east type of conflict.xlsx (ACLED-style) | 149,825 | Dec 2014 – Jun 2026 | Unrest, strategic developments, Gulf/IOR strikes | country + week/month |
+| D10 | 6. war_terror_violence_200k.csv (UCDP) | 200,000 | 1989 – 2025 | 37-year base rates; case-selection audit | event ID ↔ D1; country + year |
+| D11 | 1. country_month_panel_with_middle_east.csv | 3,445 | 1989 – Jun 2026 | UCDP–ME correlation; join audit | country + month (pre-joined) |
+| D12 | 2. country_summary_panel_with_middle_east.csv | 22 | all years | Media attention per death; totals audit | country |
+
+D7 and D8 (5.7 GB) are reduced out of core to daily tables per state pair and per focus country, keyed on the report date
+(`data/gdelt/`, with the reduction script). The US is about two thirds of GDELT rows, so we compare rates, shares and tone,
+never raw volumes across countries.
+
+**Pre-joined and supplementary files were audited, not trusted:**
+
+| ID | Check | Finding | What we did |
+|---|---|---|---|
+| D10 | Rows vs DATASET_SUMMARY | 200,000 vs 209,787 stated | Treated as capped; 'other country' rows used only for relative context |
+| D10 | Overlap with D1 (2014–25) | 99.5% of D1 events found; deaths identical in 100% | Validates both; D1 stays the primary source |
+| D11 | Latest UCDP month | 2025-12; Iran Feb–Apr 2026 = 0 deaths | Panel misses the 2026 war: not used for 2026 deaths; D1 Candidate data used instead |
+| D11 | GDELT month key | 50 country-months before Feb 2026 (2016-02 – 2026-04) | Keyed on back-dated event date; our GDELT tables use the report date |
+| D11 | UCDP deaths vs D10 | Matches D10 start-month totals in 100% of 1,896 country-months | Panel stacks 1,352 multi-month records on their start month; we split them by day (DQ07) |
+| D12 | Totals vs raw files | UCDP event totals match D10 for all seven focus countries | Used as a validated cross-country table |
 
 **36 documented checks**, of which 23 found something to handle. No row is silently
 dropped: every fix is logged, and raw values are kept beside corrected ones. The ten that matter most are below; all
@@ -109,7 +151,7 @@ The ablation in §7.2 shows that **a compact 18-feature subset generalises best*
 
 ## 5 · Exploratory analysis and findings
 
-### 5.1 Intensity and tempo [Data]
+### 5.1 Intensity and tempo [Data · D1, D6]
 
 
 <figure><img src="../outputs/figures/01_monthly_deaths.png" alt="Figure 1 – Monthly deaths by conflict (log scale); shaded = 2026 withheld test window"/><figcaption>Figure 1 – Monthly deaths by conflict (log scale); shaded = 2026 withheld test window</figcaption></figure>
@@ -128,7 +170,7 @@ strikes, then direct war in Feb–Mar 2026), Af–Pak is a creep (rising since 2
 trend, and -27% (Dec) and -34% (Jan); Af–Pak peaks in Sep–Oct. *So what:* one warning rule
 cannot fit all four, so we forecast level, trend and spread separately.
 
-### 5.2 How the wars are being fought (military lens)
+### 5.2 How the wars are being fought (military lens) [Data · D1, D10]
 
 **Front geography: widening, not moving [Data].** Donetsk's share of located events fell from 55% (2022) to
 30% (2026) while Zaporizhzhia (14%), Dnipropetrovsk
@@ -147,8 +189,12 @@ than the reverse, so the ratio is an upper bound of reporting, not a verified ex
 <div class="two"><figure><img src="../outputs/figures/05_front_geography.png" alt="Figure 2 – Russia–Ukraine: share of located discrete events by area"/><figcaption>Figure 2 – Russia–Ukraine: share of located discrete events by area</figcaption></figure><figure><img src="../outputs/figures/06_attrition_ru_ua.png" alt="Figure 3 – Russia–Ukraine: UCDP-recorded fatalities by side (recorded, not verified)"/><figcaption>Figure 3 – Russia–Ukraine: UCDP-recorded fatalities by side (recorded, not verified)</figcaption></figure></div>
 
 
-**Afghanistan–Pakistan: a second front opens [Data].** Violence has concentrated in Khyber Pakhtunkhwa (TTP) and
-Balochistan and has risen every year since 2021. Since **Oct 2025 the two states clash directly** (131 deaths in Oct 2025;
+**Afghanistan–Pakistan: a second front opens [Data].** Pakistan's recorded conflict deaths rose from
+310 (2021) to 2,361 (2025), with 2,020 more in Jan–Sep 2026.
+TTP violence alone went from 259 to 2,226 deaths (2021 → 2025), concentrated in Khyber
+Pakhtunkhwa and Balochistan. Direct state-on-state clashes grew from 16 deaths (2022) to 685 in Jan–Sep 2026.
+The case covers the cross-border and TTP war, not all of Afghanistan: its dyads hold
+8% of Afghanistan's recorded deaths 2014–25 (D10). Since **Oct 2025 the two states clash directly** (131 deaths in Oct 2025;
 172, 411 and 68 in Feb–Apr 2026). *So what [Domain]:* a Pakistan Army committed in the west has less capacity in the east,
 or more incentive for diversionary LoC activity. Watch the western front more closely, not less.
 
@@ -158,19 +204,25 @@ or more incentive for diversionary LoC activity. Watch the western front more cl
 
 **Horizontal escalation [Data].** The US–Iran case spread from 4 countries (2025) to
 14 (2026), including five Gulf states and Sri Lankan waters. Israel–Hamas reached Qatar in Sep 2025.
+A second provider confirms the spread (D9): violent events in the six Gulf states rose from
+9 to 322 (H1 2025 → H1 2026), and at sea in the
+Indian Ocean from 60 to 74. A third
+(D7) agrees: GDELT conflict reports located in Kuwait went from 0.8 a day (1–27 Feb) to
+58 a day in March, and Sri Lanka-located reports peaked on 5 Mar, the day after the strike.
 
-### 5.3 Media attention vs deaths: an original index [Data]
+### 5.3 Media attention vs deaths: an original index [Data · D1, D2, D12]
 
 We regress monthly source references on events and deaths (log, conflict fixed effects). The standardised residual is the
 **Attention Gap Index (AGI)**: above 0 is over-reported, below 0 is "forgotten" violence. References scale with
 **incidents** (elasticity 0.96), not **lethality** (0.01);
 R² = 0.96. Per 100 deaths there are 150 references for Israel–Hamas, 54 for RU–UA, 40 for Af–Pak and 35
-for US–Iran. The AGI does **not** lead next month's escalation (coefficient -0.047, p =
+for US–Iran. A second source agrees (D12): GDELT carried 7 media events per
+recorded death for Ukraine in Feb–Apr 2026, against 1,593 for Russia. The AGI does **not** lead next month's escalation (coefficient -0.047, p =
 0.50). In UCDP's record, Indian outlets (mainly PTI) appear in
 **17% of Af–Pak events** and almost none elsewhere: the record of
 West Asia rests on non-Indian wires. *So what:* do not build warning on media volume.
 
-### 5.4 Displacement and humanitarian planning [Data]
+### 5.4 Displacement and humanitarian planning [Data · D3, D4, D5, D6]
 
 Ukraine, end-2025: about 5.2M refugees abroad and 3.7M IDPs; **72%** of refugees
 with recorded sex and age are women or children. Afghanistan: 63% women and
@@ -183,7 +235,7 @@ escalation flags), not death tolls, and stock paediatric and maternal supplies.
 <div class="two"><figure><img src="../outputs/figures/13_media_scatter.png" alt="Figure 6 – References track events tightly, deaths loosely"/><figcaption>Figure 6 – References track events tightly, deaths loosely</figcaption></figure><figure><img src="../outputs/figures/08_country_map.png" alt="Figure 7 – Where the four conflicts killed people, 2024–Sep 2026 (India outlined)"/><figcaption>Figure 7 – Where the four conflicts killed people, 2024–Sep 2026 (India outlined)</figcaption></figure></div>
 
 
-### 5.5 A second source: GDELT media-coded events, Feb–Nov 2026 [Data, new results]
+### 5.5 A second source: GDELT media-coded events, Feb–Nov 2026 [Data · D7, D8]
 
 The competition package also contains GDELT, about 5.4 GB of machine-coded news events. We reduced
 541,275 dyad-coded events (RU↔UA, ISR↔PSE/Hamas, AFG↔PAK, USA↔IRN; 2026-02-01 to
@@ -205,6 +257,15 @@ event to event. **This is a separate analysis: it does not change any submitted 
   (p = 0.55). Out of sample over 20 weeks, neither beats persistence
   (-15% and -1% change in error). So GDELT does not improve the submitted
   forecasts and we did not add it to them.
+* **Each war on its own (D8).** Tested separately, last week's GDELT adds to last week's deaths in
+  1 of four conflicts at 5% (Af–Pak p = 0.02, Israel–Hamas p = 0.64, RU–UA p = 0.73, US–Iran p = 0.63).
+  The one hit, Af–Pak, does not survive a correction for four tests (0.09).
+* **Before the Feb 2026 war (D7).** Reports a day on the Iran vs US or Israel went from 936
+  (1–20 Feb) to 930 in the last week before the war (p = 1.00): no warning in
+  volume. Their Goldstein score moved from +0.71 to -0.10 (p = 0.007):
+  one case, so a hypothesis only.
+* **October check (D8).** GDELT's Oct 2026 direction agrees with our frozen Oct forecast direction for
+  4 of 4 conflicts.
 * **What it is good for: seeing past UCDP's cut-off.** UCDP ends on 30 Sep 2026; GDELT runs to 12 Nov. For the spike
   wars where it tracks UCDP, it is a fast situational-awareness feed:
 
@@ -228,6 +289,33 @@ early Nov for Af–Pak and Israel–Hamas rest on 12 days and are not yet a tren
 
 <div class="two"><figure><img src="../outputs/figures/27_gdelt_vs_ucdp.png" alt="Figure 8 – GDELT violent events per day vs UCDP weekly deaths, 2026 (shaded = after UCDP ends)"/><figcaption>Figure 8 – GDELT violent events per day vs UCDP weekly deaths, 2026 (shaded = after UCDP ends)</figcaption></figure><figure><img src="../outputs/figures/28_gdelt_lags.png" alt="Figure 9 – Correlation of GDELT with UCDP at different week shifts"/><figcaption>Figure 9 – Correlation of GDELT with UCDP at different week shifts</figcaption></figure></div>
 
+
+### 5.6 What the twelve files say together [Data · D1–D12]
+
+**Precursors the death count missed (D9, D11, D7).** In Dec 2025 – Jan 2026, unrest in Iran left
+**27,646 dead** in D9 (protests and riots), which UCDP excludes by definition (D11 shows the
+same month; Iran's UCDP deaths and protest counts are unrelated month to month, ρ = -0.05).
+Strategic developments in Iran then ran **5.1×** their 52-week norm in the four weeks
+before 28 Feb (88 events). Before the Jun 2025 war they ran
+0.8×: no signal. One case in two, so we recommend a **trial, not a model**.
+
+**Persistence (D10).** In 37 years of UCDP data, **100% of
+15 focus-country years with ≥ 10,000 deaths were followed by ≥ 1,000** the next year; only
+4.9% of quiet years (< 25 deaths) became ≥ 1,000. Ukraine's episode is in year
+4. This supports RED for Russia–Ukraine, and the multi-year planning horizon for spares.
+
+**Sources agree on magnitude (D9).** Monthly Israel + Palestine fatalities in D9 move with D1's Israel–Hamas deaths
+(Spearman ρ = 0.87, 126 months).
+
+| Finding | Primary [D] | Second source [D] | Call |
+|---|---|---|---|
+| Intense wars persist | RU–UA 4–11k deaths a month since 2023 (D1) | 100% of ≥ 10k years followed by ≥ 1k (D10) | RED stays RED |
+| Wars start from quiet | No build-up before Feb 2026 (D1) | 4.9% of quiet years became ≥ 1k (D10); GDELT volume flat (D7) | Counts and volume miss onset |
+| Precursors sit outside the death record | Iran unrest 27,646 dead (D9, D11) | Strategic developments ×5.1 (D9); tone (D7); inflation (D6) | One case in two: trial it |
+| Spread to India's neighbourhood | 5 Gulf states + Sri Lankan waters (D1) | Gulf violent events 9 → 322 (D9) | Confirmed by a second provider |
+| Attention ≠ harm | References follow events, not deaths (D2) | Media events per death: Ukraine 7, Russia 1,593 (D12); no weekly lead (D8) | Do not warn on headlines |
+| Ground truth is robust | Israel + Palestine fatalities (D1) | ρ = 0.87 with D9; 99.5% of D1 events match D10 | Except unrest, which UCDP excludes |
+| Beyond Sep 2026 | Our Oct forecast (D1) | GDELT to 12 Nov agrees on direction for 4 of 4 (D8) | Consistent |
 
 ## 6 · India impact
 
@@ -372,6 +460,7 @@ forecasts and watch-list frozen in this submission against any new month of even
 | **SENSE** | Task ISR and analysts on the monthly sub-national watch-list; track active sectors and countries hit | Top-10 list 3.5× random (§8) | DIA / Service intelligence | Now |
 | **SENSE** | Build Indian OSINT coverage of the Gulf, Iran and Red Sea; run a GDELT feed as a nowcast past UCDP's lag for spike wars | Indian outlets in 17% of Af–Pak events, about 0% elsewhere; GDELT tracks UCDP for US–Iran (§5.3, §5.5) | DIA / MEA | 90 days |
 | **WARN** | Adopt the Af–Pak interstate dyad and KP/Balochistan scores as standing LoC I&W indicators | State clashes since Oct 2025; 3 hotspots (§5.2, §8) | Northern / Western Comds | Now |
+| **WARN** | Run a weekly precursor watch per state pair: unrest and strategic developments (D9), tone (D7/D8) | Preceded Feb 2026, not Jun 2025 (§5.6) | DIA / HQ IDS | 90 days |
 | **WARN** | Publish the scorecard monthly; escalate any move to RED or rise in countries hit | US–Iran 4 → 14 countries with no build-up (§5.2) | HQ IDS | 90 days |
 | **SHIELD** | Keep Gulf NEO plans current while US–Iran is AMBER; sealift/airlift options | 5 Gulf states struck, 25 events (§6) | HQ IDS / Navy / IAF / MEA | Now |
 | **SHIELD** | Belligerent-movement picture for the IOR | 104 killed off Sri Lanka, 4 Mar 2026 (§6) | Navy / IFC-IOR | 90 days |
@@ -387,10 +476,13 @@ forecasts and watch-list frozen in this submission against any new month of even
 * Displacement stocks cannot be attributed to single events; IDMC and UNRWA series are kept separate.
 * Nine test months per conflict is a small sample: see the intervals in §7.3 and §8.
 * Forecasts cannot anticipate decisions to start wars, and US–Iran intervals under-cover (§7.4).
-* GDELT (§5.5) covers only Feb–Nov 2026 with a 16-day gap, counts reports not incidents, and over-represents US-linked news.
+* GDELT (D7, D8) covers only Feb–Nov 2026 with a 16-day gap, counts reports not incidents, and over-represents US-linked news.
+* D10 holds 200,000 rows against 209,787 stated (capped "other country" rows). D11 stops UCDP at
+  2025-12 and keys GDELT on event date, so we rebuilt those joins. D9 counts protest and riot deaths that
+  UCDP excludes by definition; it is never added to UCDP totals.
 * Map boundaries follow the Government of India's depiction. [Domain] statements are expert reasoning and are labelled.
 
-**Tools.** Python 3.13: pandas, NumPy, SciPy, statsmodels (ETS, SARIMA), LightGBM (forecaster, classifier, TreeSHAP),
+**Tools.** Python 3.13: pandas, NumPy, SciPy, openpyxl (D9), statsmodels (ETS, SARIMA), LightGBM (forecaster, classifier, TreeSHAP),
 scikit-learn, Plotly and Streamlit (dashboard), python-pptx. **AI tools used: Claude (Anthropic), as a coding, drafting
 and review assistant.** It helped write and debug the pipeline, dashboard, report and slide code, and reviewed the
 submission against the marking scheme. **No number was typed in or generated by an AI tool: every figure is computed by
@@ -398,7 +490,7 @@ the code in this repository from the issued dataset and can be reproduced with o
 questions, checked the analysis and owns the findings and recommendations.**
 
 **Reproduce.** `pip install -r requirements-dev.txt`, then `python run_pipeline.py` (about 4 min: clean → features →
-insights → models → evidence checks → figures), `streamlit run app/app.py`, `python score_holdout.py --selftest`. Seeds
+insights → models → second sources → evidence checks → figures), `streamlit run app/app.py`, `python score_holdout.py --selftest`. Seeds
 are fixed (`random_state = 42`). Every number here is read from `outputs/tables/`; the run ID **CW-8694DE2B** is a hash of the
 result tables and is printed on this report, the deck and the dashboard, so all three can be matched. Live:
 conflictmonitor2026.streamlit.app.
@@ -451,3 +543,22 @@ intervals:** 1,000 resamples of areas. **Calibration** (2026, LightGBM):
 | (0.1, 0.15] | 71 | 12.5% | 16.9% |
 | (0.15, 0.25] | 84 | 19.1% | 11.9% |
 | (0.25, 1.0] | 63 | 33.9% | 19.0% |
+
+## Appendix C · Self-verification: every issued file is used
+
+This table is generated by scanning the report's own text: a file passes only if its ID is cited in the data section (§3) and in the findings or recommendations (§5–9).
+
+| ID | Used for | Cited in §3 | Cited in §5–9 |
+|---|---|---|---|
+| D1 | Forecast and warning target; every finding | ✓ | ✓ |
+| D2 | Attention Gap Index | ✓ | ✓ |
+| D3 | Refugees abroad; hosts incl. India | ✓ | ✓ |
+| D4 | Women, children, under-fives | ✓ | ✓ |
+| D5 | IDPs and UNRWA, kept apart | ✓ | ✓ |
+| D6 | Deaths per head; inflation | ✓ | ✓ |
+| D7 | Pre-war volume and tone | ✓ | ✓ |
+| D8 | Weekly lead test; October direction | ✓ | ✓ |
+| D9 | Iran unrest; Gulf spread; ρ with D1 | ✓ | ✓ |
+| D10 | Persistence base rate; case scope; D1 audit | ✓ | ✓ |
+| D11 | Join audit; Iran unrest vs UCDP | ✓ | ✓ |
+| D12 | Media events per death; totals audit | ✓ | ✓ |

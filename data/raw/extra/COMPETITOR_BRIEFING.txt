@@ -1,0 +1,56 @@
+COMPETITOR BRIEFING — Multi-Source Conflict & Media Analytics
+=============================================================
+
+Challenge
+---------
+Analyse organised violence (UCDP) alongside media-coded geopolitics signals (GDELT)
+for: Afghanistan, Pakistan, United States, Russia, Ukraine, Iran, Israel.
+
+Datasets provided
+-----------------
+1) war_terror_violence_200k.csv
+   - UCDP Georeferenced Event Dataset subset
+   - Organised violence events with fatalities (war / one-sided / non-state)
+   - Time span: mainly 1989-2025
+
+2) gdelt_focus_feb_apr_2026.csv
+   - GDELT media-coded events for the same focus countries
+   - Time span: February-April 2026
+
+3) country_month_panel.csv  (RECOMMENDED analysis table)
+   - Pre-joined on country + year_month
+   - Join type used: FULL OUTER style union of keys (coverage_flag shows source)
+
+4) country_summary_panel.csv
+   - Country-level LEFT/FULL style summary (easy starter table)
+
+CRITICAL dataset RULES (read carefully)
+-------------------------------
+1. UCDP and GDELT are DIFFERENT sources. One GDELT row is NOT one UCDP incident.
+2. Do NOT join on event IDs.
+3. joins:
+   - country + year_month  (panel already provided)
+   - country-level aggregates
+4. GDELT is news volume / narrative signal; UCDP is conflict fatality ground truth.
+5. Time overlap is limited: UCDP historical vs GDELT Feb-Apr 2026.
+   Use GDELT for near-term narrative heat; UCDP for long-run conflict baseline.
+6. United States will dominate GDELT counts due to media coverage bias.
+
+Join types explained
+--------------------
+- FULL OUTER JOIN (country, year_month): keep months present in either source.
+  Implemented in country_month_panel via coverage_flag =
+    both | ucdp_only | gdelt_only
+- Country-level join: always matched for the 7 focus countries in country_summary_panel.
+
+
+
+
+Additional source added
+-----------------------
+5) middle east type of conflict.xlsx (+ derived middle_east_conflict_monthly.csv)
+   - ACLED-style weekly Middle East political violence aggregates
+   - Joined on country + year_month into country_month_panel_with_middle_east.csv
+   - Best overlap with focus set: Iran, Israel; also broader ME context
+
+Use country_month_panel_with_middle_east.csv as the fullest joined table.

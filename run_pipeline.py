@@ -17,7 +17,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from src import cleaning, config as C, features, gdelt, insights, models as M, robustness, viz
+from src import cleaning, config as C, extra_sources, features, gdelt, insights, models as M, robustness, viz
 
 MODEL_DIR = C.ROOT / "models"
 MODEL_DIR.mkdir(exist_ok=True)
@@ -54,6 +54,7 @@ def main(figs: bool = True):
     rag.to_csv(C.TAB_DIR / "rag_scorecard.csv", index=False)
     print("      GDELT vs UCDP (new, labelled; does not change the models) ...")
     gdelt.run(cm)
+    extra_sources.run(cm)
     print("      evidence strength (bootstrap, Diebold-Mariano, late data, calibration) ...")
     rob = robustness.run(cm)
     joblib.dump(dict(m_case_full=fc["m_case_full"], members=fc["members"], conformal=fc["conformal"],

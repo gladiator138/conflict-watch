@@ -1,0 +1,68 @@
+FINAL DATASET SUMMARY — Data Analytics Competition
+============================================================
+Folder: C:\Users\piyus\Desktop\data set analytiucs\final dataset
+Total folder size: 5,856,204,021 bytes (5.45 GB)
+Total tuples (sum of listed data tables): 13,873,959
+
+Per-file details
+------------------------------------------------------------
+File: war_terror_violence_200k.csv
+  Size: 73,229,340 bytes (69.84 MB)
+  Tuples: 209,787
+  Timeline: 1989-2025
+  Violence / event types: War / state-based armed conflict: 149,215; Terror-like / one-sided violence against civilians: 36,191; Other organised group violence (non-state): 14,594
+
+File: gdelt_focus_feb_apr_2026.csv
+  Size: 2,154,481,594 bytes (2054.67 MB)
+  Tuples: 5,092,402
+  Timeline: 201602 to 202604
+  Violence / event types: Verbal Cooperation: 2,953,338; Material Conflict: 846,309; Verbal Conflict: 738,617; Material Cooperation: 554,138
+
+File: gdelt_focus_3gb_from_2026.csv
+  Size: 3,580,129,284 bytes (3414.28 MB)
+  Tuples: 8,414,836
+  Timeline: 201605 to 202611
+  Violence / event types: Verbal Cooperation: 5,040,377; Material Conflict: 1,285,552; Verbal Conflict: 1,149,841; Material Cooperation: 939,066
+
+File: middle east type of conflict.xlsx
+  Size: 8,148,180 bytes (7.77 MB)
+  Tuples: 149,825
+  Timeline: 2014-12-27 to 2026-06-27
+  Violence / event types: Protests: 44,280; Explosions/Remote violence: 32,466; Strategic developments: 30,004; Battles: 20,462; Violence against civilians: 15,069; Riots: 7,544
+
+File: country_month_panel.csv
+  Size: 103,384 bytes (0.10 MB)
+  Tuples: 1,934
+  Timeline: derived joined panel
+  Violence / event types: aggregated from source files
+
+File: country_month_panel_with_middle_east.csv
+  Size: 266,215 bytes (0.25 MB)
+  Tuples: 3,445
+  Timeline: derived joined panel
+  Violence / event types: aggregated from source files
+
+File: country_summary_panel.csv
+  Size: 653 bytes (0.00 MB)
+  Tuples: 7
+  Timeline: derived joined panel
+  Violence / event types: aggregated from source files
+
+File: country_summary_panel_with_middle_east.csv
+  Size: 1,231 bytes (0.00 MB)
+  Tuples: 22
+  Timeline: derived joined panel
+  Violence / event types: aggregated from source files
+
+File: middle_east_conflict_monthly.csv
+  Size: 66,669 bytes (0.06 MB)
+  Tuples: 1,701
+  Timeline: derived joined panel
+  Violence / event types: aggregated from source files
+
+Notes
+------------------------------------------------------------
+1) UCDP violence types: War/state-based, one-sided (terror-like), non-state.
+2) GDELT QuadClass: Verbal/Material Cooperation and Conflict (media-coded).
+3) Middle East file: ACLED-style event types (Battles, Explosions, VAC, Protests, etc.).
+4) Joined panels are for analysis; primary raw sources are UCDP + GDELT + Middle East xlsx.
