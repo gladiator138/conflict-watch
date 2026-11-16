@@ -1,1 +1,6 @@
-CW WTC 130600 IST NOV 26 AMBER▼ CONF MEDIUM. GDELT violent events, Af–Pak dyad down: 2/day over 7 days vs 13/day the 4 weeks before (×0.23); yesterday 3 (z. ACT1 task ISR on Kandahar, Balochistan, Kunar (72h, Theatre J2 (Int)). NOTIONAL
+PRIORITY - CW/WTC - DTG 130600 IST NOV 26
+THREAT AMBER EASING - CONF MEDIUM
+SIT GDELT violent events, Af-Pak dyad down: 2/day over 7 days vs 13/day the 4 weeks before (x0.23)..
+WATCH Kandahar 0.22, Balochistan 0.20, Kunar 0.20
+ACT J2 (Int): task ISR on Kandahar, Balochistan, Kunar NLT 160600 NOV
+ACK REQD - NOTIONAL

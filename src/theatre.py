@@ -39,6 +39,8 @@ import math
 from datetime import timedelta
 
 import numpy as np
+import re
+
 import pandas as pd
 
 from . import config as C
@@ -699,21 +701,86 @@ def _flash_dtg(date: str, i: int) -> str:
 RAG_EMOJI = {"RED": "🔴", "AMBER": "🟠", "GREEN": "🟢"}
 
 
+PRECEDENCE = {"RED": "IMMEDIATE", "AMBER": "PRIORITY", "GREEN": "ROUTINE"}
+_ASCII = {"×": "x", "–": "-", "—": "-", "▲": "UP", "▼": "DOWN", "►": "STEADY", "▶": "STEADY", "→": "->", "≥": ">=", "·": "-"}
+
+
+def _nlt(b: dict, timeline: str) -> str:
+    """Deadline as a date-time group: brief issue time plus the action timeline (24h, 72h, 7d)."""
+    m = re.match(r"(\d+)\s*([hd])", str(timeline))
+    try:
+        t0 = pd.Timestamp(b["date"]).normalize() + pd.Timedelta(days=1, hours=6)   # issued 0600 IST the next morning
+        if not m:
+            return str(timeline)
+        t = t0 + pd.Timedelta(**{"hours" if m.group(2) == "h" else "days": int(m.group(1))})
+        return f"{t:%d%H%M} {t:%b}".upper()
+    except Exception:
+        return str(timeline)
+
+
+def _owner(a: dict) -> str:
+    return a["owner"].split(" /")[0].replace("Theatre ", "").strip()
+
+
+def _tactical_obs(b: dict) -> list:
+    """Observations for a tactical message: market lines are left to the full brief."""
+    return [o for o in b["observe"] if o.get("source") != "Markets"]
+
+
+def _hot(b: dict, n: int = 3) -> list:
+    d = sorted(b.get("districts", []), key=lambda d: -d.get("p_now", 0))
+    return [x for x in d if x.get("p_now", 0) >= 0.10][:n] or d[:1]   # areas worth a commander's attention
+
+
+def _ascii(t: str) -> str:
+    for k, v in _ASCII.items():
+        t = t.replace(k, v)
+    return t.encode("ascii", "ignore").decode()
+
+
+def _cut(t: str, n: int) -> str:
+    return t if len(t) <= n else t[:n].rsplit(" ", 1)[0].rstrip(" ,;:(") + ".."
+
+
 def to_sms(b: dict) -> str:
+    """Formatted signal, plain ASCII (GSM-7) so it stays within two SMS segments (<= 320 characters)."""
     a = b["decide"][0]
-    return (f"CW {b['code']} {b['dtg']} {b['rating']}{b['arrow']} CONF {b['confidence']}. "
-            f"{b['observe'][0]['text'][:110]}. ACT1 {a['short']} ({a['timeline']}, {a['owner'].split(' /')[0]}). "
-            "NOTIONAL" + (" SYNTH" if b["synthetic"] else ""))[:320]
+    obs = _tactical_obs(b) or b["observe"]
+    hot = ", ".join(f"{d['name'].split(' (')[0]} {d['p_now']:.2f}" for d in _hot(b))
+    tag = "NOTIONAL" + ("/SYNTHETIC DRILL" if b["synthetic"] else "")
+    head = f"{PRECEDENCE[b['rating']]} - CW/{b['code']} - DTG {b['dtg']}\nTHREAT {b['rating']} {b['trend'].upper()} - CONF {b['confidence']}"
+    act = f"ACT {_owner(a)}: {a['short']} NLT {_nlt(b, a['timeline'])}"
+    hotl = f"WATCH {hot}" if hot else ""
+    tail = f"ACK REQD - {tag}"
+    room = 320 - sum(len(_ascii(x)) + 1 for x in (head, hotl, act, tail) if x) - 5
+    sit = "SIT " + _cut(_ascii(obs[0]["text"]), max(room, 40))
+    return "\n".join(_ascii(x) for x in (head, sit, hotl, act, tail) if x)[:320]
 
 
 def to_whatsapp(b: dict) -> str:
-    lines = [f"*CONFLICT WATCH · {b['code']} DAILY BRIEF* ({b['dtg']})",
-             f"{RAG_EMOJI[b['rating']]} *{b['rating']}* {b['arrow']} {b['trend']} · confidence {b['confidence']}",
-             f"_BLUF:_ {b['bluf']}", "", "*OBSERVE*"] + [f"• {o['text']} _({o['window']}, {o['tag']})_" for o in b["observe"]]
-    lines += ["", "*DECIDE / ACT*"] + [f"{a['rank']}. {a['short']}: {a['owner']}, {a['timeline']}. Trigger: {a['trigger']}"
-                                       for a in b["decide"]]
-    lines += ["", "_NOTIONAL theatre. UNCLASSIFIED - competition data._"]
-    return "\n".join(lines)
+    """Five-paragraph signal: situation, hot areas, assessment, actions (who / what / by when), escalation triggers."""
+    obs = _tactical_obs(b) or b["observe"]
+    tag = "NOTIONAL" + (" · SYNTHETIC DRILL" if b["synthetic"] else "")
+    L = [f"*{PRECEDENCE[b['rating']]} · CONFLICT WATCH SITREP*",
+         f"FROM: CW Ops Cell   TO: Cdr {b['code']}",
+         f"DTG: {b['dtg']}   UNCLAS · {tag}",
+         "",
+         f"{RAG_EMOJI[b['rating']]} *THREAT {b['rating']} {b['arrow']} {b['trend'].upper()}* · CONFIDENCE {b['confidence']}",
+         "",
+         "*1. SITUATION*"]
+    L += [f"• {o['text']} _[{o['tag']}, {o['window']}]_" for o in obs[:3]]
+    hot = _hot(b)
+    if hot:
+        L += ["", "*2. WATCH AREAS* (escalation probability, nowcast)"]
+        L += [f"• {'◆ ' if d.get('synthetic') else ''}{d['name']} ({d['iso']}) — {d['p_now']:.2f}" for d in hot]
+    L += ["", "*3. ASSESSMENT*"] + [f"• {x['why']} ({x['pts']:+d})" for x in sorted(b["orient"]["points"], key=lambda x: -abs(x["pts"]))[:2]]
+    L += ["", "*4. ACTIONS* (who · what · by when)"]
+    L += [f"A{a['rank']}. *{_owner(a)}* · {a['short'][0].upper() + a['short'][1:]} · *NLT {_nlt(b, a['timeline'])}* ({a['timeline']})"
+          for a in b["decide"]]
+    L += ["", "*5. ESCALATE IF*"] + [f"A{a['rank']}. {a['trigger']}" for a in b["decide"]]
+    L += ["", "*ACK:* reply ACK-" + b["code"] + ". Full brief: Ops Console ▸ Theatre.",
+          f"_UNCLAS · {tag} · competition data._"]
+    return "\n".join(L)
 
 
 def to_markdown(b: dict) -> str:

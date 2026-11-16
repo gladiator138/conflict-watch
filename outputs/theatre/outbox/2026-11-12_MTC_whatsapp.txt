@@ -1,17 +1,28 @@
-*CONFLICT WATCH · MTC DAILY BRIEF* (130600 IST NOV 26)
-🟠 *AMBER* ► steady · confidence MEDIUM
-_BLUF:_ Maritime theatre AMBER ► (steady): GDELT material-conflict events in Saudi Arabia down: 11/day over 7 days vs 29/day the 4 weeks before (×0.38); yesterday 9 (z -0.8). Recommend: place the NEO task group on 72 h notice within 72h.
+*PRIORITY · CONFLICT WATCH SITREP*
+FROM: CW Ops Cell   TO: Cdr MTC
+DTG: 130600 IST NOV 26   UNCLAS · NOTIONAL
 
-*OBSERVE*
-• GDELT material-conflict events in Saudi Arabia down: 11/day over 7 days vs 29/day the 4 weeks before (×0.38); yesterday 9 (z -0.8) _(7d, DATA)_
-• Hormozgan (IRN): P(escalation) 0.16, nowcast 0.17 _(7d, MODEL)_
-• Rupee vs USD -0.9% over 5 sessions (median basis, z -1.6; close 93.70 on 2026-11-12) _(7d, DATA)_
-• Tanker equities (Frontline) -12.8% over 5 sessions (median basis, z -2.4; close 46.76 on 2026-11-12) _(7d, DATA)_
-• Brent crude -10.5% over 5 sessions (median basis, z -2.0; close 95.82 on 2026-11-12) _(7d, DATA)_
+🟠 *THREAT AMBER ► STEADY* · CONFIDENCE MEDIUM
 
-*DECIDE / ACT*
-1. place the NEO task group on 72 h notice: Theatre J1 / NEO cell with MEA, 72h. Trigger: Strikes on a GCC state hosting Indians, or Gulf GDELT reporting ×1.5 for 3 days (now ×0.75) -> launch
-2. surge MDA over Hormuz and the Arabian Sea: Theatre J3 Maritime / IFC-IOR, 7d. Trigger: Attack on merchant shipping in the AOR, or tanker equities z >= 2.5 -> start escort
-3. raise readiness of Western Fleet units in the Arabian Sea: Theatre J3 (Ops), 7d. Trigger: RAG turns RED, or two days of rising trend with >= 2 areas over 0.20 -> move to the next state
+*1. SITUATION*
+• GDELT material-conflict events in Saudi Arabia down: 11/day over 7 days vs 29/day the 4 weeks before (×0.38); yesterday 9 (z -0.8) _[DATA, 7d]_
+• Hormozgan (IRN): P(escalation) 0.16, nowcast 0.17 _[MODEL, 7d]_
 
-_NOTIONAL theatre. UNCLASSIFIED - competition data._
+*2. WATCH AREAS* (escalation probability, nowcast)
+• Hormozgan (IRN) — 0.17
+
+*3. ASSESSMENT*
+• US–Iran monthly RAG AMBER (model scorecard, Oct 2026) (+4)
+
+*4. ACTIONS* (who · what · by when)
+A1. *J1* · Place the NEO task group on 72 h notice · *NLT 160600 NOV* (72h)
+A2. *J3 Maritime* · Surge MDA over Hormuz and the Arabian Sea · *NLT 200600 NOV* (7d)
+A3. *J3 (Ops)* · Raise readiness of Western Fleet units in the Arabian Sea · *NLT 200600 NOV* (7d)
+
+*5. ESCALATE IF*
+A1. Strikes on a GCC state hosting Indians, or Gulf GDELT reporting ×1.5 for 3 days (now ×0.75) -> launch
+A2. Attack on merchant shipping in the AOR, or tanker equities z >= 2.5 -> start escort
+A3. RAG turns RED, or two days of rising trend with >= 2 areas over 0.20 -> move to the next state
+
+*ACK:* reply ACK-MTC. Full brief: Ops Console ▸ Theatre.
+_UNCLAS · NOTIONAL theatre · competition data._

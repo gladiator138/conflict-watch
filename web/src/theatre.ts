@@ -23,7 +23,8 @@ const CSS = `
 .msg2 .t { font: 500 11px var(--mono); color: var(--tx3); letter-spacing:.08em; }
 .phone2 { background:#0B1520; border:2px solid var(--line2); border-radius: 24px; padding: 14px; }
 .bub { background:#1F3B2E; color:#E8F5EC; border-radius: 12px; padding: 10px 12px; white-space: pre-wrap; font-size: 13px; line-height:1.4; }
-.bub.sms { background:#24364A; }
+.bub.sms { background:#24364A; font-family: var(--mono); font-size: 12px; }
+.phone2 { max-height: 520px; overflow-y: auto; }
 .chipN { display:inline-block; font: 800 11px var(--mono); letter-spacing:.12em; padding: 3px 8px; border-radius: 6px; border:1px solid var(--amber); color: var(--amber); margin-right:6px; }
 .chipS { border-color: var(--red); color: var(--red); }
 .ooda-row { display:grid; grid-template-columns: 110px 1fr 1fr 150px; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
@@ -119,7 +120,8 @@ export function renderTheatre(P: HTMLElement, D: Data, q: URLSearchParams) {
     }
     const bub = $("#th-bub");
     const setCh = (c: string) => { $$("#th-ch button").forEach((x) => x.classList.toggle("on", x.dataset.c === c));
-      bub.className = "bub" + (c === "sms" ? " sms" : ""); bub.textContent = (c === "sms" ? X.sms[role] : X.whatsapp[role]).replace(/[*_]/g, ""); };
+      bub.className = "bub" + (c === "sms" ? " sms" : ""); const raw = String(c === "sms" ? X.sms[role] : X.whatsapp[role]).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+      bub.innerHTML = c === "sms" ? raw : raw.replace(/\*([^*\n]+)\*/g, "<b>$1</b>").replace(/(^|\s)_([^_\n]+)_/g, '$1<i style="opacity:.7">$2</i>'); };
     setCh("wa");
     $$("#th-ch button").forEach((x) => x.addEventListener("click", () => setCh(x.dataset.c!)));
     $$("#th-r button").forEach((x) => x.addEventListener("click", () => { role = x.dataset.r!; draw(); }));
