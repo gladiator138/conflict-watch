@@ -33,6 +33,24 @@ e26 = preds[(preds.model == "ensemble") & (preds.fold == 2026)]
 cov80 = ((e26.actual >= e26.pi80_lo) & (e26.actual <= e26.pi80_hi)).mean() * 100
 stats = pd.read_csv(TB / "insight_stats.csv").iloc[0]
 abl = pd.read_csv(TB / "ablation_lgb.csv")
+import json  # noqa: E402
+ROB = json.loads((TB / "robustness.json").read_text())
+RUN_ID = (TB / "run_id.txt").read_text().strip()
+RB, RP, REW = ROB["by_conflict"], ROB["pooled"], ROB["early_warning"]
+_SH = {"Russia–Ukraine": "Russia–Ukraine", "Israel–Hamas": "Israel–Hamas", "Afghanistan–Pakistan": "Af–Pak", "US–Iran": "US–Iran"}
+_clear = [_SH[k] for k in C.CASES if RB[k]["ci"][0] > 0]
+_inc = [_SH[k] for k in C.CASES if RB[k]["ci"][0] <= 0]
+_dm = [_SH[k] for k in C.CASES if RB[k]["dm_p"] < 0.05]
+
+
+def _ci(c):
+    return f"{c[0] * 100:.0f}% to {c[1] * 100:.0f}%".replace("-", "−")
+
+
+def _and(xs):
+    return " and ".join(", ".join(xs).rsplit(", ", 1))
+
+
 RC = {"RED": "#FF4D5E", "AMBER": "#F0B03A", "GREEN": "#35C2A6"}
 
 CSS = """
@@ -174,7 +192,25 @@ QA = [
          "volatility rule."),
         ("How good is the early warning, really?", f"AUC {lg.ROC_AUC:.2f} on 2026 (rule of thumb {rule.ROC_AUC:.2f}); "
          f"top-10 precision {lg.precision_at_10:.0%} vs base rate {lg.base_rate:.1%}. Escalations are rare (4%), so "
-         "precision looks low in absolute terms, but it is 3.5× random: it focuses scarce ISR."),
+         "precision looks low in absolute terms, but it is 3.5× random: it focuses scarce ISR. The scores run high at the "
+         "top end, so we use the list as a ranking, not as literal odds."),
+        (f"Is the {pooled:.0f}% gain statistically significant?", f"Partly. The 90% bootstrap interval is {_ci(RP['ci'])} and "
+         f"excludes zero for the pool and for {_and(_clear)}. It includes zero for {_and(_inc)}, and with nine test months a "
+         f"Diebold–Mariano test is significant only for {_and(_dm) or 'no single conflict'} (pooled p = {RP['dm_p']:.2f}). "
+         f"Across all five folds the gain is {ROB['all_folds']['reduction'] * 100:.0f}%. We claim a consistent, useful gain, not a proven one."),
+        (f"Your {cov80:.0f}% coverage: is that true for every conflict?", f"No. One month ahead it is "
+         f"{RB['Russia–Ukraine']['coverage80']:.0%} for the three established wars and {RB['US–Iran']['coverage80']:.0%} for "
+         "US–Iran, whose war began inside the test window. We say US–Iran bands are too narrow."),
+        ("Do your context features leak the future?", "World Bank gaps are interpolated, which looks at later years. Those "
+         "columns are not in the selected ensemble or the classifier; they appear only in benchmark and ablation variants. "
+         "The selected models use deaths, events, references and the calendar only."),
+        ("How would this run on data that arrives a month late?", f"We tested it: forecasting from data two months old still "
+         f"beats the matching naive rule by {ROB['late_data']['holdout'] * 100:.0f}% on 2026 and "
+         f"{ROB['late_data']['backtest'] * 100:.0f}% on the back-test."),
+        ("What happens if we give you October data now?", "Run python score_holdout.py --events &lt;file&gt;. It cleans the new "
+         "events with the same rules and scores the forecasts and watch-list frozen in the submission. Nothing is refitted."),
+        ("Why is Israel–Hamas GREEN with 130 deaths a month?", "The rating measures escalation risk against the conflict's own "
+         "recent level, not peace. The forecast is flat, there are no hotspots and no new countries."),
     ]),
     ("Military and India", [
         ("Is the Russia:Ukraine 10:1 ratio real?", "No; it is recorded. Ukrainian OSINT and memorial databases record "
@@ -187,12 +223,30 @@ QA = [
          "already accepts new features; the walk-forward protocol would test their value."),
     ]),
     ("Dashboard and reproducibility", [
-        ("Can it run offline at an HQ?", "Yes. Streamlit on a laptop, no internet calls, bundled map outline. One command "
-         "rebuilds everything in about 2.5 minutes."),
+        ("Can it run offline at an HQ?", "Yes. The Ops site is one offline HTML file and the Streamlit dashboard runs on "
+         "a laptop with no internet calls and a bundled map outline. One command rebuilds everything in about 4 minutes."),
         ("Can it be updated monthly?", "Drop in the new UCDP month and rerun. The 'live re-train' page refits LightGBM-Δ "
          "in about 2 seconds."),
-        ("How was AI used?", "As a coding assistant, which the rules allow. Every number is produced by code in the "
-         "repository and every result can be reproduced and checked."),
+        ("Why add GDELT, and why is it not in your model?", "UCDP stops at Sep 2026; GDELT runs to 12 Nov. We tested "
+         "it as new, separately labelled work. It moves with UCDP month to month only in spike wars (US–Iran ρ 0.86, "
+         "Af–Pak 0.93; not RU–UA or Israel–Hamas). A week earlier it adds nothing (p 0.55), and it did not beat "
+         "persistence out of sample. So it is a nowcast for situational awareness, not a forecast input."),
+        ("What does GDELT say after September?", "US–Iran violent events per day rose about 59% in 1–12 Nov over "
+         "October, and threats doubled, while the scorecard is AMBER. Af–Pak and Israel–Hamas fell; RU–UA steady. "
+         "GDELT counts news reports, not incidents, so treat it as a cue to look, not a casualty figure."),
+        ("How was AI used?", "AI tools used: Claude (Anthropic), as a coding, drafting and review assistant. It helped write "
+         "and debug the pipeline, dashboard, report and slide code, and reviewed the submission against the marking scheme. "
+         "No number was typed in or generated by an AI tool: every figure is computed by the code in this repository from "
+         "the issued dataset and can be reproduced with one command. The team framed the questions, checked the analysis "
+         "and owns the findings and recommendations."),
+        ("Is your map of India correct?", "Yes. India is drawn with the whole of Jammu &amp; Kashmir and Ladakh, following "
+         "the Government of India's depiction (Natural Earth India point-of-view boundary). PoK incidents are shown as "
+         "points labelled PoK."),
+        ("How do we know the demo matches the submission?", f"The run ID {RUN_ID} is a hash of the result tables. It is "
+         "printed on the report, every slide, the dashboard sidebar and the Ops site strip, and the deck annex holds all "
+         "12 dashboard pages and every metric."),
+        ("What is the single decision a commander should take on Monday?", "Put the top-10 watch-list into the monthly ISR "
+         "tasking cycle and keep the Gulf NEO plan current while US–Iran is AMBER."),
     ]),
 ]
 
@@ -202,38 +256,40 @@ qa_html = "".join(f"<h3>{sec}</h3>" + "".join(f"<div class='q'>Q. {q}</div><div 
 speak = f"""
 <div class="hdr"><div class="k">PRESENTER PACK &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026</div>
 <h1>Run of show, speaker split and Q&amp;A preparation</h1>
-<div class="m">Designed for a Google Meet presentation: share the deck window, then switch to the dashboard tab for the demo.</div></div>
+<div class="m">Designed for a Google Meet presentation: share the deck window, then switch to the live Ops site tab for the demo. Run {RUN_ID}.</div></div>
 
-<h2>RUN OF SHOW (ABOUT 12 MINUTES + Q&amp;A)</h2>
+<h2>RUN OF SHOW (15-MINUTE SLOT, TARGET 14:40 + Q&amp;A)</h2>
 <table><tr><th>Time</th><th>Slides / demo</th><th>Speaker</th><th>Key line</th></tr>
-<tr><td>0:00–1:30</td><td>1 Cover, 2 BLUF</td><td>Maj Shivam Mehta</td><td>"Four wars, three warning signals, one exposed neighbour."</td></tr>
-<tr><td>1:30–2:30</td><td>3 Why it matters</td><td>Maj Shivam Mehta</td><td>"The war reached the Gulf, Hormuz and Sri Lankan waters."</td></tr>
-<tr><td>2:30–3:30</td><td>4 Data and method</td><td>Capt Siddharth Sangwan</td><td>"36 checks; 2026 withheld; one command reproduces everything."</td></tr>
-<tr><td>3:30–6:00</td><td>5–9 Findings</td><td>Maj Shivam Mehta</td><td>"The front is widening, not moving. Pakistan fights on two fronts."</td></tr>
-<tr><td>6:00–7:30</td><td>10–11 Prediction and warning</td><td>Capt Siddharth Sangwan</td><td>"−{pooled:.0f}% error on unseen data; watch-list 3.5× random."</td></tr>
-<tr><td>7:30–10:00</td><td>12 <b>LIVE DEMO</b>: brief → drill-down → military → forecast → early warning → what-if → scorecard lab</td><td>Capt Siddharth Sangwan</td><td>"Here is the RED card, and here is where it comes from."</td></tr>
-<tr><td>10:00–11:30</td><td>13–14 Recommendations</td><td>Capt Sahil Singh</td><td>"SENSE and WARN need no new platform."</td></tr>
-<tr><td>11:30–12:00</td><td>15 Limits, 16 Scorecard</td><td>Capt Sahil Singh</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
+<tr><td>0:00–2:40</td><td>1 Cover, 2 BLUF, 3 Why it matters</td><td>Maj Shivam Mehta</td><td>"Four wars, three warning signals, one exposed neighbour."</td></tr>
+<tr><td>2:40–3:35</td><td>4 Data and method</td><td>Capt Siddharth Sangwan</td><td>"36 checks; 2026 withheld; one command reproduces everything."</td></tr>
+<tr><td>3:35–7:05</td><td>5–9 Findings</td><td>Maj Shivam Mehta</td><td>"The front is widening, not moving. Pakistan fights on two fronts."</td></tr>
+<tr><td>7:05–8:40</td><td>10–11 Prediction and warning</td><td>Capt Siddharth Sangwan</td><td>"−{pooled:.0f}% error on unseen data; watch-list 3.5× random."</td></tr>
+<tr><td>8:40–9:20</td><td>12 GDELT (new results)</td><td>Capt Siddharth Sangwan</td><td>"News sees past UCDP's cut-off. It does not see ahead."</td></tr>
+<tr><td>9:20–11:50</td><td>13 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the rating, and here is where it comes from."</td></tr>
+<tr><td>11:50–13:10</td><td>14–15 Recommendations</td><td>Capt Sahil Singh</td><td>"SENSE and WARN need no new platform."</td></tr>
+<tr><td>13:10–14:40</td><td>16 Limits, 17 Scorecard</td><td>Capt Sahil Singh</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
 </table>
-<p><b>Speaker split (proposed):</b> <b>Maj Shivam Mehta</b> opens: bottom line, why it matters for India, and the military findings. <b>Capt Siddharth Sangwan</b> covers data, models and runs the live demo. <b>Capt Sahil Singh</b> closes with recommendations, limits and the scorecard, and chairs Q&amp;A. In Q&amp;A the chair routes data and model questions to Capt Sangwan, and military and India questions to Maj Mehta.</p>
+<p><b>Speaker split:</b> <b>Maj Shivam Mehta</b> opens: bottom line, why it matters for India, and the military findings. <b>Capt Siddharth Sangwan</b> covers data, models and runs the live demo. <b>Capt Sahil Singh</b> closes with recommendations, limits and the scorecard, and chairs Q&amp;A. In Q&amp;A the chair routes data and model questions to Capt Sangwan, and military and India questions to Maj Mehta. The word-for-word script is in <i>Presenter_Script.pdf</i>.</p>
 
 <h2>VIDEO-CALL CHECKLIST</h2>
 <ul>
-<li>Start the dashboard 10 minutes early (<code>streamlit run app/app.py</code>); open every page once so it is cached.</li>
+<li>Open <b>conflictmonitor2026.streamlit.app</b> 15 minutes early so it wakes; scroll the story once and open the console once.</li>
 <li>Share a single browser window at 1600×900 or similar; browser zoom 110–125% for legibility after compression.</li>
-<li>Keep the backup video (deck/demo) and the deck PDF open in case the live demo or screen-share fails.</li>
+<li>Fall-backs: the offline Ops site <code>deck/conflictwatch.html</code>, the demo video and the deck PDF.</li>
+<li>Check the run ID on the site strip reads <b>{RUN_ID}</b>, the same as the deck footer.</li>
 <li>Mute notifications; use a wired connection; cameras on for Q&amp;A.</li>
 </ul>
 
-<h2>DEMO SCRIPT (ABOUT 3 MINUTES)</h2>
+<h2>DEMO SCRIPT (ABOUT 3 MINUTES, OPS SITE)</h2>
 <ol>
-<li><b>Commander's brief:</b> point at the four RAG cards; open "Why this rating?" on one card.</li>
-<li><b>Area drill-down:</b> Af–Pak → Khyber Pakhtunkhwa: rising deaths, forecast, and the warning history with past escalations marked.</li>
-<li><b>Military lens:</b> front-geography chart (Donetsk 55% → 30%), Af–Pak interstate bars.</li>
-<li><b>Forecast (2026 test):</b> Russia–Ukraine, Track A: actual vs forecast inside the band.</li>
-<li><b>Early warning:</b> Replay Mar 2026 (3 of the top 10 escalated), then move the Alert threshold slider.</li>
-<li><b>What-if:</b> Af–Pak, +30% for 3 months: 318 → about 359. Click "Train now" for the live re-train.</li>
-<li><b>Scorecard lab:</b> move the hotspot slider and show which ratings change and which do not.</li>
+<li><b>Globe:</b> twelve years of deaths; scroll so it turns to India and draws the exposure ring (Gulf, Hormuz, Chabahar, Sri Lanka, LoC).</li>
+<li><b>BLUF:</b> click the Af–Pak card: 3 points (intensity + hotspots), so AMBER.</li>
+<li><b>Front:</b> toggle "show all deaths": the 92% with no location. <b>Af–Pak:</b> switch RAW / HARMONISED to show the FATA fix.</li>
+<li><b>Prediction:</b> press play; coverage ticks to 83%. Show Track B honestly (SARIMA won there).</li>
+<li><b>Early warning:</b> Replay Mar 2026 (3 of the top 10 escalated), then move the threshold.</li>
+<li><b>GDELT:</b> toggle US–Iran; the line runs past UCDP's end and the table flags early Nov RISING.</li>
+<li><b>What-if:</b> Af–Pak, +30% for 3 months: 318 → 359. Then the scorecard lab: reset to doctrine.</li>
+<li><b>Ops console:</b> Ctrl+K → Kandahar: deaths, forecast, warning history; print bulletin.</li>
 </ol>
 
 <h2>LIKELY QUESTIONS AND ANSWERS</h2>

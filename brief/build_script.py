@@ -80,49 +80,57 @@ SLIDES = [
     (10, "Finding 6: prediction on unseen 2026 data", S, "7:05", "7:55",
      ["We compared seven forecasters, from 'no change' to SARIMA and LightGBM, on a walk-forward back-test.",
       "The chosen ensemble, a 3-month mean, ETS and a LightGBM on the change in deaths, cut one-month error by 29% against 'no change' on 2026. Russia–Ukraine by 30%, Israel–Hamas by 55%.",
-      "83% of 2026 outcomes fell inside our 80% band, so the uncertainty is honest. We called the direction of change right 72% of the time.",
+      "83% of 2026 outcomes fell inside our 80% band: all of them for the three established wars, but only 22% for US–Iran, whose war started inside the test year. We called the direction of change right 72% of the time.",
       "Use the forecast as a planning baseline with honest bands."],
      "", None),
     (11, "Finding 7: a district-level watch-list, one month ahead", S, "7:55", "8:40",
      ["Every month we score 222 area series in 22 countries for escalation next month.",
       "On 2026, the model's AUC is 0.795. The top-10 list is right 14% of the time against a base rate of 4.1%: 3.5 times random.",
       "The strongest signals are contagion: the area's own intensity, the country's tempo and the whole war's momentum.",
-      "So ISR and analyst effort can be tasked before the escalation, not after. Let me show you."],
+      "So ISR and analyst effort can be tasked before the escalation, not after."],
+     "", None),
+    (12, "Finding 8: a second source, GDELT (new results)", S, "8:40", "9:20",
+     ["UCDP stops at the end of September. To see past it we added GDELT: 541,000 news-coded events from February to 12 November 2026.",
+      "GDELT moves with UCDP month to month in the spike wars: US–Iran at 0.86, Af–Pak at 0.93. In Ukraine and Gaza it does not; there the news is steady while deaths swing.",
+      "It is a nowcast, not a leading indicator: GDELT a week earlier adds nothing (p 0.55), and it did not beat persistence out of sample, so it stays out of our submitted numbers.",
+      "What it tells us now: US–Iran violence and threats rose about 59% in early November. Let me show you."],
      "Switch screen share to the browser tab with the live app (already open and warmed up).", None),
-    (12, "LIVE DEMO: Conflict Watch Ops site", S, "8:40", "11:30",
+    (13, "LIVE DEMO: Conflict Watch Ops site", S, "9:20", "11:50",
      ["(Hero globe) Twelve years of conflict deaths, by theatre. As I scroll, the globe turns to India and draws the exposure ring: Gulf, Hormuz, Chabahar, Sri Lanka, the LoC.",
       "(BLUF) Every rating is mechanical. Click Af–Pak: 3 points, intensity plus three hotspots, so AMBER.",
       "(Front) Toggle 'show all deaths': the grey flood is the 92% with no location. That is why we use located events.",
       "(Af–Pak) Raw labels make FATA look like it went quiet after the 2018 merger; harmonised into KP, that false drop disappears and the real rise since 2021 shows.",
       "(Prediction) Press play: the 80% band coverage ticks up to 83%. Track B: here SARIMA beat us, and we show it.",
       "(Early warning) Replay March 2026: three of our top ten escalated the next month, against 0.4 by chance. Move the threshold: fewer alarms, fewer catches.",
+      "(GDELT) Toggle US–Iran: the yellow line runs past the shaded line where UCDP ends, and the table flags it RISING.",
       "(What-if) Af–Pak, plus 30% for three months: the October forecast goes from 318 to 359. Short surges damp; sustained ones carry through.",
       "(Ops console) This is what a staff officer uses each month. Ctrl+K, Kandahar: deaths, forecast and warning history. It prints a one-page I&W bulletin."],
-     f"Live URL: {URL}. If the network fails, open deck/conflictwatch.html (offline copy). Deep link for the what-if: #whatif?c=afpak&shock=30&m=3. Keep to 2 min 50 s.",
+     f"Live URL: {URL}. If the network fails, open deck/conflictwatch.html (offline copy). Deep link for the what-if: #whatif?c=afpak&shock=30&m=3. Keep to 2 min 30 s.",
      f"Capt Sahil Singh will now give our recommendations."),
-    (13, "Recommendations: sense, warn, shield, sustain", H, "11:30", "12:35",
+    (14, "Recommendations: sense, warn, shield, sustain", H, "11:50", "12:50",
      ["Sir, the commander's intent: see escalation coming a month out, protect Indians and our interests inside the strike envelope, and keep our platforms supplied.",
       "SENSE: task ISR and analysts on the monthly sub-national watch-list, and build Indian OSINT on the Gulf, Iran and the Red Sea. Lead: DIA and Service intelligence.",
       "WARN: adopt the Af–Pak interstate dyad and the KP and Balochistan hotspots as standing LoC indicators, and publish the RAG every month. Lead: HQ IDS, Northern and Western Commands.",
       "SHIELD: keep Gulf NEO plans current while US–Iran is AMBER, with a belligerent-movement picture in the IOR. Lead: HQ IDS, Navy, IAF and MEA.",
       "SUSTAIN: buffer and indigenise spares for Russian- and Israeli-origin equipment, and build HADR kits for women, children and under-fives. Lead: MoD, DPSUs and NDMA."],
      "Return screen share to the deck.", None),
-    (14, "Execution: who does what, by when", H, "12:35", "13:00",
+    (15, "Execution: who does what, by when", H, "12:50", "13:10",
      ["The table shows who does what, now, in 90 days and in 6 to 12 months.",
       "Column one is only tasking and a briefing format. It can start this month, with no new platform."],
      "", None),
-    (15, "Limits and validation", H, "13:00", "13:40",
+    (16, "Limits and validation", H, "13:10", "13:50",
      ["We are clear about what this cannot claim.",
       "UCDP records reported deaths. 2026 data is provisional. 92% of 2026 Russia–Ukraine deaths have no location.",
       "And wars that start by decision, like February 2022 or February 2026, cannot be forecast from death counts. That is why we warn on spread and hotspots.",
-      "But every forecast carries a calibrated band, and 2026 was never used to tune anything."],
+      "Nine test months is a small sample. The 29% gain is consistent across bootstrap resamples, but we call it useful, not statistically proven, and the annex shows every interval.",
+      "2026 was never used to tune anything, and the run ID on every slide matches the live site."],
      "", None),
-    (16, "Threat scorecard: where to look next month", H, "13:40", "14:30",
+    (17, "Threat scorecard: where to look next month", H, "13:50", "14:40",
      ["To close: the October 2026 scorecard.",
       "Russia–Ukraine RED at 6,780. Af–Pak AMBER, with Kandahar at 23%. US–Iran AMBER, Hormozgan at 16%. Israel–Hamas GREEN.",
       "The QR code opens the live system, which the jury is welcome to use.",
       "Open data and an honest model can tell India where to look next month. Thank you, sir. We welcome your questions."],
-     "Leave this slide up during Q&A. 30 seconds of buffer remain to 15:00.", None),
+     "Leave this slide up during Q&A. 20 seconds of buffer remain to 15:00.", None),
 ]
 
 QA_ROUTING = [
@@ -131,12 +139,17 @@ QA_ROUTING = [
     ("Recommendations, limits, anything else; chairs Q&A and routes questions", H),
 ]
 BACKUPS = [
-    ("17", "Model comparison", "If asked 'did the ensemble always win?' Show Track B: SARIMA won there."),
-    ("18", "Why each method", "If asked 'why not LSTM?' Too little data: ~150 points per series; simple ensemble beat it on the back-test."),
-    ("19", "Data quality", "If asked about cleaning: 36 checks, FATA→KP, estimate repairs, month splitting."),
-    ("20", "TreeSHAP", "If asked 'what drives the forecast?': last month's level and acceleration."),
-    ("21", "Seasons and warning curves", "If asked about campaign seasons or how the warning threshold trades alarms for catches."),
-    ("22", "Forward forecast", "If asked about Nov–Dec: RU–UA Nov 6,765 (3,071–30,447)."),
+    ("18", "Model comparison", "If asked 'did the ensemble always win?' Show Track B: SARIMA won there."),
+    ("19", "Why each method", "If asked 'why not LSTM?' Too little data: ~150 points per series; simple ensemble beat it on the back-test."),
+    ("20", "Data quality", "If asked about cleaning: 36 checks, FATA→KP, estimate repairs, month splitting."),
+    ("21", "TreeSHAP", "If asked 'what drives the forecast?': last month's level and acceleration."),
+    ("22", "Seasons and warning curves", "If asked about campaign seasons or how the warning threshold trades alarms for catches."),
+    ("23", "Forward forecast", "If asked about Nov–Dec: RU–UA Nov 6,765 (3,071–30,447)."),
+    ("24", "Verification and AI declaration", "If asked how AI was used, or how to check the demo against the submission (run ID)."),
+    ("26", "Bootstrap and Diebold–Mariano", "If asked whether the 29% gain is significant, or about late-arriving data."),
+    ("27", "Early-warning metrics and calibration", "If asked how reliable the probabilities are: use the list as a ranking."),
+    ("12", "GDELT vs UCDP", "If asked what is happening after September, or why news data is not in the model."),
+    ("28–39", "All 12 dashboard pages", "If the live demo fails, show the page in question from the annex."),
 ]
 
 
@@ -161,7 +174,7 @@ st.element.rPr.rFonts.set(qn("w:eastAsia"), "Calibri")
 
 p = doc.add_paragraph(); run(p, "DATA ANALYTICS COMPETITION 2026", True, 10, AMBER)
 p = doc.add_paragraph(); run(p, "Conflict Watch: presenter script", True, 22, NAVY)
-p = doc.add_paragraph(); run(p, f"{M} · {S} · {H}   |   15-minute slot, target 14:30   |   Deck: Conflict_Watch_Jury_Deck (22 slides: 16 main + 6 backup)", False, 10, GREY)
+p = doc.add_paragraph(); run(p, f"{M} · {S} · {H}   |   15-minute slot, target 14:40   |   Deck: Conflict_Watch_Jury_Deck (39 slides: 17 main, 6 backup, 16 annex)", False, 10, GREY)
 
 doc.add_heading("Run of show", level=2)
 t = doc.add_table(rows=1, cols=4); t.style = "Light Grid Accent 1"; t.alignment = WD_TABLE_ALIGNMENT.CENTER
@@ -170,10 +183,10 @@ for c, h in zip(t.rows[0].cells, ["Time", "Slide", "Speaker", "Key line"]):
 blocks = [("0:00–2:40", "1–3 Cover, BLUF, Why India", M, "Four wars, three warning signals, one exposed neighbour."),
           ("2:40–3:35", "4 Data and method", S, "36 checks; 2026 withheld; one command reproduces everything."),
           ("3:35–7:05", "5–9 Findings 1–5", M, "The front is widening. Pakistan fights on two fronts."),
-          ("7:05–8:40", "10–11 Prediction, warning", S, "−29% error on unseen data; watch-list 3.5× random."),
-          ("8:40–11:30", "12 LIVE DEMO (Ops site)", S, "Here is the rating, and here is where it comes from."),
-          ("11:30–13:00", "13–14 Recommendations", H, "SENSE and WARN need no new platform."),
-          ("13:00–14:30", "15 Limits, 16 Scorecard", H, "Open data and an honest model tell India where to look next month.")]
+          ("7:05–9:20", "10–12 Prediction, warning, GDELT", S, "−29% error on unseen data; watch-list 3.5× random; news sees past UCDP."),
+          ("9:20–11:50", "13 LIVE DEMO (Ops site)", S, "Here is the rating, and here is where it comes from."),
+          ("11:50–13:10", "14–15 Recommendations", H, "SENSE and WARN need no new platform."),
+          ("13:10–14:40", "16 Limits, 17 Scorecard", H, "Open data and an honest model tell India where to look next month.")]
 for row in blocks:
     cells = t.add_row().cells
     for c, v in zip(cells, row):
@@ -219,11 +232,12 @@ for row in BACKUPS:
     cells = bt.add_row().cells
     for c, v in zip(cells, row):
         c.text = v
-doc.add_heading("Five likely questions", level=2)
+doc.add_heading("Six likely questions", level=2)
 for q, a in [("Did you tune on 2026?", "No. Every choice was made on the 2022–25 back-test; 2026 was scored once. (Sangwan)"),
              ("Is the 10:1 ratio real?", "It is what UCDP recorded: an upper bound of reporting, not a verified exchange ratio. (Mehta)"),
              ("Why could you not predict the US–Iran war?", "It began by decision with no build-up in deaths; no death-count model can see that. So we watch spread and hotspots. (Sangwan)"),
              ("Is the map correct?", "Every map uses the India point-of-view boundary: all of J&K and Ladakh, including PoK and Aksai Chin, shown as India. (Mehta)"),
+             ("Why is GDELT not in the model?", "It tracks UCDP only in spike wars, adds nothing a week ahead (p 0.55) and lost to persistence out of sample. We use it to watch past UCDP's cut-off. (Sangwan)"),
              ("What would you do first with this?", "Start SENSE and WARN this month: tasking and a monthly RAG brief, no new platform. (Singh)")]:
     pq = doc.add_paragraph(); run(pq, q, True)
     doc.add_paragraph(a)

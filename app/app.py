@@ -169,6 +169,9 @@ with st.sidebar:
                f"UNRWA, World Bank. Latest month: {LAST:%b %Y}.")
     st.caption("Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh")
     st.caption("UNCLASSIFIED · OPEN-SOURCE DATA ONLY")
+    _rid = C.TAB_DIR / "run_id.txt"
+    if _rid.exists():
+        st.caption(f"RUN {_rid.read_text().strip()} · matches the report, deck and Ops site")
 
 
 SITE = ROOT / "app" / "static" / "conflictwatch.html"
@@ -184,7 +187,9 @@ if page is None:
 
 
 def footer():
-    st.markdown('<div class="footer">CONFLICT WATCH  |  DATA ANALYTICS COMPETITION 2026  |  UNCLASSIFIED - OPEN-SOURCE DATA ONLY</div>',
+    _rid = C.TAB_DIR / "run_id.txt"
+    run = f"  |  RUN {_rid.read_text().strip()}" if _rid.exists() else ""
+    st.markdown(f'<div class="footer">CONFLICT WATCH  |  DATA ANALYTICS COMPETITION 2026  |  UNCLASSIFIED - OPEN-SOURCE DATA ONLY{run}</div>',
                 unsafe_allow_html=True)
 
 

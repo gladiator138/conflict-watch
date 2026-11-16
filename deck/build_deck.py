@@ -42,7 +42,8 @@ WHITE, TEXT2, TEXT3, MUTED = rgb("FFFFFF"), rgb("D5DEE8"), rgb("9FB2C6"), rgb("5
 AMBER, RED, CYAN, TEAL, VIOLET, AMBER_BG = (rgb("F0B03A"), rgb("FF4D5E"), rgb("4FD6E8"), rgb("35C2A6"),
                                             rgb("A794FF"), rgb("2A2008"))
 FONT = "Calibri"
-FOOTER = "CONFLICT WATCH   |   DATA ANALYTICS COMPETITION 2026   |   UNCLASSIFIED - OPEN-SOURCE DATA ONLY"
+RUN_ID = (C.TAB_DIR / "run_id.txt").read_text().strip()
+FOOTER = f"CONFLICT WATCH   |   DATA ANALYTICS COMPETITION 2026   |   UNCLASSIFIED - OPEN-SOURCE DATA ONLY   |   RUN {RUN_ID}"
 
 prs = Presentation()
 prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
@@ -270,6 +271,14 @@ abl = pd.read_csv(TB / "ablation_lgb.csv")
 summary = json.loads((TB / "run_summary.json").read_text())
 fut = pd.read_parquet(C.PROCESSED / "forecast_future.parquet")
 fut = fut[fut.model == "ensemble"]
+ROB = json.loads((TB / "robustness.json").read_text())
+CAL = pd.read_csv(TB / "ew_calibration.csv")
+GD = json.loads((TB / "gdelt_summary.json").read_text())
+GS = pd.read_csv(TB / "gdelt_signals.csv").set_index(["case", "month"])
+
+
+def _ci(c):
+    return f"{c[0] * 100:.0f}% to {c[1] * 100:.0f}%".replace("-", "−")
 
 RAGC = {"RED": RED, "AMBER": AMBER, "GREEN": TEAL}
 
@@ -294,7 +303,7 @@ notes(s, "Good morning. In one sentence: we built a system that forecasts where 
 s = new_slide("BOTTOM LINE UP FRONT", "Four wars, three warning signals, one exposed neighbour")
 cards = [
     (1, AMBER, "THREAT", "RED", f"Russia–Ukraine: {rag.loc['Russia–Ukraine', 'forecast_next']:,.0f} deaths forecast for Oct 2026",
-     "Af–Pak and US–Iran AMBER, Israel–Hamas GREEN", RED),
+     "Af–Pak and US–Iran AMBER, Israel–Hamas GREEN (low escalation risk, not peace)", RED),
     (2, RED, "INDIA", "104", "killed off Sri Lanka, 4 Mar 2026: the US–Iran war reached the Indian Ocean",
      f"Strikes in 5 Gulf states hosting the Indian diaspora", RED),
     (3, CYAN, "PREDICTION", f"−{pooled:.0f}%", "error vs the 'no-change' rule, one month ahead, on unseen 2026 data",
@@ -410,7 +419,7 @@ kpi_side(s, 9.1, 3.84, 3.68, 1.12, "150 vs 35", "references per 100 deaths: Isra
          numsize=26)
 kpi_side(s, 9.1, 5.06, 3.68, 1.12, f"R² {stats.media_r2:.2f}", "one mass-casualty strike is one story", color=TEAL,
          numsize=26)
-sowhat(s, "Headline volume is not an indicator. India's open-source picture of West Asia is borrowed.")
+sowhat(s, "Headline volume is not an indicator. In UCDP's record, West Asia coverage rests on non-Indian wires.")
 
 # =========================================================================== 9 FINDING 5 DISPLACEMENT
 s = new_slide("FINDING 5   |   HUMANITARIAN", "Displacement follows onset and spread, and it is women and children")
@@ -448,6 +457,24 @@ kpi_side(s, 8.3, 3.84, 4.48, 1.12, "222", "area series in 22 countries scored ev
 kpi_side(s, 8.3, 5.06, 4.48, 1.12, "Contagion", "top signals: own intensity, country tempo, whole-war momentum",
          color=TEAL, numsize=26)
 sowhat(s, "ISR and analyst effort can be tasked on predicted risk before the escalation, not after.")
+
+# =========================================================================== GDELT (new, labelled)
+s = new_slide("FINDING 8   |   SECOND SOURCE: GDELT (NEW)", "News-coded events see past UCDP's cut-off, but do not lead it")
+picture(s, FIG / "27_gdelt_vs_ucdp.png", 0.55, 1.4, 7.75, 4.8)
+_gm, _gw = GD["monthly"]["by_case"], GD["weekly"]
+_nov = GS.loc[("US–Iran", "2026-11")]
+kpi_side(s, 8.55, 1.4, 4.23, 1.12, f"ρ {_gm['US–Iran']['rho_change']:.2f} / {_gm['Afghanistan–Pakistan']['rho_change']:.2f}",
+         "GDELT tracks UCDP month to month for US–Iran / Af–Pak; not for RU–UA or Israel–Hamas", color=CYAN, numsize=24)
+kpi_side(s, 8.55, 2.62, 4.23, 1.12, f"p = {_gw['lead_p']:.2f}", "GDELT a week earlier adds nothing: a nowcast, not a "
+         "leading indicator", color=AMBER, numsize=24)
+kpi_side(s, 8.55, 3.84, 4.23, 1.12, f"{_gm['US–Iran']['articles_per_death']:,.0f} vs {_gm['Russia–Ukraine']['articles_per_death']:,.0f}",
+         "articles per UCDP death, US–Iran vs RU–UA: the attention gap again", color=VIOLET, numsize=24)
+kpi_side(s, 8.55, 5.06, 4.23, 1.12, f"{_nov.violent_change_vs_prev:+.0%}", "US–Iran violent events per day, 1–12 Nov "
+         "vs Oct 2026: the one rising signal", color=RED, numsize=24)
+sowhat(s, "Use GDELT to watch spike wars past UCDP's lag (US–Iran now). It does not change the submitted model numbers.")
+notes(s, f"GDELT: {GD['coverage']['events']:,} dyad-coded events, Feb to 12 Nov 2026, gap 1-16 May. Media reports, not incidents. "
+      "Same-week fit is significant, week-ahead is not, and out of sample neither beats persistence, so it stays out of the "
+      "submitted model. Its value: Oct-Nov 2026 situational awareness. US-Iran threats and violence up in early Nov.")
 
 # =========================================================================== LIVE DEMO SLIDE
 s = new_slide("LIVE DEMONSTRATION   |   CONFLICT WATCH OPS SITE", "A briefing site and an ops console the jury can drive")
@@ -525,14 +552,23 @@ for i, (h, d) in enumerate(lim):
     box(s, 0.55, y, 4.3, 1.08)
     text(s, 0.75, y + 0.12, 3.9, 0.4, h, size=18, bold=True, color=AMBER)
     text(s, 0.75, y + 0.52, 3.9, 0.5, d, size=13, color=TEXT2)
+_RB = ROB["by_conflict"]
+_clear = [k for k, v in _RB.items() if v["ci"][0] > 0]
+_SH = {"Russia–Ukraine": "RU–UA", "Israel–Hamas": "Israel–Hamas", "Afghanistan–Pakistan": "Af–Pak", "US–Iran": "US–Iran"}
+_inc = [_SH[k] for k in C.CASES if k not in _clear]
+_ew = ROB["early_warning"]
 rows = [["Headline result", "Internal check", "Why it still holds"],
-        [f"−{pooled:.0f}% error vs naive", "Chosen on 2022–25, 2026 scored once", "Holds in all 4 conflicts"],
-        [f"{cov80:.0f}% inside 80% band", "Split-conformal, back-test calibrated", "Adaptive variant tested, rejected"],
-        [f"AUC {lg.ROC_AUC:.2f} warning", "Beats logistic and rule of thumb", "Back-test 0.80–0.91, all years"],
+        [f"−{pooled:.0f}% error vs naive", f"90% interval {_ci(ROB['pooled']['ci'])} (block bootstrap)",
+         f"Clear for {' and '.join(_SH[k] for k in _clear)}; {', '.join(_inc[:-1])} and {_inc[-1]} intervals include zero"],
+        [f"{cov80:.0f}% inside 80% band", "Split-conformal, back-test calibrated",
+         f"{_RB['Russia–Ukraine']['coverage80']:.0%} for three wars, {_RB['US–Iran']['coverage80']:.0%} for US–Iran: its bands are too narrow"],
+        [f"AUC {lg.ROC_AUC:.2f} warning", f"90% interval {_ew['auc'][0]:.2f}–{_ew['auc'][1]:.2f}; beats rule of thumb",
+         "Ranks well; scores run high at the top, so use as a ranking"],
         ["Fronts widening", "Located events only", "Same in events and deaths"],
         ["Media ≠ warning", "Lead test p = 0.50", "Holds with fixed effects"]]
-table(s, 5.1, 1.4, 7.68, rows, [2.5, 2.7, 2.48], size=13, row_h=0.78, first_col_color=WHITE)
-sowhat(s, "Uncertainty is shown, not hidden: every forecast carries a calibrated band.", label="VALIDATION")
+table(s, 5.1, 1.4, 7.68, rows, [2.1, 2.7, 2.88], size=12, row_h=0.78, first_col_color=WHITE)
+sowhat(s, "Uncertainty is shown, not hidden. Nine test months is a small sample, and we say where the evidence is thin.",
+       label="VALIDATION")
 
 # =========================================================================== 15 CLOSING – RAG
 s = new_slide("THREAT SCORECARD   |   OCTOBER 2026", "Where to look next month")
@@ -616,6 +652,70 @@ for case in C.CASES:
 table(s, 0.55, 1.45, 12.23, rows, [3.2, 3.01, 3.01, 3.01], size=17, row_h=0.8, first_col_color=CYAN)
 text(s, 0.55, 5.6, 12.2, 0.6, "Refitted on all data to Sep 2026. Horizon 1 uses the operational track; 2–3 use the "
      "strategic track, so bands widen.", size=13, color=TEXT3)
+
+# =========================================================================== ANNEX: VERIFICATION + METRICS
+s = new_slide("ANNEX   |   VERIFICATION", "Results as obtained at submission")
+text(s, 0.55, 1.5, 12.2, 1.6, [f"The slides that follow record every evaluation metric and all twelve dashboard pages exactly as "
+     f"produced by pipeline run {RUN_ID}.", "The run ID is a hash of the result tables. It is printed on the report "
+     "footer, on every slide, in the dashboard sidebar and on the live Ops site, so the live demonstration can be checked "
+     "against this submission."], size=17, color=TEXT2)
+box(s, 0.55, 3.6, 12.23, 2.6)
+kicker_lbl(s, 0.8, 3.75, 6.0, "AI TOOLS DECLARATION", color=AMBER, size=12)
+text(s, 0.8, 4.15, 11.7, 1.9, "AI tools used: Claude (Anthropic), as a coding, drafting and review assistant. It helped write "
+     "and debug the pipeline, dashboard, report and slide code, and reviewed the submission against the marking scheme. "
+     "No number was typed in or generated by an AI tool: every figure is computed by the code in this repository from the "
+     "issued dataset and can be reproduced with one command. The team framed the questions, checked the analysis and owns "
+     "the findings and recommendations.", size=15, color=TEXT2)
+
+s = new_slide("ANNEX   |   METRICS", "Forecast accuracy: RMSLE by model, back-test vs 2026 holdout")
+lab2 = {"ensemble": "Ensemble", "ets": "ETS", "lgb_case": "LightGBM-Δ global", "ma3": "Moving average", "naive": "Naive",
+        "sarima": "SARIMA", "lgb_admin1": "LightGBM bottom-up, Tweedie", "snaive": "Seasonal naive"}
+rows = [["Model", "A · back-test 2022–25", "A · 2026 holdout", "B · back-test 2022–25", "B · 2026 holdout"]]
+for m in sorted(lab2, key=lambda m: rml.loc[m][("A", False)]):
+    rr = rml.loc[m]
+    rows.append([lab2[m], f"{rr[('A', False)]:.3f}", f"{rr[('A', True)]:.3f}", f"{rr[('B', False)]:.3f}", f"{rr[('B', True)]:.3f}"])
+table(s, 0.55, 1.4, 12.23, rows, [3.83, 2.1, 2.1, 2.1, 2.1], size=15, row_h=0.52, first_col_color=WHITE)
+text(s, 0.55, 6.25, 12.2, 0.6, "A = 1 month ahead, rolling. B = 1–9 months from a December origin. Lower is better. "
+     "Ensemble members were chosen on the back-test only.", size=13, color=TEXT3)
+
+s = new_slide("ANNEX   |   METRICS", "1 month ahead on 2026: error vs the no-change rule, with 90% intervals")
+rows = [["Conflict", "MAE ensemble", "MAE naive", "Reduction (90% interval)", "DM test p", "80% band cover"]]
+for k in C.CASES:
+    v = ROB["by_conflict"][k]
+    rows.append([k, f"{v['mae_ens']:,.0f}", f"{v['mae_naive']:,.0f}", f"{v['reduction'] * 100:.0f}%  ({_ci(v['ci'])})",
+                 f"{v['dm_p']:.2f}", f"{v['coverage80']:.0%}"])
+P = ROB["pooled"]
+rows.append(["Pooled", "", "", f"{P['reduction'] * 100:.0f}%  ({_ci(P['ci'])})", f"{P['dm_p']:.2f}", f"{P['coverage80']:.0%}"])
+table(s, 0.55, 1.4, 12.23, rows, [3.0, 1.75, 1.6, 2.9, 1.4, 1.58], size=15, row_h=0.6, first_col_color=WHITE)
+A, L = ROB["all_folds"], ROB["late_data"]
+text(s, 0.55, 5.2, 12.2, 1.5, [f"All five folds ({A['months']} months): pooled reduction {A['reduction'] * 100:.0f}% ({_ci(A['ci'])}).",
+     f"If data arrive a month late (forecast from t−2): reduction {L['holdout'] * 100:.0f}% on 2026, {L['backtest'] * 100:.0f}% on the back-test.",
+     f"Intervals: moving-block bootstrap over months ({ROB['n_boot']:,} resamples). DM = Diebold–Mariano, one-sided, small-sample corrected."],
+     size=14, color=TEXT2)
+
+s = new_slide("ANNEX   |   METRICS", "Early warning on 2026 withheld months")
+rows = [["Model", "ROC-AUC", "PR-AUC", "Brier", "Top-10 precision", "Top-20 recall"]]
+for m in ["LightGBM classifier", "Logistic regression (5 signals)", "Rule: rank by last month's deaths"]:
+    r = ew26.loc[m]
+    rows.append([m, f"{r.ROC_AUC:.3f}", f"{r.PR_AUC:.3f}", f"{r.Brier:.3f}", f"{r.precision_at_10:.1%}", f"{r.recall_at_20:.1%}"])
+rows.append(["Base rate", "", f"{lg.base_rate:.3f}", "", f"{lg.base_rate:.1%}", ""])
+table(s, 0.55, 1.4, 7.4, rows, [2.5, 0.95, 0.95, 0.85, 1.15, 1.0], size=12, row_h=0.55, first_col_color=WHITE)
+rows = [["Predicted band", "Areas", "Mean predicted", "Escalated"]]
+for r in CAL.itertuples():
+    rows.append([r.band.replace("(-0.001", "(0"), f"{r.areas:,}", f"{r.mean_pred:.1%}", f"{r.escalated:.1%}"])
+table(s, 8.2, 1.4, 4.58, rows, [1.3, 0.9, 1.25, 1.13], size=12, row_h=0.5, first_col_color=WHITE)
+E_ = ROB["early_warning"]
+text(s, 0.55, 4.9, 7.4, 1.4, [f"90% intervals (areas resampled): AUC {E_['auc'][0]:.2f}–{E_['auc'][1]:.2f}; top-10 precision "
+     f"{E_['p10'][0]:.0%}–{E_['p10'][1]:.0%}; lift {E_['lift'][0]:.1f}×–{E_['lift'][1]:.1f}× random.",
+     "Right: calibration. Scores above 15% over-state the risk, so the watch-list is a ranking, not literal odds."],
+     size=13, color=TEXT2)
+
+PAGES = ["Commander's brief", "Conflict explorer", "Area drill-down", "Military lens", "India impact", "Displacement",
+         "Media attention", "Forecast (2026 test)", "Early warning", "What-if simulator", "Scorecard lab",
+         "Data quality & method"]
+for i, name in enumerate(PAGES, 1):
+    s = new_slide(f"ANNEX   |   DASHBOARD PAGE {i} OF 12", name)
+    picture(s, SHOT / f"page{i:02d}.png", 1.6, 1.3, 10.13, 5.7, frame=True)
 
 prs.save(OUT)
 print("deck saved:", OUT, "slides:", len(prs.slides))

@@ -12,7 +12,7 @@ const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const CHAPTERS = [
   ["hero", "Four wars"], ["bluf", "BLUF"], ["india", "India"], ["signatures", "Signatures"], ["front", "The front"],
-  ["afpak", "Two fronts"], ["media", "Headlines"], ["displacement", "Displacement"], ["prediction", "Prediction"],
+  ["afpak", "Two fronts"], ["media", "Headlines"], ["gdelt", "GDELT"], ["displacement", "Displacement"], ["prediction", "Prediction"],
   ["warning", "Early warning"], ["decision", "Decision room"], ["recs", "Recommendations"], ["method", "Limits & method"], ["closing", "Close"],
 ] as const;
 
@@ -32,7 +32,7 @@ export function renderStory(D: Data) {
   const F = D.facts;
   const S: Record<string, Score> = Object.fromEntries(F.scorecard.map((s: Score) => [s.id, s]));
   const O: Record<string, any> = Object.fromEntries(F.overview.map((o: any) => [o.id, o]));
-  const mil = F.military, ind = F.india, med = F.media, dsp = F.displacement, fc = F.forecasting, ew = F.warning;
+  const gd = F.gdelt, mil = F.military, ind = F.india, med = F.media, dsp = F.displacement, fc = F.forecasting, ew = F.warning;
   const bad = verify(F.scorecard, DOCTRINE(F));
   if (bad.length) console.error("Scorecard parity FAILED", bad);
 
@@ -137,6 +137,20 @@ export function renderStory(D: Data) {
       <div class="panel"><div class="ph"><span class="t">References vs deaths (loose)</span></div><div class="chart" id="agi-d"></div></div>
     </div>
     <p class="small" style="margin-top:12px">References per 100 deaths (median month): ${CASES.map((c) => `${CASE_SHORT[c]} <b>${med.refs_per_100[c]}</b>`).join(" · ")}. Indian outlets appear in <b>${Math.round(med.indian_share.afpak * 100)}%</b> of Af–Pak events and almost none elsewhere. ${tag("data")}</p>
+  </div></section>
+
+  <section class="ch" id="gdelt"><div class="wrap">
+    <div class="eyebrow">FINDING 8 · SECOND SOURCE: GDELT, FEB–NOV 2026 · NEW RESULTS</div>
+    <h2 class="title reveal">News sees past UCDP's cut-off. It does not see ahead.</h2>
+    <div class="grid g3 reveal" style="margin:10px 0 20px">
+      ${K(gd.rho_change.usir, "US–Iran: GDELT tracks UCDP month to month", `Af–Pak ${gd.rho_change.afpak} · RU–UA ${gd.rho_change.ruua} · IL–Hamas ${gd.rho_change.ilh}`, { dec: 2, pre: "ρ ", color: "var(--teal)" })}
+      ${K(gd.lead_p, "GDELT a week EARLIER adds nothing", "a nowcast, not a leading indicator", { dec: 2, pre: "p = ", color: "var(--amber)" })}
+      ${K(gd.articles_per_death.usir, "articles per UCDP death, US–Iran", `vs ${gd.articles_per_death.ruua} for RU–UA: the attention gap again`, { color: "#A78BFA" })}
+    </div>
+    <div class="panel"><div class="ph"><span class="t">Weekly: UCDP deaths (bars) vs GDELT violent events per day (line) · shaded = after UCDP ends</span>${info("GDELT counts media-coded reports, not incidents. Rates are per covered day: GDELT has no data for 1–16 May 2026 and stops on 12 Nov 2026. UCDP bars are deaths in discrete, dated events.")}<div class="seg" id="gd-seg">${CASES.map((c) => `<button data-c="${c}"${c === "usir" ? ' class="on"' : ""}>${CASE_SHORT[c]}</button>`).join("")}</div></div><div class="chart" id="gd-ch" style="height:360px"></div></div>
+    <div class="panel" style="margin-top:14px"><div class="ph"><span class="t">After UCDP: GDELT signal for Oct and 1–12 Nov 2026</span></div>
+      <table class="t"><tr><th>Conflict</th><th>Month</th><th>Violent / day</th><th>Change</th><th>Threats / day</th><th>Signal</th><th>Tracks UCDP?</th></tr>${gd.signals.filter((x: any) => x.m !== "2026-09").map((x: any) => `<tr><td><b style="color:${CASE_COLOR[x.c as keyof typeof CASE_COLOR]}">${CASE_SHORT[x.c]}</b></td><td class="mono">${x.m === "2026-11" ? "1–12 Nov" : "Oct"}</td><td class="mono">${fmt(x.v)}</td><td class="mono">${x.ch == null ? "" : (x.ch > 0 ? "+" : "") + Math.round(x.ch * 100) + "%"}</td><td class="mono">${fmt(x.t)}</td><td><b style="color:${x.flag === "RISING" ? "var(--red)" : x.flag === "FALLING" ? "var(--teal)" : "var(--tx2)"}">${x.flag}</b></td><td>${x.tracks ? "Yes" : "No"}</td></tr>`).join("")}</table></div>
+    <div class="sowhat" style="margin-top:14px"><b>SO WHAT</b> Watch spike wars past UCDP's lag with GDELT: <b>US–Iran violence and threats rose in early Nov 2026</b> while the scorecard is AMBER. GDELT did not beat persistence out of sample (${gd.oos_weeks} weeks), so it stays out of the submitted forecasts. ${tag("data")}</div>
   </div></section>
 
   <section class="ch" id="displacement"><div class="wrap">
@@ -351,6 +365,21 @@ export function renderStory(D: Data) {
   const ce = mount($("#agi-e"), scat("e")), cd = mount($("#agi-d"), scat("d"));
   const link = (a: any, b: any) => { a.on("mouseover", (p: any) => b.dispatchAction({ type: "highlight", seriesIndex: p.seriesIndex, dataIndex: p.dataIndex })); a.on("mouseout", (p: any) => b.dispatchAction({ type: "downplay", seriesIndex: p.seriesIndex, dataIndex: p.dataIndex })); };
   link(ce, cd); link(cd, ce);
+
+  // ---- GDELT vs UCDP
+  const gdDraw = (c: string) => {
+    const w = gd.weekly[c];
+    $$("#gd-seg button").forEach((b) => b.classList.toggle("on", b.dataset.c === c));
+    const after = w.weeks.find((x: string) => x >= "2026-09-28");
+    update($("#gd-ch"), { grid: { left: 56, right: 64, top: 56, bottom: 36 }, legend: { data: ["UCDP deaths (weekly)", "GDELT violent events / day"], textStyle: { color: "#AEB8C6" } }, tooltip: { trigger: "axis" },
+      xAxis: { type: "category", data: w.weeks, ...axis() },
+      yAxis: [{ type: "value", ...axis(), name: "UCDP deaths" }, { type: "value", ...axis(), name: "GDELT / day", splitLine: { show: false } }],
+      series: [{ name: "UCDP deaths (weekly)", type: "bar", data: w.ucdp, itemStyle: { color: CASE_COLOR[c as keyof typeof CASE_COLOR], opacity: 0.6 },
+        markArea: { itemStyle: { color: "rgba(242,179,61,.10)" }, data: after ? [[{ xAxis: after }, { xAxis: w.weeks[w.weeks.length - 1] }]] : [] } },
+        { name: "GDELT violent events / day", type: "line", yAxisIndex: 1, data: w.v, smooth: true, showSymbol: false, lineStyle: { color: "#F2B33D", width: 2.5 }, itemStyle: { color: "#F2B33D" } }] }, true);
+  };
+  $$("#gd-seg button").forEach((b) => b.addEventListener("click", () => gdDraw(b.dataset.c!)));
+  gdDraw("usir");
 
   // ---- Displacement waffle
   const nRef = Math.round(dsp.ukr.refugees / 50000), nIdp = Math.round(dsp.ukr.idps / 50000);

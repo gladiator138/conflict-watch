@@ -13,15 +13,19 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 
 | Path | What it is |
 |---|---|
-| `report/Conflict_Watch_Report.pdf` | Full analysis report: method, results, assumptions and limitations (17 pages) |
+| `report/Conflict_Watch_Report.pdf` | Full analysis report: method, results, assumptions and limitations (10 pages + appendices); footer carries the run ID |
 | `deck/` | Presentation deck (PPTX + PDF), commander's brief, Q&A prep sheet, demo-video script |
 | `app/app.py` | Hosted app: opens on the Ops site; classic 12-page Streamlit dashboard in *Analyst dashboard* mode |
 | `web/`, `scripts/export_web.py` | Ops site source (Vite + TypeScript + ECharts + d3-geo) and its data export with asserts |
 | `notebooks/01–05` | Executed notebooks: cleaning, features, EDA (military + India), forecasting, early warning |
 | `src/` | All pipeline code: `cleaning`, `features`, `insights`, `models`, `viz`, `config` |
 | `run_pipeline.py` | One command that reproduces every table, model and figure |
+| `score_holdout.py` | Scores the frozen Oct–Dec 2026 forecasts and watch-list against new UCDP events, with no refit (`--events FILE`, `--selftest`) |
+| `src/robustness.py` | Evidence strength: month-block bootstrap, Diebold–Mariano, late-data test, warning calibration → `outputs/tables/robustness.json` |
+| `src/gdelt.py`, `data/gdelt/` | GDELT media-coded events (Feb–12 Nov 2026) as compact aggregates plus the script that built them; compared with UCDP as **new, separately labelled** results |
+| `outputs/tables/run_id.txt` | Run ID (hash of every result table) printed on the report, deck, dashboard and Ops site |
 | `outputs/tables/` | Every number quoted anywhere, as CSV (incl. `data_quality_log.csv`) |
-| `outputs/figures/` | 31 figures as PNG and interactive HTML |
+| `outputs/figures/` | 34 figures as PNG and interactive HTML |
 | `models/models.joblib` | Fitted forecaster, ensemble members, conformal intervals and early-warning classifier |
 
 ## Data
@@ -90,3 +94,7 @@ precision 3.5× the base rate) feeds a transparent Red/Amber/Green threat scorec
 * All design choices (features, ensemble members, interval bands, classifier features) were made on the
   2022–2025 back-test folds. 2026 was scored once.
 * Every figure and number in the report and deck is read from `outputs/tables/`.
+* The run ID (`outputs/tables/run_id.txt`) is a SHA-256 hash of those tables. If the ID on the deck, report, dashboard
+  and Ops site match, they show the same run.
+* GDELT does not change the submitted models: it tracks UCDP only in spike wars, adds nothing a week ahead and
+  did not beat persistence out of sample. It is used to watch Oct–Nov 2026, past UCDP's Sep 2026 end.

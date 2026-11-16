@@ -503,6 +503,58 @@ def fig_ew_curves(ewp: pd.DataFrame, fold=2026):
     return fig
 
 
+def fig_ew_calibration(cal: pd.DataFrame):
+    """Predicted probability band vs share that escalated (2026 withheld months)."""
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=[0, 0.4], y=[0, 0.4], mode="lines", line=dict(color=T["muted"], dash="dot"),
+                             name="Perfect calibration"))
+    fig.add_trace(go.Scatter(x=cal.mean_pred, y=cal.escalated, mode="lines+markers+text", name="LightGBM, 2026",
+                             line=dict(color=T["amber"], width=3), marker=dict(size=8 + 22 * (cal.areas / cal.areas.max()) ** 0.5),
+                             text=[f"n={n:,}" for n in cal.areas], textposition="top left"))
+    fig.update_xaxes(title_text="Mean predicted probability", tickformat=".0%", range=[0, 0.4])
+    fig.update_yaxes(title_text="Share that escalated", tickformat=".0%", range=[0, 0.4])
+    fig.update_layout(title="Calibration: predicted vs observed escalation", height=450)
+    return fig
+
+
+def fig_gdelt_vs_ucdp(gd: pd.DataFrame, wk: pd.DataFrame):
+    """Daily-rate GDELT violent events (weekly) vs UCDP deaths in discrete dated events, 2026."""
+    fig = make_subplots(rows=2, cols=2, subplot_titles=C.CASES, vertical_spacing=0.16, horizontal_spacing=0.09,
+                        specs=[[{"secondary_y": True}] * 2] * 2)
+    d = gd.copy()
+    d["date"] = pd.to_datetime(d.date)
+    d["week"] = d.date.dt.to_period("W-SUN").dt.start_time
+    case = {"RU-UA": "Russia–Ukraine", "ISR-HAMAS": "Israel–Hamas", "AF-PAK": "Afghanistan–Pakistan", "US-IRAN": "US–Iran"}
+    d["case"] = d.case_id.map(case)
+    g = d.groupby(["case", "week"]).agg(v=("violent_events", "sum"), n=("date", "nunique")).reset_index()
+    g = g[g.n >= 4]
+    g["v"] = g.v / g.n
+    wk = wk.assign(week=pd.to_datetime(wk.week))
+    for i, c in enumerate(C.CASES):
+        r, k = i // 2 + 1, i % 2 + 1
+        x = g[g.case == c]
+        u = wk[wk.case == c]
+        fig.add_trace(go.Bar(x=u.week, y=u.ucdp_deaths, name="UCDP deaths (dated events, weekly)", marker_color=CC[c],
+                             opacity=0.55, showlegend=i == 0), row=r, col=k, secondary_y=False)
+        fig.add_trace(go.Scatter(x=x.week, y=x.v, name="GDELT violent events per day", line=dict(color=T["amber"], width=2.5),
+                                 showlegend=i == 0), row=r, col=k, secondary_y=True)
+        fig.add_vrect(x0="2026-10-01", x1="2026-11-12", fillcolor=T["amber"], opacity=0.08, line_width=0, row=r, col=k)
+    fig.update_layout(title="GDELT (media-coded) vs UCDP (recorded deaths), 2026 · shaded = beyond UCDP's Sep 2026 end",
+                      height=620, legend=dict(orientation="h", y=-0.08))
+    return fig
+
+
+def fig_gdelt_lags(lags: pd.DataFrame):
+    fig = go.Figure()
+    for c in C.CASES:
+        x = lags[lags.case == c]
+        fig.add_trace(go.Bar(x=x.lag_weeks, y=x.spearman, name=c, marker_color=CC[c]))
+    fig.update_xaxes(title_text="GDELT shift (weeks; positive = GDELT earlier than UCDP)", tickvals=[-2, -1, 0, 1, 2])
+    fig.update_yaxes(title_text="Spearman correlation with UCDP weekly deaths", range=[-0.5, 1])
+    fig.update_layout(title="Does GDELT lead UCDP? Mostly same-week, and only for spike wars", barmode="group", height=450)
+    return fig
+
+
 def fig_rag(rag: pd.DataFrame):
     fig = go.Figure()
     for i, r in rag.reset_index(drop=True).iterrows():

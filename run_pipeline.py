@@ -17,7 +17,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from src import cleaning, config as C, features, insights, models as M, viz
+from src import cleaning, config as C, features, gdelt, insights, models as M, robustness, viz
 
 MODEL_DIR = C.ROOT / "models"
 MODEL_DIR.mkdir(exist_ok=True)
@@ -52,6 +52,10 @@ def main(figs: bool = True):
     print("[5/6] Scorecard ...")
     rag = M.rag_scorecard(cm, fc["future"], ew["live"], ins["theatre_spread"])
     rag.to_csv(C.TAB_DIR / "rag_scorecard.csv", index=False)
+    print("      GDELT vs UCDP (new, labelled; does not change the models) ...")
+    gdelt.run(cm)
+    print("      evidence strength (bootstrap, Diebold-Mariano, late data, calibration) ...")
+    rob = robustness.run(cm)
     joblib.dump(dict(m_case_full=fc["m_case_full"], members=fc["members"], conformal=fc["conformal"],
                      ew_full=ew["clf_full"]), MODEL_DIR / "models.joblib")
 
@@ -61,6 +65,7 @@ def main(figs: bool = True):
         .unstack(0).to_dict(),
         early_warning_2026=ew["report"][ew["report"].year == 2026].round(3).to_dict("records"),
         rag=rag[["conflict_case", "rating", "score", "forecast_next"]].round(0).to_dict("records"),
+        robustness=rob,
         runtime_s=round(time.time() - t0, 1),
     )
     (C.TAB_DIR / "run_summary.json").write_text(json.dumps(summary, indent=2, default=str))
@@ -100,6 +105,10 @@ def export_figures(cl, cm, ins, fc, ew, rag, shap_case, shap_ew):
     viz.save(viz.fig_shap(shap_case), "22_shap_forecast")
     viz.save(viz.fig_shap(shap_ew, title="What drives the escalation warning (mean |SHAP|)"), "23_shap_early_warning")
     viz.save(viz.fig_ew_curves(ew["preds"]), "24_early_warning_curves")
+    viz.save(viz.fig_gdelt_vs_ucdp(pd.read_csv(gdelt.GDIR / "gdelt_case_daily.csv"),
+                                   pd.read_parquet(C.PROCESSED / "gdelt_weekly.parquet")), "27_gdelt_vs_ucdp", height=620)
+    viz.save(viz.fig_gdelt_lags(pd.read_csv(C.TAB_DIR / "gdelt_weekly_lags.csv")), "28_gdelt_lags", width=900)
+    viz.save(viz.fig_ew_calibration(pd.read_csv(C.TAB_DIR / "ew_calibration.csv")), "26_ew_calibration", width=900)
     viz.save(viz.fig_rag(rag), "25_rag_scorecard", height=260)
 
 

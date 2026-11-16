@@ -42,6 +42,7 @@ const NOTES: Record<string, string> = {
   front: "Front widening: Donetsk 55%→30%. Flip FOG OF WAR toggle: 92% of 2026 deaths unlocated. Caveat on attrition ratio.",
   afpak: "Two fronts: dyad peak 411 (Mar 2026). Flip RAW/HARMONISED to show why FATA is merged.",
   media: "Headlines follow incidents (0.96) not deaths (0.01); gap does not lead escalation (p = 0.50).",
+  gdelt: "GDELT (new): tracks UCDP for US–Iran (rho 0.86) and Af–Pak, not RU–UA. A week earlier adds nothing (p 0.55): a nowcast. Show US–Iran rising in early Nov.",
   displacement: "Women and children: 72% / 63%; HADR packs.",
   prediction: "Hand over to Capt Sangwan. Playhead: coverage ticks to 83%. Show Track B honestly.",
   warning: "Replay Mar 2026: 3 of top 10 escalated. Move the threshold slider.",
