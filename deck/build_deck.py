@@ -763,7 +763,18 @@ notes(s, "Datasets 3 and 4 (D7, D8): 13,507,238 GDELT rows, reduced with DuckDB 
 
 # =========================================================================== LIVE DEMO SLIDE
 s = new_slide("LIVE DEMONSTRATION   |   CONFLICT WATCH OPS SITE", "A briefing site and an ops console the jury can drive")
-picture(s, SHOT / "ops_hero.png", 0.62, 1.48, 5.9, 3.32, frame=True, caption="OPS SITE   |   STORY: FOUR WARS, ONE EXPOSED NEIGHBOUR")
+PROMO, PROMO_POSTER = ROOT / "deck" / "Conflict_Watch_Promo.mp4", ROOT / "deck" / "Conflict_Watch_Promo_poster.png"
+if PROMO.exists() and PROMO_POSTER.exists():
+    # embedded promo video (deck/build_promo.py); click to play, poster frame shows in PDF exports
+    _px, _py, _pw, _ph = picture(s, PROMO_POSTER, 0.62, 1.48, 5.9, 3.32, frame=True,
+                                 caption="DEMO VIDEO   |   CLICK TO PLAY   |   OPS SITE, CONSOLE, DASHBOARD")
+    _pic = [sh for sh in s.shapes if sh.shape_type == 13][-1]
+    _mv = s.shapes.add_movie(str(PROMO), Inches(_px), Inches(_py), Inches(_pw), Inches(_ph),
+                             poster_frame_image=str(PROMO_POSTER), mime_type="video/mp4")
+    _mv.name = "Demo video"
+    _pic._element.getparent().remove(_pic._element)
+else:
+    picture(s, SHOT / "ops_hero.png", 0.62, 1.48, 5.9, 3.32, frame=True, caption="OPS SITE   |   STORY: FOUR WARS, ONE EXPOSED NEIGHBOUR")
 picture(s, SHOT / "ops_console_whatif.png", 6.85, 1.48, 5.9, 3.32, frame=True, caption="OPS CONSOLE   |   WHAT-IF: AF-PAK +30% x 3 MONTHS = 359")
 for i, (h, d, col) in enumerate([
         ("Story", "14 chapters: globe, BLUF, fog of war, FATA fix, India ring", CYAN),
