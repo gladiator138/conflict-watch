@@ -80,6 +80,9 @@ cd web && npm run dev            # live development server
   exact Python ensemble output for every slider position (Af–Pak +30% × 3 months = 359, asserted).
 * Maps draw India's boundary from Natural Earth's India point-of-view layer; PoK areas are shown as points inside it.
 * Keys: **P** presenter mode (15-min timer, arrows jump chapters), **N** speaker notes, **Ctrl/⌘ K** command palette in the console.
+* `app/static/conflictwatch.html` (served by the app and its full-screen button) and `deck/conflictwatch.html` are the
+  team's **redesigned** single-file build (commander landing page: CDS / WTC / NTC / MTC). Its source is not in `web/`,
+  so do **not** run `scripts/build_site.py` without re-applying it: that would overwrite the redesign with the older build.
 * `deck/conflictwatch.html` is the single-file offline backup. `DEMO_SCRIPT.md` is the 2-minute live-demo walkthrough.
 
 ## Theatre commander briefs (notional)
