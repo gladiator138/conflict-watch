@@ -1,0 +1,66 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Q&A Prep – Conflict Watch</title><style>
+@page { size: A4; margin: 8mm 10mm; }
+* { box-sizing: border-box; }
+body { font-family: Calibri, Carlito, 'Segoe UI', Arial, sans-serif; color: #1b2733; font-size: 9.4pt; line-height: 1.3; margin: 0; }
+.hdr { background: #07131F; color: #fff; padding: 9px 14px 10px 14px; border-radius: 6px; }
+.hdr .k { color: #F0B03A; font-weight: 700; letter-spacing: 2px; font-size: 8pt; }
+.hdr h1 { margin: 2px 0 2px 0; font-size: 18pt; }
+.hdr .m { color: #9FB2C6; font-size: 8.4pt; }
+h2 { font-size: 10.5pt; color: #07131F; border-bottom: 2px solid #F0B03A; margin: 9px 0 5px 0; padding-bottom: 2px; letter-spacing: .5px; }
+h3 { font-size: 10.5pt; margin: 10px 0 4px 0; }
+ul, ol { margin: 3px 0 3px 0; padding-left: 16px; } li { margin: 1.5px 0; }
+table { border-collapse: collapse; width: 100%; font-size: 8.7pt; margin: 3px 0; }
+th { background: #0F2236; color: #fff; text-align: left; padding: 3px 5px; }
+td { border-bottom: 1px solid #d6dee8; padding: 3px 5px; vertical-align: top; }
+.rag { display: flex; gap: 6px; margin: 6px 0 2px 0; }
+.rag div { flex: 1; background: #0F2236; color: #fff; border-radius: 6px; padding: 5px 8px; border: 2px solid; }
+.rag b.r { font-size: 14pt; display: block; }
+.rag span { font-size: 8pt; color: #D5DEE8; }
+.d { background: #35C2A6; color: #07131F; font-size: 7pt; font-weight: 700; padding: 0 4px; border-radius: 3px; }
+.o { background: #A794FF; color: #07131F; font-size: 7pt; font-weight: 700; padding: 0 4px; border-radius: 3px; }
+.foot { margin-top: 6px; font-size: 7.5pt; color: #5E7B99; text-align: center; letter-spacing: 1px; }
+.bluf { background: #fff8e8; border-left: 4px solid #F0B03A; padding: 5px 9px; }
+.q { font-weight: 700; color: #07131F; margin-top: 7px; }
+.a { margin: 1px 0 0 0; }
+.cols { display: flex; gap: 14px; } .cols > div { flex: 1; }
+</style></head><body>
+<div class="hdr"><div class="k">PRESENTER PACK &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026</div>
+<h1>Run of show, speaker split and Q&amp;A preparation</h1>
+<div class="m">Designed for a Google Meet presentation: share the deck window, then switch to the dashboard tab for the demo.</div></div>
+
+<h2>RUN OF SHOW (ABOUT 12 MINUTES + Q&amp;A)</h2>
+<table><tr><th>Time</th><th>Slides / demo</th><th>Speaker</th><th>Key line</th></tr>
+<tr><td>0:00–1:30</td><td>1 Cover, 2 BLUF</td><td>Maj Shivam Mehta</td><td>"Four wars, three warning signals, one exposed neighbour."</td></tr>
+<tr><td>1:30–2:30</td><td>3 Why it matters</td><td>Maj Shivam Mehta</td><td>"The war reached the Gulf, Hormuz and Sri Lankan waters."</td></tr>
+<tr><td>2:30–3:30</td><td>4 Data and method</td><td>Capt Siddharth Sangwan</td><td>"36 checks; 2026 withheld; one command reproduces everything."</td></tr>
+<tr><td>3:30–6:00</td><td>5–9 Findings</td><td>Maj Shivam Mehta</td><td>"The front is widening, not moving. Pakistan fights on two fronts."</td></tr>
+<tr><td>6:00–7:30</td><td>10–11 Prediction and warning</td><td>Capt Siddharth Sangwan</td><td>"−29% error on unseen data; watch-list 3.5× random."</td></tr>
+<tr><td>7:30–10:00</td><td>12 <b>LIVE DEMO</b>: brief → drill-down → military → forecast → early warning → what-if → scorecard lab</td><td>Capt Siddharth Sangwan</td><td>"Here is the RED card, and here is where it comes from."</td></tr>
+<tr><td>10:00–11:30</td><td>13–14 Recommendations</td><td>Capt Sahil Singh</td><td>"SENSE and WARN need no new platform."</td></tr>
+<tr><td>11:30–12:00</td><td>15 Limits, 16 Scorecard</td><td>Capt Sahil Singh</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
+</table>
+<p><b>Speaker split (proposed):</b> <b>Maj Shivam Mehta</b> opens: bottom line, why it matters for India, and the military findings. <b>Capt Siddharth Sangwan</b> covers data, models and runs the live demo. <b>Capt Sahil Singh</b> closes with recommendations, limits and the scorecard, and chairs Q&amp;A. In Q&amp;A the chair routes data and model questions to Capt Sangwan, and military and India questions to Maj Mehta.</p>
+
+<h2>VIDEO-CALL CHECKLIST</h2>
+<ul>
+<li>Start the dashboard 10 minutes early (<code>streamlit run app/app.py</code>); open every page once so it is cached.</li>
+<li>Share a single browser window at 1600×900 or similar; browser zoom 110–125% for legibility after compression.</li>
+<li>Keep the backup video (deck/demo) and the deck PDF open in case the live demo or screen-share fails.</li>
+<li>Mute notifications; use a wired connection; cameras on for Q&amp;A.</li>
+</ul>
+
+<h2>DEMO SCRIPT (ABOUT 3 MINUTES)</h2>
+<ol>
+<li><b>Commander's brief:</b> point at the four RAG cards; open "Why this rating?" on one card.</li>
+<li><b>Area drill-down:</b> Af–Pak → Khyber Pakhtunkhwa: rising deaths, forecast, and the warning history with past escalations marked.</li>
+<li><b>Military lens:</b> front-geography chart (Donetsk 55% → 30%), Af–Pak interstate bars.</li>
+<li><b>Forecast (2026 test):</b> Russia–Ukraine, Track A: actual vs forecast inside the band.</li>
+<li><b>Early warning:</b> Replay Mar 2026 (3 of the top 10 escalated), then move the Alert threshold slider.</li>
+<li><b>What-if:</b> Af–Pak, +30% for 3 months: 318 → about 359. Click "Train now" for the live re-train.</li>
+<li><b>Scorecard lab:</b> move the hotspot slider and show which ratings change and which do not.</li>
+</ol>
+
+<h2>LIKELY QUESTIONS AND ANSWERS</h2>
+<div class="cols"><div><h3>Problem framing</h3><div class='q'>Q. Why forecast deaths and not events?</div><div class='a'>Deaths are the measure of harm that planners act on, and the series is comparable across the four conflicts. Events drive media volume, not lethality, as our index shows.</div><div class='q'>Q. Why only these four conflicts?</div><div class='a'>They are the competition scope. The pipeline is generic: any UCDP conflict can be added by extending the case list in config.py.</div><h3>Data and cleaning</h3><div class='q'>Q. Did you change the source data?</div><div class='a'>No. Raw CSVs are read-only. Repairs go into new columns (e.g. deaths_low_c) and every change is in the 36-check data-quality log.</div><div class='q'>Q. How did you handle multi-month events?</div><div class='a'>731 records span more than one month, including front-wide aggregates. We spread their deaths across months by day count, otherwise the start month shows a false spike.</div><div class='q'>Q. What about out-of-order low/best/high?</div><div class='a'>692 rows. We keep best, because it reconciles exactly with the fatality components, and widen the band to min/max. Raw values are kept.</div><div class='q'>Q. Why merge FATA into KP?</div><div class='a'>Pakistan merged them in 2018. Without harmonising, FATA would show a fake collapse and KP a fake surge exactly at the boundary change.</div><div class='q'>Q. 2026 data are provisional; is the test fair?</div><div class='a'>It is the hardest, most realistic test: operational users always work on provisional data. Revisions usually go upward, which makes our holdout error conservative.</div><h3>Models and validation</h3><div class='q'>Q. Why not a deep-learning model (LSTM)?</div><div class='a'>Four series of 153 months is far too little data. Our ablation shows even a 40-feature LightGBM over-fits. Simpler, regularised models generalise better and are explainable.</div><div class='q'>Q. Why does LightGBM predict the change, not the level?</div><div class='a'>Trees cannot predict above the highest value seen in training. A level model trained before 2022 can never forecast the invasion. The change target removes that ceiling: back-test RMSLE 1.23 (level) vs 0.90 (change, compact).</div><div class='q'>Q. How do you know you didn't tune on 2026?</div><div class='a'>All choices (features, ensemble members, interval bands, classifier features) were made on 2022–25 folds. 2026 was scored once. On Track B SARIMA beat the ensemble in 2026, and we report that rather than switch.</div><div class='q'>Q. Why is RMSLE the selection metric?</div><div class='a'>The series differ by three orders of magnitude. RMSE would be dominated by Russia–Ukraine. RMSLE scores relative error fairly. MAE, RMSE, MAPE, sMAPE and MASE are all reported too.</div><div class='q'>Q. Your Af–Pak improvement is only 4%. Why?</div><div class='a'>Af–Pak is a steady creep with little month-to-month signal, so 'no change' is already a strong baseline. The ensemble still wins, and the gain is large where it matters (RU–UA, Israel–Hamas, US–Iran).</div><div class='q'>Q. Why are the 95% intervals so wide?</div><div class='a'>The back-test includes the 2022 invasion. A calibrated interval must keep room for outbreaks. The 80% band, which covered 83% of 2026, is the planning band.</div><div class='q'>Q. The model missed the US–Iran war. Isn't that a failure?</div><div class='a'>Yes, and we say so. No death-count model can foresee a decision to go to war. That is why warning also tracks spread and hotspots, and why the scorecard has a volatility rule.</div><div class='q'>Q. How good is the early warning, really?</div><div class='a'>AUC 0.79 on 2026 (rule of thumb 0.73); top-10 precision 14% vs base rate 4.1%. Escalations are rare (4%), so precision looks low in absolute terms, but it is 3.5× random: it focuses scarce ISR.</div><h3>Military and India</h3><div class='q'>Q. Is the Russia:Ukraine 10:1 ratio real?</div><div class='a'>No; it is recorded. Ukrainian OSINT and memorial databases record Russian deaths more fully. We show it as an upper bound of reporting and caveat it on the slide.</div><div class='q'>Q. How do you link the Af–Pak war to the LoC?</div><div class='a'>The data show Pakistan fighting on its western front. The LoC link is domain reasoning, labelled DOMAIN, and we recommend it as an indicator to watch, not a prediction.</div><div class='q'>Q. Where does '9 million Indians in the Gulf' come from?</div><div class='a'>It is public MEA-order-of-magnitude knowledge, not from the competition files, and is labelled DOMAIN.</div><div class='q'>Q. What would you do with classified data?</div><div class='a'>Fuse it as extra features (e.g. movement indicators). The pipeline already accepts new features; the walk-forward protocol would test their value.</div><h3>Dashboard and reproducibility</h3><div class='q'>Q. Can it run offline at an HQ?</div><div class='a'>Yes. Streamlit on a laptop, no internet calls, bundled map outline. One command rebuilds everything in about 2.5 minutes.</div><div class='q'>Q. Can it be updated monthly?</div><div class='a'>Drop in the new UCDP month and rerun. The 'live re-train' page refits LightGBM-Δ in about 2 seconds.</div><div class='q'>Q. How was AI used?</div><div class='a'>As a coding assistant, which the rules allow. Every number is produced by code in the repository and every result can be reproduced and checked.</div></div></div>
+<div class="foot">UNCLASSIFIED – OPEN-SOURCE DATA ONLY</div>
+</body></html>

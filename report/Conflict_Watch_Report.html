@@ -1,0 +1,1167 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Conflict Watch – Analysis Report</title><style>
+@page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+body { font-family: Calibri, 'Segoe UI', Carlito, Arial, sans-serif; color: #1b2733; font-size: 10.6pt; line-height: 1.45; }
+h1, h2, h3 { color: #07131F; }
+h2 { border-bottom: 3px solid #F0B03A; padding-bottom: 4px; margin-top: 26px; font-size: 17pt; page-break-after: avoid; }
+h3 { font-size: 13pt; margin-top: 18px; page-break-after: avoid; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 14px 0; font-size: 9pt; page-break-inside: auto; }
+th { background: #0F2236; color: #fff; text-align: left; padding: 5px 6px; }
+td { border-bottom: 1px solid #d6dee8; padding: 4px 6px; vertical-align: top; }
+tr:nth-child(even) td { background: #f4f7fa; }
+figure { margin: 12px 0 16px 0; page-break-inside: avoid; }
+figure img { width: 100%; border-radius: 6px; }
+figcaption { font-size: 8.8pt; color: #5E7B99; margin-top: 4px; }
+blockquote { border-left: 4px solid #F0B03A; background: #fff8e8; margin: 10px 0; padding: 8px 14px; font-size: 11.5pt; }
+code, pre { background: #f0f3f7; border-radius: 4px; font-size: 9pt; }
+pre { padding: 10px; }
+.red { color: #d7263d; } .amber { color: #c77d00; } .green { color: #1f9e83; }
+.cover { background: #07131F; color: #fff; margin: -16mm -15mm 0 -15mm; padding: 70mm 18mm 60mm 18mm; min-height: 160mm; }
+.cover .kick { color: #F0B03A; font-weight: 700; letter-spacing: 3px; font-size: 10pt; }
+.cover .title { color: #fff; font-size: 54pt; letter-spacing: 2px; margin: 14px 0 8px 0; border: none; }
+.cover .subtitle { color: #D5DEE8; font-size: 15pt; line-height: 1.4; }
+.cover .author { color: #fff; font-weight: 700; font-size: 15pt; margin-top: 28mm; line-height: 1.35; }
+.cover .meta { color: #9FB2C6; font-size: 10pt; margin-top: 4px; }
+.pagebreak { page-break-after: always; }
+</style></head><body><div class="cover">
+<div class="kick">DATA ANALYTICS COMPETITION 2026</div>
+<h1 class="title">CONFLICT WATCH</h1>
+<div class="subtitle">When and where will conflict deaths rise next, and what does it mean for India?<br/>
+Russia–Ukraine · Israel–Hamas · Afghanistan–Pakistan · US–Iran</div>
+<div class="author"><span style="font-weight:400;font-size:10pt;color:#F0B03A;letter-spacing:2px">TEAM</span><br/>Maj Shivam Mehta<br/>Capt Siddharth Sangwan<br/>Capt Sahil Singh</div>
+<div class="meta">Analysis report · data to 30 Sep 2026 · UNCLASSIFIED – open-source data only</div>
+</div>
+
+<div class="pagebreak"></div>
+
+<h2>1 · Bottom line up front</h2>
+<ul>
+<li><strong>Threat picture (Oct 2026).</strong> Russia–Ukraine is <b class="red">RED</b>: an active high-intensity war forecast at
+  <strong>6,780 deaths</strong> next month. Afghanistan–Pakistan
+  and US–Iran are <b class="amber">AMBER</b>: Af–Pak has three escalation hotspots and a new interstate front, and
+  US–Iran is volatile after its Feb–Mar 2026 war. Israel–Hamas is <b class="green">GREEN</b>: it has de-escalated to
+  about 130 deaths a month.</li>
+<li><strong>The fronts are widening, not moving.</strong> In Ukraine, Donetsk's share of located events fell from
+  <strong>55% to 30%</strong> (2022 → 2026) as violence spread to Zaporizhzhia, Dnipropetrovsk, Sumy and into
+  Russia. The US–Iran war hit <strong>14 countries in 2026</strong>, up from 4 in 2025.</li>
+<li><strong>Pakistan now has a two-front problem.</strong> The TTP insurgency in Khyber Pakhtunkhwa has grown every year since 2021,
+  and since Oct 2025 the Afghan and Pakistani <strong>governments fight each other directly</strong> (peak: 411 deaths, Mar 2026).</li>
+<li><strong>The war reached India's neighbourhood.</strong> In 2026 strikes hit 5 Gulf states that host the
+  Indian diaspora (25 events), Iran's Hormuz/Chabahar coast (299 deaths),
+  and Sri Lankan waters (<strong>104 killed, 4 Mar 2026</strong>).</li>
+<li><strong>Forecasting works on unseen data.</strong> Trained only on 2014–2025, our ensemble cut 1-month-ahead error against
+  the "no-change" rule by <strong>29%</strong> overall on Jan–Sep 2026 (30% for RU–UA,
+  55% for Israel–Hamas). Its 80% intervals contained <strong>83%</strong> of 2026 outcomes.</li>
+<li><strong>Warning works sub-nationally.</strong> A month ahead, the escalation classifier ranks 222 area series with
+  ROC-AUC <strong>0.79</strong> on 2026 (rule of thumb: 0.73). Its top-10 watch-list is
+  <strong>3.5× better than random</strong>.</li>
+<li><strong>Limit.</strong> No model built on death counts foresees a <em>decision</em> to go to war (Feb 2022, Feb 2026). Indications and
+  warning must watch spread and hotspots, and <strong>not media volume</strong>: references follow incidents, not lethality, and
+  do not lead escalation.</li>
+</ul>
+<p><strong>Recommendations, in brief:</strong> task ISR on the monthly escalation watch-list. Keep Gulf NEO plans current while US–Iran is
+AMBER. Treat the Af–Pak interstate dyad as a standing I&amp;W indicator for the LoC. Build indigenous OSINT coverage of
+West Asia: Indian outlets appear in 17% of Af–Pak events and almost
+none elsewhere. See §9.</p>
+<figure><img src="../outputs/figures/25_rag_scorecard.png" alt="Figure 1 – Threat scorecard for Oct 2026, built only from model outputs (rules in §8.3)"/><figcaption>Figure 1 – Threat scorecard for Oct 2026, built only from model outputs (rules in §8.3)</figcaption></figure>
+
+<table>
+<thead>
+<tr>
+<th>Conflict</th>
+<th>Rating</th>
+<th>Oct 2026 forecast</th>
+<th>80% low</th>
+<th>80% high</th>
+<th>Trend vs 6 mo (%)</th>
+<th>Hotspot areas</th>
+<th>Top escalation areas (probability)</th>
+<th>Points</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Russia–Ukraine</td>
+<td>RED</td>
+<td>6,780</td>
+<td>3,316</td>
+<td>16,708</td>
+<td>+7</td>
+<td>0</td>
+<td>Chernihiv (15%); Dnipropetrovsk (14%); Sumy (14%)</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Israel–Hamas</td>
+<td>GREEN</td>
+<td>128</td>
+<td>62</td>
+<td>317</td>
+<td>-4</td>
+<td>0</td>
+<td>Gaza Strip (14%); West Bank (11%); Haifa district (1%)</td>
+<td>1</td>
+</tr>
+<tr>
+<td>Afghanistan–Pakistan</td>
+<td>AMBER</td>
+<td>318</td>
+<td>155</td>
+<td>786</td>
+<td>+12</td>
+<td>3</td>
+<td>Kandahar (23%); Balochistan (21%); Kunar (21%)</td>
+<td>3</td>
+</tr>
+<tr>
+<td>US–Iran</td>
+<td>AMBER</td>
+<td>26</td>
+<td>12</td>
+<td>66</td>
+<td>-78</td>
+<td>1</td>
+<td>Hormozgan (16%); Khuzestan (12%); Kermanshah (9%)</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<h2>2 · Problem framing</h2>
+<p>The brief asks teams to explore four conflicts, frame their own questions, and show verifiable, reproducible
+findings with stated assumptions. For an audience of military officers we chose an <strong>operational</strong> framing:</p>
+<blockquote>
+<p><strong>When and where will conflict deaths rise next, and what does that mean for the Indian Armed Forces and for
+humanitarian planning?</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+<th>Method</th>
+<th>Section</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Q1</td>
+<td>How intense is each conflict, and how is it changing?</td>
+<td>Monthly panels, tempo, lethality, seasonality</td>
+<td>5.1</td>
+</tr>
+<tr>
+<td>Q2</td>
+<td>How are the wars fought: attrition, violence type, front geography, spread?</td>
+<td>Dyad/side analysis, geolocated-event shares, theatre spread</td>
+<td>5.2</td>
+</tr>
+<tr>
+<td>Q3</td>
+<td>Can we forecast monthly deaths better than simple rules, on unseen 2026 data?</td>
+<td>7 models, walk-forward back-test, 2026 holdout, conformal intervals</td>
+<td>7</td>
+</tr>
+<tr>
+<td>Q4</td>
+<td>Can we warn which areas will escalate next month?</td>
+<td>Sub-national classifier, watch-list precision</td>
+<td>8</td>
+</tr>
+<tr>
+<td>Q5</td>
+<td>What does it mean for India?</td>
+<td>Exposure analysis + clearly labelled domain reasoning</td>
+<td>6</td>
+</tr>
+</tbody>
+</table>
+<p>Throughout, <strong>[Data]</strong> marks results computed from the competition files and <strong>[Domain]</strong> marks expert reasoning
+that the files cannot prove.</p>
+<h2>3 · Data and preparation</h2>
+<p><strong>Sources (official package only).</strong> 61,055 UCDP event records (GED 26.1 for 2014–2025; provisional
+Candidate 26.01.26.09 for Jan–Sep 2026), 85,406 source references, UNHCR bilateral stocks (6,273 rows) and
+demographics (19,830), IDMC/UNRWA reference stocks (112) and World Bank context (1,764). The top-level files outside
+the official folder belong to another package and were <strong>not</strong> used.</p>
+<p><strong>36 documented checks</strong>, of which 23 found something to handle. No row is
+silently dropped: every fix is logged, and raw values are kept beside corrected ones.</p>
+<figure><img src="../outputs/figures/03_data_quality.png" alt="Figure 2 – Data-quality issues found and handled (log scale, % of table rows)"/><figcaption>Figure 2 – Data-quality issues found and handled (log scale, % of table rows)</figcaption></figure>
+
+<p>Key decisions:</p>
+<ul>
+<li><strong>Out-of-order estimates (692 rows).</strong> Where low &gt; best or best &gt; high, we keep the raw values and build a corrected
+  band (<code>min</code>/<code>max</code> of the three). We widen the band rather than move <em>best</em>, because <em>best</em> reconciles exactly with the
+  four fatality components (validated for every row).</li>
+<li><strong>Multi-month records (731 rows).</strong> These include front-wide monthly aggregates. Deaths are spread across calendar
+  months in proportion to the days in the date range. Stacking them on the start month would create false spikes.</li>
+<li><strong>Provisional 2026 data (4,644 rows).</strong> Flagged and used <strong>only</strong> as the withheld test set.</li>
+<li><strong>Boundary change.</strong> Pakistan merged FATA into Khyber Pakhtunkhwa in 2018. UCDP labels change at that point, which
+  would fake a collapse of violence in FATA and a surge in KP. We harmonise to the post-merger boundary.</li>
+<li><strong>Publisher normalisation.</strong> 1,715 raw labels become 1,625 outlets (e.g. ITAR-TASS and Tass; UA Losses and UALosses).
+  7,515 repeat references (same outlet and date within one event) are flagged.</li>
+<li><strong>Missing geography.</strong> Blank country codes become <code>INTL</code> (waters/airspace) or <code>XXX</code> (ambiguous code 666). Blank admin1
+  becomes an explicit "country-level" bucket, so those deaths are not lost.</li>
+<li><strong>World Bank gaps.</strong> 36 GDP and 124 inflation values are interpolated within each economy. Context enters models with a
+  one-year lag, so 2026 needs no extrapolation.</li>
+</ul>
+<p><strong>A finding from cleaning: the fog of war is in the data.</strong> The share of Russia–Ukraine deaths with no sub-national
+location rose from 30% (2022) to <strong>92% (2026)</strong>, because most
+recent deaths come from country-level memorial and aggregate counts. We therefore measure front geography with
+<strong>located, discrete events</strong>, and we state this limit wherever sub-national results touch Ukraine.</p>
+<figure><img src="../outputs/figures/04_fog_of_war.png" alt="Figure 3 – Share of deaths located only to country level"/><figcaption>Figure 3 – Share of deaths located only to country level</figcaption></figure>
+
+<h2>4 · Feature engineering</h2>
+<p>Two monthly panels: <strong>4 conflicts × 153 months</strong> and <strong>222 sub-national area series × 153 months</strong> (zero-filled).
+Every feature is known at the end of the forecast-origin month. Annual context is lagged one year.</p>
+<table>
+<thead>
+<tr>
+<th>Family</th>
+<th>Features</th>
+<th>Military / analytic idea</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Intensity memory</td>
+<td>lags 0–12, rolling means 3/6/12, EWM, 12-month peak</td>
+<td>War has inertia</td>
+</tr>
+<tr>
+<td>Momentum</td>
+<td>3-vs-12-month momentum, acceleration, dormancy streak</td>
+<td>Escalation = short-term above long-term norm</td>
+</tr>
+<tr>
+<td>Tempo</td>
+<td>events/month, references/month, outlets</td>
+<td>Engagements vs lethality</td>
+</tr>
+<tr>
+<td>Fog of war</td>
+<td>(high − low)/best, aggregate share, low date precision</td>
+<td>Degraded reporting picture</td>
+</tr>
+<tr>
+<td>Character</td>
+<td>civilian, state-based, one-sided and focal-dyad shares</td>
+<td>Battlefield vs punitive violence</td>
+</tr>
+<tr>
+<td>Geography</td>
+<td>active areas, Herfindahl concentration, share outside core theatre</td>
+<td>Front widening, horizontal escalation</td>
+</tr>
+<tr>
+<td>Seasonality</td>
+<td>target-month sine/cosine, same month last year</td>
+<td>Campaign seasons</td>
+</tr>
+<tr>
+<td>Context (t−1 y)</td>
+<td>IDPs, refugees, displacement growth, GDP growth, inflation</td>
+<td>Structural stress</td>
+</tr>
+<tr>
+<td>Hierarchy</td>
+<td>conflict-level tempo and momentum, area's share of its conflict</td>
+<td>Areas inherit their war's tempo</td>
+</tr>
+</tbody>
+</table>
+<p>The ablation in §7.2 shows that <strong>a compact subset generalises best</strong> at conflict level. With four series, 40 features
+over-fit. The richer set is used where data are plentiful (222 sub-national series).</p>
+<h2>5 · Findings</h2>
+<h3>5.1 Intensity and tempo [Data]</h3>
+<figure><img src="../outputs/figures/01_monthly_deaths.png" alt="Figure 4 – Monthly deaths by conflict (log scale); shaded = 2026 withheld test window"/><figcaption>Figure 4 – Monthly deaths by conflict (log scale); shaded = 2026 withheld test window</figcaption></figure>
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Russia–Ukraine</th>
+<th>Israel–Hamas</th>
+<th>Afghanistan–Pakistan</th>
+<th>US–Iran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recorded deaths 2014–Sep 2026 (best)</td>
+<td>447,452</td>
+<td>67,933</td>
+<td>31,082</td>
+<td>7,929</td>
+</tr>
+<tr>
+<td>UCDP low – high</td>
+<td>270,529 – 782,980</td>
+<td>64,292 – 71,893</td>
+<td>28,784 – 39,746</td>
+<td>6,878 – 8,742</td>
+</tr>
+<tr>
+<td>Peak month</td>
+<td>Mar 2022 (27,245)</td>
+<td>Oct 2023 (11,211)</td>
+<td>Feb 2017 (762)</td>
+<td>Mar 2026 (2,825)</td>
+</tr>
+<tr>
+<td>Deaths Jan–Sep 2026</td>
+<td>64,453</td>
+<td>1,191</td>
+<td>2,767</td>
+<td>3,965</td>
+</tr>
+<tr>
+<td>Civilian share</td>
+<td>7%</td>
+<td>49%</td>
+<td>20%</td>
+<td>36%</td>
+</tr>
+<tr>
+<td>Countries with deaths</td>
+<td>4</td>
+<td>9</td>
+<td>2</td>
+<td>15</td>
+</tr>
+</tbody>
+</table>
+<p>Each conflict has a different threat signature: <strong>RU–UA is sustained attrition</strong> (4–11k deaths a month since 2023),
+<strong>US–Iran is spikes</strong> (proxy and coalition strikes, then direct war in Feb–Mar 2026), <strong>Af–Pak is creeping</strong> (rising since
+2021), and <strong>Israel–Hamas is de-escalating</strong> (about 130 a month in 2026 after a 2,474-death month in Jul 2025).
+<em>So what:</em> one warning rule cannot fit all four. We forecast level, trend and spread separately.</p>
+<h3>5.2 How the wars are being fought (military lens)</h3>
+<p><strong>Front geography – widening, not moving [Data].</strong> Donetsk's share of geolocated events fell from 55% (2022)
+to 30% (2026). Zaporizhzhia (14%), Dnipropetrovsk
+(7%), Sumy (6%) and Russia's
+Belgorod (5%) grew. Recorded deaths inside Russia peaked at 10,358 in 2024
+(Kursk). <em>So what [Domain]:</em> a wide, static front rewards long-range precision fires, counter-drone and EW, and
+logistics depth. Warning should track the <strong>number of active sectors</strong>, which our models do.</p>
+<figure><img src="../outputs/figures/05_front_geography.png" alt="Figure 5 – Russia–Ukraine: share of located discrete events by area"/><figcaption>Figure 5 – Russia–Ukraine: share of located discrete events by area</figcaption></figure>
+
+<p><strong>Recorded attrition by side [Data, with caveat].</strong> In the RU–UA focal dyad, UCDP records
+41,929 Russian vs 21,844 Ukrainian fatalities in 2022
+(ratio 1.9:1), widening to 5.5:1 in 2025 and
+10.5:1 in 2026. In the 2026 US–Iran war, Iran's recorded losses were
+1,274 against 11 for the Israel–US coalition.
+<strong>Caveat:</strong> these are <em>recorded</em> figures. Ukrainian OSINT and memorial databases document Russian losses more fully than
+the reverse, so the ratio is an upper bound of reporting, not a verified exchange ratio. <em>So what [Domain]:</em> stand-off
+precision strike, layered air defence and drone-enabled ISR produce extreme asymmetry. These lessons apply directly to
+Indian force design on both fronts.</p>
+<figure><img src="../outputs/figures/06_attrition_ru_ua.png" alt="Figure 6 – Russia–Ukraine: UCDP-recorded fatalities by side"/><figcaption>Figure 6 – Russia–Ukraine: UCDP-recorded fatalities by side</figcaption></figure>
+
+<p><strong>Afghanistan–Pakistan: a second front opens [Data].</strong> Violence has concentrated in Khyber Pakhtunkhwa (TTP) and
+Balochistan, and has risen every year since 2021. Since <strong>Oct 2025 the Afghan and Pakistani states clash directly</strong>
+(131 deaths in Oct 2025; 172, 411 and 68 in Feb–Apr 2026). <em>So what [Domain]:</em> the Pakistan Army is committed in the
+west. That can lower its eastern capacity, or raise the incentive for diversionary LoC activity. India should watch the
+western front more closely, not less.</p>
+<figure><img src="../outputs/figures/10_afpak_interstate.png" alt="Figure 7 – Afghanistan vs Pakistan government clashes (focal dyad), deaths per month"/><figcaption>Figure 7 – Afghanistan vs Pakistan government clashes (focal dyad), deaths per month</figcaption></figure>
+
+<figure><img src="../outputs/figures/09_afpak_provinces.png" alt="Figure 8 – Afghanistan–Pakistan deaths by province (FATA harmonised into KP)"/><figcaption>Figure 8 – Afghanistan–Pakistan deaths by province (FATA harmonised into KP)</figcaption></figure>
+
+<p><strong>Horizontal escalation [Data].</strong> The US–Iran case spread from 4 countries (2025) to
+14 (2026), including five Gulf states and Sri Lankan waters. Israel–Hamas reached Qatar in Sep 2025.</p>
+<figure><img src="../outputs/figures/08_country_map.png" alt="Figure 9 – Where the four conflicts killed people, 2024–Sep 2026 (India outlined)"/><figcaption>Figure 9 – Where the four conflicts killed people, 2024–Sep 2026 (India outlined)</figcaption></figure>
+
+<p><strong>Campaign seasons [Data].</strong> RU–UA deaths run +35% (May) and +25% (Jul) against trend, and
+-27% (Dec) and -34% (Jan), matching the summer campaigning season and the winter/<em>rasputitsa</em>
+lull. Af–Pak peaks in Sep–Oct. Seasonality enters the models.</p>
+<figure><img src="../outputs/figures/11_seasonality.png" alt="Figure 10 – Deaths vs 12-month trend by calendar month"/><figcaption>Figure 10 – Deaths vs 12-month trend by calendar month</figcaption></figure>
+
+<h3>5.3 Media attention vs deaths – an original index [Data]</h3>
+<p>We regress monthly source references on events and deaths (log, with conflict fixed effects). The residual, standardised,
+is the <strong>Attention Gap Index (AGI)</strong>: above 0 means over-reported, below 0 means "forgotten" violence.</p>
+<ul>
+<li>References scale with <strong>incidents</strong> (elasticity 0.96) and <strong>not lethality</strong>
+  (0.01); R² = 0.96. One mass-casualty strike is one story, so
+  high-lethality violence is under-documented per death.</li>
+<li>References per 100 deaths: Israel–Hamas 150, RU–UA 54, Af–Pak 40, US–Iran 35.</li>
+<li>The AGI does <strong>not</strong> lead next month's escalation (coefficient -0.047, p = 0.50).
+  <em>So what:</em> do not build warning on media volume.</li>
+<li>Indian outlets (mainly PTI) appear in <strong>17% of Af–Pak events</strong> and
+  almost none of the other theatres. India's open-source picture of West Asia and Europe is borrowed.</li>
+</ul>
+<figure><img src="../outputs/figures/13_media_scatter.png" alt="Figure 11 – References track events tightly, deaths loosely"/><figcaption>Figure 11 – References track events tightly, deaths loosely</figcaption></figure>
+
+<h3>5.4 Displacement and humanitarian planning [Data]</h3>
+<ul>
+<li>Ukraine end-2025: about 5.2M refugees abroad and 3.7M IDPs. <strong>72%</strong> of refugees with
+  recorded sex and age are women or children.</li>
+<li>Afghanistan: 63% women and children, 10% under five.
+  Refugees abroad fell from 5.8M (2024) to 2.7M (2025) as returns and reclassification (1.03M "other protection")
+  took effect.</li>
+<li>Palestine: 2.0M IDPs (IDMC) since 2024. UNRWA registrations (2.5M in Palestine) are a separate series and are never summed.</li>
+<li>Country-year deaths explain little of the <em>change</em> in displaced stocks (Spearman 0.10, p =
+  0.18). Displacement responds to onset, spread and access, not monthly tolls, and cannot be attributed to
+  single events.</li>
+</ul>
+<p><em>So what:</em> trigger HADR planning on <strong>onset and spread</strong> (our escalation flags), and stock paediatric and maternal supplies.</p>
+<figure><img src="../outputs/figures/15_displacement.png" alt="Figure 12 – Displaced populations by origin (UNHCR refugees and asylum seekers; IDMC IDPs)"/><figcaption>Figure 12 – Displaced populations by origin (UNHCR refugees and asylum seekers; IDMC IDPs)</figcaption></figure>
+
+<h2>6 · India impact</h2>
+<table>
+<thead>
+<tr>
+<th>Theatre</th>
+<th>What the data show [Data]</th>
+<th>What it means for India [Domain]</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Afghanistan–Pakistan</td>
+<td>KP deaths up every year since 2021; Afghan–Pakistan state clashes since Oct 2025; deaths in Pakistan areas adjoining India/LoC rose from 2 (2022) to 52 (2025)</td>
+<td>Pakistan Army committed in the west, so risk of diversionary LoC activity, infiltration and TTP/IS-K spill-over</td>
+</tr>
+<tr>
+<td>US–Iran / Gulf</td>
+<td>14 countries hit in 2026, including 5 Gulf states (25 events, 37 deaths); 299 deaths on Iran's Hormuz/Chabahar coast; 945 deaths in Yemen in 2025</td>
+<td>About 9M Indians in the Gulf need NEO contingency (cf. Op Ganga, Kaveri, Ajay); a large share of crude and LPG transits Hormuz; Chabahar and INSTC lie in the strike zone; Red Sea shipping at risk</td>
+</tr>
+<tr>
+<td>Indian Ocean</td>
+<td>104 killed in one strike off Sri Lanka's west coast, 4 Mar 2026</td>
+<td>The war entered India's maritime neighbourhood. IFC-IOR and Navy need a belligerent-movement picture</td>
+</tr>
+<tr>
+<td>Russia–Ukraine</td>
+<td>4–11k deaths a month; front widening; extreme recorded attrition asymmetry</td>
+<td>Spares and deliveries for legacy Russian platforms at risk; drone, counter-drone and EW lessons</td>
+</tr>
+<tr>
+<td>Israel–Hamas</td>
+<td>De-escalated to about 130/month in 2026</td>
+<td>Key supplier of UAVs, missiles and sensors at war; buffer stocks</td>
+</tr>
+<tr>
+<td>Refugees in India</td>
+<td>Afghans 16,247 (2021) → 8,377 (2025); Russian asylum seekers 5 (2015) → 329 (2025)</td>
+<td>Small numbers; the rising Russian flow is consistent with draft-evasion migration, so monitor</td>
+</tr>
+<tr>
+<td>Macro</td>
+<td>India's inflation was 6.7% in 2022 (World Bank)</td>
+<td>Coincides with the energy shock; attribution not claimed</td>
+</tr>
+</tbody>
+</table>
+<figure><img src="../outputs/figures/17_india_exposure.png" alt="Figure 13 – Deaths in places that matter to India (log scale)"/><figcaption>Figure 13 – Deaths in places that matter to India (log scale)</figcaption></figure>
+
+<h2>7 · Forecasting model</h2>
+<h3>7.1 Protocol</h3>
+<p>Models are fitted once on data up to December <em>Y − 1</em>, frozen, and scored on Jan–Sep of year <em>Y</em> in two ways:</p>
+<ul>
+<li><strong>Track A (operational):</strong> 1 month ahead, rolling. Each month the frozen model sees the newly observed month and
+  forecasts the next. There is no refitting.</li>
+<li><strong>Track B (strategic):</strong> 1–9 months ahead from a single December origin, with nothing from year <em>Y</em>.</li>
+</ul>
+<p>Back-test folds 2022–2025 drive <strong>every</strong> design choice: ablation, ensemble membership and interval calibration.
+<strong>2026 is the withheld test set</strong>, scored once. Metrics: MAE, RMSE, MAPE (actual &gt; 0), sMAPE, MASE and RMSLE. RMSLE is
+the selection metric because the four series differ by three orders of magnitude.</p>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Naive, seasonal naive, 3-month moving average</td>
+<td>Benchmarks</td>
+</tr>
+<tr>
+<td>ETS (damped Holt, log)</td>
+<td>Classical smoother for level shifts</td>
+</tr>
+<tr>
+<td>SARIMA (AIC-selected per series, log)</td>
+<td>Autocorrelation and seasonality</td>
+</tr>
+<tr>
+<td><strong>LightGBM-Δ</strong> (global across the 4 conflicts)</td>
+<td>Learns the <em>change</em> in log deaths from 18 features</td>
+</tr>
+<tr>
+<td>LightGBM bottom-up (Tweedie; 222 area series summed)</td>
+<td>Hierarchical, answers <em>where</em></td>
+</tr>
+<tr>
+<td><strong>Ensemble</strong> = Moving average + ETS + LightGBM-Δ global</td>
+<td>Log-space mean; members chosen on back-test</td>
+</tr>
+</tbody>
+</table>
+<h3>7.2 Why these choices – ablation (back-test only)</h3>
+<table>
+<thead>
+<tr>
+<th>LightGBM variant</th>
+<th>RMSLE Track A (1-step)</th>
+<th>RMSLE Track B (1-9 step)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A. Level target, L2, full features (default ML)</td>
+<td>1.232</td>
+<td>1.197</td>
+</tr>
+<tr>
+<td>B. Δ target, L2, full features</td>
+<td>0.993</td>
+<td>1.260</td>
+</tr>
+<tr>
+<td>C. Δ target, L2, full features, regularised</td>
+<td>0.955</td>
+<td>1.283</td>
+</tr>
+<tr>
+<td>D. Δ target, Huber, compact features</td>
+<td>0.896</td>
+<td>1.143</td>
+</tr>
+<tr>
+<td>E. Δ target, L1, compact features (selected)</td>
+<td>0.902</td>
+<td>1.128</td>
+</tr>
+<tr>
+<td>F. Tweedie on raw counts, full features</td>
+<td>1.331</td>
+<td>1.263</td>
+</tr>
+</tbody>
+</table>
+<p>A plain LightGBM on the log <strong>level</strong> is the worst ML option. Regression trees cannot predict beyond the target range
+seen in training, so a model fitted before 2022 can never forecast the invasion. Predicting the <strong>change</strong> in log deaths
+removes that ceiling. A compact feature set with a robust L1 loss generalises best.</p>
+<h3>7.3 Results on the withheld 2026 data</h3>
+<figure><img src="../outputs/figures/21_model_compare.png" alt="Figure 14 – Log-scale error by model: back-test vs 2026 holdout"/><figcaption>Figure 14 – Log-scale error by model: back-test vs 2026 holdout</figcaption></figure>
+
+<p><strong>RMSLE (lower is better)</strong></p>
+<table>
+<thead>
+<tr>
+<th>model</th>
+<th>A · Back-test 2022–25</th>
+<th>A · 2026 holdout</th>
+<th>B · Back-test 2022–25</th>
+<th>B · 2026 holdout</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ensemble (log-space mean, members chosen on back-test)</td>
+<td>0.839</td>
+<td>0.845</td>
+<td>1.142</td>
+<td>1.169</td>
+</tr>
+<tr>
+<td>ETS (damped Holt, log)</td>
+<td>0.867</td>
+<td>0.897</td>
+<td>1.196</td>
+<td>1.062</td>
+</tr>
+<tr>
+<td>LightGBM-Δ global (change in log deaths, L1)</td>
+<td>0.902</td>
+<td>0.908</td>
+<td>1.128</td>
+<td>1.249</td>
+</tr>
+<tr>
+<td>Moving average (3 months)</td>
+<td>0.907</td>
+<td>1.014</td>
+<td>1.182</td>
+<td>1.464</td>
+</tr>
+<tr>
+<td>Naive (last month)</td>
+<td>0.928</td>
+<td>0.961</td>
+<td>1.311</td>
+<td>1.372</td>
+</tr>
+<tr>
+<td>SARIMA (AIC-selected, log)</td>
+<td>1.065</td>
+<td>0.844</td>
+<td>1.532</td>
+<td>1.042</td>
+</tr>
+<tr>
+<td>LightGBM bottom-up, Tweedie (sub-national, summed)</td>
+<td>1.293</td>
+<td>0.933</td>
+<td>1.208</td>
+<td>1.003</td>
+</tr>
+<tr>
+<td>Seasonal naive (same month last year)</td>
+<td>1.798</td>
+<td>1.579</td>
+<td>1.798</td>
+<td>1.579</td>
+</tr>
+</tbody>
+</table>
+<p><strong>MAE, 2026 holdout, 1 month ahead (deaths per month)</strong></p>
+<table>
+<thead>
+<tr>
+<th>model</th>
+<th>Russia–Ukraine</th>
+<th>Israel–Hamas</th>
+<th>Afghanistan–Pakistan</th>
+<th>US–Iran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ensemble (log-space mean, members chosen on back-test)</td>
+<td>563</td>
+<td>17</td>
+<td>123</td>
+<td>445</td>
+</tr>
+<tr>
+<td>SARIMA (AIC-selected, log)</td>
+<td>686</td>
+<td>35</td>
+<td>98</td>
+<td>434</td>
+</tr>
+<tr>
+<td>Naive (last month)</td>
+<td>805</td>
+<td>39</td>
+<td>128</td>
+<td>643</td>
+</tr>
+<tr>
+<td>ETS (damped Holt, log)</td>
+<td>805</td>
+<td>35</td>
+<td>113</td>
+<td>438</td>
+</tr>
+<tr>
+<td>Moving average (3 months)</td>
+<td>1,166</td>
+<td>29</td>
+<td>145</td>
+<td>684</td>
+</tr>
+<tr>
+<td>LightGBM-Δ global (change in log deaths, L1)</td>
+<td>1,439</td>
+<td>31</td>
+<td>115</td>
+<td>433</td>
+</tr>
+<tr>
+<td>Seasonal naive (same month last year)</td>
+<td>1,938</td>
+<td>1,399</td>
+<td>144</td>
+<td>494</td>
+</tr>
+<tr>
+<td>LightGBM bottom-up, Tweedie (sub-national, summed)</td>
+<td>2,352</td>
+<td>101</td>
+<td>148</td>
+<td>420</td>
+</tr>
+</tbody>
+</table>
+<p>The ensemble reduces 1-month-ahead MAE against the naive rule by <strong>30%</strong> (RU–UA),
+<strong>55%</strong> (Israel–Hamas), <strong>31%</strong> (US–Iran) and
+<strong>4%</strong> (Af–Pak); pooled, <strong>29%</strong>. MAPE for RU–UA is
+9%.
+On Track B (9 months blind), SARIMA and the bottom-up LightGBM edged the ensemble in 2026, though not in the
+back-test. We report this rather than re-select on the test set.</p>
+<figure><img src="../outputs/figures/19_forecast_A_RU-UA.png" alt="Figure 15 – Russia–Ukraine: 1-month-ahead forecasts vs actual on the 2026 holdout, with 80% interval and forward forecast"/><figcaption>Figure 15 – Russia–Ukraine: 1-month-ahead forecasts vs actual on the 2026 holdout, with 80% interval and forward forecast</figcaption></figure>
+
+<figure><img src="../outputs/figures/19_forecast_A_AF-PK.png" alt="Figure 16 – Afghanistan–Pakistan: same view"/><figcaption>Figure 16 – Afghanistan–Pakistan: same view</figcaption></figure>
+
+<h3>7.4 Reliability for trend forecasting</h3>
+<ul>
+<li><strong>Calibrated uncertainty.</strong> Split-conformal intervals on log residuals from 2022–25 cover
+  <strong>83%</strong> of 2026 outcomes at the 80% level (Track A 81%,
+  Track B 86%). The 95% upper tail is very wide by design:
+  the back-test includes the 2022 invasion, and outbreak risk is real. A volatility-scaled (adaptive) variant was
+  tested and rejected because it under-covered regime breaks in calm series.</li>
+<li><strong>Direction.</strong> The 1-month forecast got the direction of change right in 72% of 2026 conflict-months.</li>
+<li><strong>Stability.</strong> Back-test RMSLE by year: 2022 (invasion) is the hardest. 2023–2025 are stable. No single model wins
+  every fold, which is why we ensemble.</li>
+<li><strong>Explainability.</strong> TreeSHAP shows the forecast is driven by last month's level and acceleration, two-month memory,
+  momentum and volatility, then seasonality. These are features an officer can reason about.</li>
+<li><strong>Known failure mode.</strong> US–Iran 2026 has the largest error: the war began in Feb 2026 with no build-up in the
+  death series. Political decisions to start wars are not forecastable from this data. Warning must come from spread,
+  hotspots and other intelligence.</li>
+</ul>
+<figure><img src="../outputs/figures/22_shap_forecast.png" alt="Figure 17 – Mean |SHAP| for the LightGBM-Δ forecaster"/><figcaption>Figure 17 – Mean |SHAP| for the LightGBM-Δ forecaster</figcaption></figure>
+
+<p><strong>Forward forecast (all data, refitted):</strong></p>
+<table>
+<thead>
+<tr>
+<th>Conflict</th>
+<th>Month</th>
+<th>Forecast deaths</th>
+<th>80% low</th>
+<th>80% high</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Afghanistan–Pakistan</td>
+<td>Oct 2026</td>
+<td>318</td>
+<td>155</td>
+<td>786</td>
+</tr>
+<tr>
+<td>Afghanistan–Pakistan</td>
+<td>Nov 2026</td>
+<td>316</td>
+<td>143</td>
+<td>1,428</td>
+</tr>
+<tr>
+<td>Afghanistan–Pakistan</td>
+<td>Dec 2026</td>
+<td>291</td>
+<td>132</td>
+<td>1,313</td>
+</tr>
+<tr>
+<td>Israel–Hamas</td>
+<td>Oct 2026</td>
+<td>128</td>
+<td>62</td>
+<td>317</td>
+</tr>
+<tr>
+<td>Israel–Hamas</td>
+<td>Nov 2026</td>
+<td>129</td>
+<td>58</td>
+<td>583</td>
+</tr>
+<tr>
+<td>Israel–Hamas</td>
+<td>Dec 2026</td>
+<td>123</td>
+<td>55</td>
+<td>557</td>
+</tr>
+<tr>
+<td>Russia–Ukraine</td>
+<td>Oct 2026</td>
+<td>6,780</td>
+<td>3,316</td>
+<td>16,708</td>
+</tr>
+<tr>
+<td>Russia–Ukraine</td>
+<td>Nov 2026</td>
+<td>6,765</td>
+<td>3,071</td>
+<td>30,447</td>
+</tr>
+<tr>
+<td>Russia–Ukraine</td>
+<td>Dec 2026</td>
+<td>6,735</td>
+<td>3,058</td>
+<td>30,316</td>
+</tr>
+<tr>
+<td>US–Iran</td>
+<td>Oct 2026</td>
+<td>26</td>
+<td>12</td>
+<td>66</td>
+</tr>
+<tr>
+<td>US–Iran</td>
+<td>Nov 2026</td>
+<td>26</td>
+<td>11</td>
+<td>122</td>
+</tr>
+<tr>
+<td>US–Iran</td>
+<td>Dec 2026</td>
+<td>24</td>
+<td>11</td>
+<td>114</td>
+</tr>
+</tbody>
+</table>
+<h2>8 · Early warning, scorecard and what-if</h2>
+<h3>8.1 Sub-national escalation classifier</h3>
+<p>An area escalates next month if its deaths are ≥ 10 <strong>and</strong> ≥ 1.5 × its trailing 3-month mean (2–4% of area-months).
+A regularised LightGBM classifier is fitted on 19 features (own intensity and momentum, conflict-wide tempo and spread,
+country momentum, seasonality). It is trained on target months up to Dec <em>Y − 1</em> and tested on Jan–Sep <em>Y</em>, for
+2023–2026. Features were chosen on 2023–25.</p>
+<table>
+<thead>
+<tr>
+<th>2026 withheld</th>
+<th>ROC-AUC</th>
+<th>PR-AUC</th>
+<th>Brier</th>
+<th>Top-10 precision</th>
+<th>Top-20 recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LightGBM classifier</strong></td>
+<td><strong>0.795</strong></td>
+<td><strong>0.133</strong></td>
+<td>0.038</td>
+<td><strong>14.4%</strong></td>
+<td>32.7%</td>
+</tr>
+<tr>
+<td>Logistic regression (5 signals)</td>
+<td>0.745</td>
+<td>0.103</td>
+<td>0.041</td>
+<td>6.7%</td>
+<td>34.6%</td>
+</tr>
+<tr>
+<td>Rule: last month's deadliest</td>
+<td>0.727</td>
+<td>0.088</td>
+<td>0.049</td>
+<td>4.4%</td>
+<td>21.8%</td>
+</tr>
+<tr>
+<td>Base rate</td>
+<td></td>
+<td>0.041</td>
+<td></td>
+<td>4.1%</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>The top-10 list is <strong>3.5× better than random</strong> and
+3.3× better than the rule of thumb. TreeSHAP's leading signals are
+the area's smoothed intensity, <strong>its country's</strong> current intensity and momentum, and the <strong>whole conflict's</strong> momentum
+and spread. Escalation is contagious within a theatre.</p>
+<figure><img src="../outputs/figures/24_early_warning_curves.png" alt="Figure 18 – ROC and precision–recall on 2026 withheld months"/><figcaption>Figure 18 – ROC and precision–recall on 2026 withheld months</figcaption></figure>
+
+<h3>8.2 Watch-list for Oct 2026</h3>
+<p>The dashboard lists the 20 highest-risk areas. The top three are Kandahar, Balochistan and Kunar (Af–Pak,
+21–23%), then Hormozgan (US–Iran, 16%) and Chernihiv, Dnipropetrovsk and Sumy (RU–UA, 14–15%).</p>
+<h3>8.3 Threat scorecard (RAG) rules</h3>
+<p>Points: <strong>intensity</strong> (next-month forecast ≥ 1,000 → 2; ≥ 100 → 1); <strong>trend</strong> against the last 6 months (≥ +20% → +1;
+≤ −20% → −1); <strong>hotspots</strong> (named areas with escalation probability ≥ 15%: ≥ 3 → 2; ≥ 1 → 1); <strong>spread</strong> (more countries
+than last year → 1); <strong>volatility</strong> (a ≥ 1,000-death month in the last year → 1). <strong>RED</strong> = forecast ≥ 1,000 a month or
+≥ 5 points; <strong>AMBER</strong> = 2–4; <strong>GREEN</strong> ≤ 1. The rules are transparent and every input is a model output.</p>
+<h3>8.4 What-if simulator</h3>
+<p>The dashboard re-runs the selected ensemble on a modified history. Example: a +30% surge in Af–Pak deaths over three months
+raises the Oct 2026 forecast by about 13% (318 → 359). The model damps short surges because most partly revert, while
+sustained six-month surges carry through. A <strong>live re-train</strong> page fits LightGBM-Δ from scratch on any cut-off in about
+2 seconds and scores it against naive.</p>
+<h2>9 · Recommendations</h2>
+<table>
+<thead>
+<tr>
+<th>Line of effort</th>
+<th>Action</th>
+<th>Lead [Domain]</th>
+<th>When</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SENSE</strong></td>
+<td>Use the monthly sub-national watch-list to task ISR and analyst effort; track <em>active sectors</em> and <em>countries hit</em>, not media volume</td>
+<td>DIA / Service intelligence</td>
+<td>Now (0–30 days)</td>
+</tr>
+<tr>
+<td><strong>SENSE</strong></td>
+<td>Build Indian OSINT coverage of the Gulf, Iran and Red Sea (Indian sources cover 17% of Af–Pak events and almost none elsewhere)</td>
+<td>DIA / MEA</td>
+<td>90 days</td>
+</tr>
+<tr>
+<td><strong>WARN</strong></td>
+<td>Adopt the Af–Pak interstate dyad and KP/Balochistan escalation probabilities as standing LoC I&amp;W indicators</td>
+<td>Northern / Western Commands</td>
+<td>Now</td>
+</tr>
+<tr>
+<td><strong>WARN</strong></td>
+<td>Publish the RAG scorecard monthly; escalate any move to RED or a rise in countries hit</td>
+<td>HQ IDS</td>
+<td>90 days</td>
+</tr>
+<tr>
+<td><strong>SHIELD</strong></td>
+<td>Keep Gulf NEO plans current while US–Iran is AMBER; pre-position sealift/airlift options</td>
+<td>HQ IDS / Navy / IAF / MEA</td>
+<td>Now</td>
+</tr>
+<tr>
+<td><strong>SHIELD</strong></td>
+<td>Belligerent-movement picture for the IOR after the strike off Sri Lanka</td>
+<td>Navy / IFC-IOR</td>
+<td>90 days</td>
+</tr>
+<tr>
+<td><strong>SUSTAIN</strong></td>
+<td>Buffer stocks and indigenisation of critical spares for Russian- and Israeli-origin platforms</td>
+<td>MoD / DPSUs</td>
+<td>6–12 months</td>
+</tr>
+<tr>
+<td><strong>SUSTAIN</strong></td>
+<td>HADR kits weighted to women, children and under-fives; trigger on escalation flags, not death tolls</td>
+<td>HQ IDS / NDMA</td>
+<td>6–12 months</td>
+</tr>
+</tbody>
+</table>
+<h2>10 · Assumptions and limitations</h2>
+<ul>
+<li>UCDP records <strong>reported</strong> lethal organised violence. Coverage depends on access and sources, and recorded side-specific
+  attrition reflects reporting asymmetry.</li>
+<li>2026 data are <strong>provisional</strong> (Candidate) and are usually revised upward. Holdout error includes revision noise.</li>
+<li>Over 90% of 2026 RU–UA deaths have no sub-national location, so sub-national claims about Ukraine rest on events.</li>
+<li>The US–Iran focal dyad codes <strong>Israel and the US as one actor</strong>, so no country split is possible.</li>
+<li>Displacement stocks cannot be attributed to single events. IDMC and UNRWA series are kept separate.</li>
+<li>World Bank context ends in 2025 and is used with a one-year lag.</li>
+<li>Forecasts cannot anticipate political decisions to start wars. That risk sits in the wide 95% tail.</li>
+<li>[Domain] statements are expert reasoning and are labelled as such.</li>
+</ul>
+<h2>11 · Reproducibility</h2>
+<pre><code>pip install -r requirements.txt
+python run_pipeline.py          # ~2.5 min: clean → features → insights → models → scorecard → figures
+streamlit run app/app.py        # dashboard (works offline)
+jupyter lab notebooks/          # 01–05, each re-runs its stage with commentary
+</code></pre>
+<p>Seeds are fixed (<code>random_state = 42</code>). Paths resolve automatically, or set <code>CONFLICT_DATA_DIR</code>. Source CSVs are read-only.
+Every table in this report is in <code>outputs/tables/</code>, and every figure is in <code>outputs/figures/</code> (PNG + interactive HTML).
+Run time on a laptop: about 66 s for modelling, 2–3 min end to end.</p>
+<h2>Appendix A · Data-quality log (issues found)</h2>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>table</th>
+<th>check</th>
+<th>rows_affected</th>
+<th>pct_affected</th>
+<th>action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DQ05</td>
+<td>conflict_events</td>
+<td>Out-of-order low/best/high estimates (low&lt;=best&lt;=high violated)</td>
+<td>692</td>
+<td>1.13</td>
+<td>Raw values preserved. Corrected copies deaths_low_c = min(low,best,high) and deaths_high_c = max(low,best,high); row flagged flag_estimate_order.</td>
+</tr>
+<tr>
+<td>DQ07</td>
+<td>conflict_events</td>
+<td>Event date range crosses a month boundary</td>
+<td>731</td>
+<td>1.20</td>
+<td>Fatalities allocated across months in proportion to days in range (uniform-day disaggregation) instead of assigning everything to the start month.</td>
+</tr>
+<tr>
+<td>DQ08</td>
+<td>conflict_events</td>
+<td>Date range extends beyond the 30 Sep 2026 extract window</td>
+<td>1</td>
+<td>0.00</td>
+<td>Kept. Only the in-window share of deaths enters the monthly panel; out-of-window share is logged.</td>
+</tr>
+<tr>
+<td>DQ09</td>
+<td>conflict_events</td>
+<td>Low date precision (code 4-5: month or longer)</td>
+<td>792</td>
+<td>1.30</td>
+<td>Kept and flagged. Used as a feature (share of imprecise events = reporting fog).</td>
+</tr>
+<tr>
+<td>DQ10</td>
+<td>conflict_events</td>
+<td>Provisional UCDP Candidate records (Jan-Sep 2026)</td>
+<td>4,644</td>
+<td>7.61</td>
+<td>Flagged is_provisional. 2026 is used ONLY as the withheld test set, never for training the evaluated models.</td>
+</tr>
+<tr>
+<td>DQ11</td>
+<td>conflict_events</td>
+<td>UCDP coding status under review ('Check ...')</td>
+<td>176</td>
+<td>0.29</td>
+<td>Kept and flagged flag_coding_check; sensitivity analysis excludes them.</td>
+</tr>
+<tr>
+<td>DQ12</td>
+<td>conflict_events</td>
+<td>Blank location_iso3 (code 666 ambiguous / international waters or airspace)</td>
+<td>38</td>
+<td>0.06</td>
+<td>Imputed join key: 'INTL' for international waters/airspace (precision 7), 'XXX' for ambiguous code 666. Source labels retained.</td>
+</tr>
+<tr>
+<td>DQ13</td>
+<td>conflict_events</td>
+<td>Administrative boundary change: FATA merged into Khyber Pakhtunkhwa (2018)</td>
+<td>602</td>
+<td>0.99</td>
+<td>Harmonised FATA to 'Khyber Pakhtunkwa province' (post-merger boundary) for a stable sub-national panel; raw admin1_name retained.</td>
+</tr>
+<tr>
+<td>DQ14</td>
+<td>conflict_events</td>
+<td>Blank admin1_name</td>
+<td>3,043</td>
+<td>4.98</td>
+<td>Imputed category '(country-level / unspecified)' so the events remain in sub-national panels.</td>
+</tr>
+<tr>
+<td>DQ15</td>
+<td>conflict_events</td>
+<td>Aggregate event records (event_clarity = 2)</td>
+<td>5,757</td>
+<td>9.43</td>
+<td>Kept (they carry real deaths) and flagged; event COUNT features use clear events only.</td>
+</tr>
+<tr>
+<td>DQ16</td>
+<td>conflict_events</td>
+<td>Extreme fatality records (&gt; 99.9th pct = 1225)</td>
+<td>62</td>
+<td>0.10</td>
+<td>Kept: verified as multi-day aggregates (mostly RU-UA front-wide monthly totals). Models use log1p target and robust (MAE-based) evaluation.</td>
+</tr>
+<tr>
+<td>DQ17</td>
+<td>conflict_events</td>
+<td>Zero-fatality events (deaths_best = 0)</td>
+<td>1,294</td>
+<td>2.12</td>
+<td>Kept: UCDP retains events whose best estimate is 0 if low/high &gt; 0 or in an active dyad.</td>
+</tr>
+<tr>
+<td>DQ18</td>
+<td>conflict_events</td>
+<td>Monthly allocation outside panel window (after Sep 2026)</td>
+<td>1</td>
+<td>0.00</td>
+<td>Dropped allocation rows after the window (0.5 deaths, i.e. the October share of a September-start record).</td>
+</tr>
+<tr>
+<td>DQ22</td>
+<td>event_sources</td>
+<td>Publisher labels with spreadsheet 'Source:' prefix</td>
+<td>870</td>
+<td>1.02</td>
+<td>Prefix stripped in publisher_norm.</td>
+</tr>
+<tr>
+<td>DQ23</td>
+<td>event_sources</td>
+<td>Publisher name variants (e.g. ITAR-TASS/Tass, UA Losses/UALosses)</td>
+<td>90</td>
+<td>5.25</td>
+<td>Normalised 1,714 raw labels to 1,624 outlets (case, punctuation, prefix, alias map).</td>
+</tr>
+<tr>
+<td>DQ24</td>
+<td>event_sources</td>
+<td>Same outlet + same date repeated within one event</td>
+<td>7,515</td>
+<td>8.80</td>
+<td>Kept (README: references can repeat an outlet/date) but flagged; 'unique outlets' feature de-duplicates them.</td>
+</tr>
+<tr>
+<td>DQ25</td>
+<td>event_sources</td>
+<td>Reference published before the event's end date</td>
+<td>253</td>
+<td>0.30</td>
+<td>Kept (README: references may precede an event, e.g. aggregate updates). Lag clipped at 0 for reporting-latency statistics.</td>
+</tr>
+<tr>
+<td>DQ27</td>
+<td>bilateral_displacement_stocks</td>
+<td>Blank other_international_protection (source dash)</td>
+<td>6,269</td>
+<td>99.94</td>
+<td>Imputed 0: in UNHCR tables a dash denotes nil / not applicable (documented in data dictionary). Flag retained.</td>
+</tr>
+<tr>
+<td>DQ29</td>
+<td>unhcr_demographics</td>
+<td>Unspecified sex/age cells ('_X')</td>
+<td>6,596</td>
+<td>33.26</td>
+<td>Kept as an explicit 'Unspecified' level; shares computed over specified cells only and coverage reported alongside.</td>
+</tr>
+<tr>
+<td>DQ30</td>
+<td>displacement_reference_stocks</td>
+<td>Two non-comparable series (IDMC IDPs vs UNRWA registrations)</td>
+<td>112</td>
+<td>100.00</td>
+<td>series_code kept as a key on every summary; the series are never summed.</td>
+</tr>
+<tr>
+<td>DQ31</td>
+<td>displacement_reference_stocks</td>
+<td>Unknown reporting area (UNK)</td>
+<td>1</td>
+<td>0.89</td>
+<td>Kept in series totals, excluded from country joins.</td>
+</tr>
+<tr>
+<td>DQ33</td>
+<td>country_year_context</td>
+<td>Missing gdp_growth_annual_pct</td>
+<td>36</td>
+<td>2.04</td>
+<td>Within-economy linear interpolation + edge fill; 12 remain blank (economy has no value in any year) and are left missing.</td>
+</tr>
+<tr>
+<td>DQ34</td>
+<td>country_year_context</td>
+<td>Missing consumer_inflation_annual_pct</td>
+<td>124</td>
+<td>7.03</td>
+<td>Within-economy linear interpolation + edge fill; 60 remain blank (economy has no value in any year) and are left missing.</td>
+</tr>
+</tbody>
+</table>
+<h2>Appendix B · Metric definitions</h2>
+<p>MAE = mean |error|; RMSE = √mean(error²); MAPE = mean |error|/actual over months with actual &gt; 0; sMAPE = mean
+2|e|/(|y|+|ŷ|); MASE = MAE / in-sample MAE of the one-step naive; RMSLE = √mean(log(1+ŷ) − log(1+y))²; coverage = share
+of actuals inside the interval; ROC-AUC/PR-AUC for ranking; Brier = mean squared probability error; precision@10 =
+share of each month's top-10 areas that escalated.</p></body></html>

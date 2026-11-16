@@ -1,0 +1,94 @@
+{
+  "ensemble_members": [
+    "ma3",
+    "ets",
+    "lgb_case"
+  ],
+  "holdout_rmsle": {
+    "A": {
+      "ensemble": 0.845,
+      "ets": 0.897,
+      "lgb_admin1": 0.933,
+      "lgb_case": 0.908,
+      "ma3": 1.014,
+      "naive": 0.961,
+      "sarima": 0.844,
+      "snaive": 1.579
+    },
+    "B": {
+      "ensemble": 1.169,
+      "ets": 1.062,
+      "lgb_admin1": 1.003,
+      "lgb_case": 1.249,
+      "ma3": 1.464,
+      "naive": 1.372,
+      "sarima": 1.042,
+      "snaive": 1.579
+    }
+  },
+  "early_warning_2026": [
+    {
+      "model": "LightGBM classifier",
+      "year": 2026,
+      "ROC_AUC": 0.795,
+      "PR_AUC": 0.133,
+      "Brier": 0.038,
+      "precision_at_10": 0.144,
+      "recall_at_20": 0.327,
+      "base_rate": 0.041,
+      "n": 1998,
+      "positives": 82
+    },
+    {
+      "model": "Logistic regression (5 signals)",
+      "year": 2026,
+      "ROC_AUC": 0.745,
+      "PR_AUC": 0.103,
+      "Brier": 0.041,
+      "precision_at_10": 0.067,
+      "recall_at_20": 0.346,
+      "base_rate": 0.041,
+      "n": 1998,
+      "positives": 82
+    },
+    {
+      "model": "Rule: rank by last month's deaths",
+      "year": 2026,
+      "ROC_AUC": 0.727,
+      "PR_AUC": 0.088,
+      "Brier": 0.049,
+      "precision_at_10": 0.044,
+      "recall_at_20": 0.218,
+      "base_rate": 0.041,
+      "n": 1998,
+      "positives": 82
+    }
+  ],
+  "rag": [
+    {
+      "conflict_case": "Russia\u2013Ukraine",
+      "rating": "RED",
+      "score": 3,
+      "forecast_next": 6780.0
+    },
+    {
+      "conflict_case": "Israel\u2013Hamas",
+      "rating": "GREEN",
+      "score": 1,
+      "forecast_next": 128.0
+    },
+    {
+      "conflict_case": "Afghanistan\u2013Pakistan",
+      "rating": "AMBER",
+      "score": 3,
+      "forecast_next": 318.0
+    },
+    {
+      "conflict_case": "US\u2013Iran",
+      "rating": "AMBER",
+      "score": 2,
+      "forecast_next": 26.0
+    }
+  ],
+  "runtime_s": 66.4
+}
