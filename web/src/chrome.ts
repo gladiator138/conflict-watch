@@ -15,7 +15,6 @@ export const navBar = (F: any, mode: "story" | "console") => `<header class="nav
 
 export const footer = (F: any) => `<footer>
   <div>CONFLICT WATCH · ${F.competition.toUpperCase()} · ${F.team.join(" · ")}</div>
-  <div class="ai">${F.ai_declaration}</div>
   <div>RUN ${F.run_id} · EXPORTED ${F.exported} · DATA AS OF ${F.data_as_of} · ${F.sources}</div>
 </footer>`;
 
@@ -99,7 +98,7 @@ const QA: [string, string][] = [
 ];
 export function qaDrawer(F: any) {
   const d = document.createElement("aside"); d.className = "drawer"; d.setAttribute("aria-label", "Jury Q&A");
-  d.innerHTML = `<button class="btn" style="position:absolute;top:28px;right:28px" id="qa-x">✕ CLOSE</button><div class="eyebrow">JURY Q&amp;A</div>${QA.map(([q, a]) => `<details><summary>${q}</summary><p class="small">${a}</p></details>`).join("")}<p class="small muted" style="margin-top:20px">${F.ai_declaration}</p>`;
+  d.innerHTML = `<button class="btn" style="position:absolute;top:28px;right:28px" id="qa-x">✕ CLOSE</button><div class="eyebrow">JURY Q&amp;A</div>${QA.map(([q, a]) => `<details><summary>${q}</summary><p class="small">${a}</p></details>`).join("")}`;
   document.body.appendChild(d);
   d.querySelector("#qa-x")!.addEventListener("click", () => d.classList.remove("open"));
   addEventListener("keydown", (e) => { if (e.key === "Escape") d.classList.remove("open"); });
