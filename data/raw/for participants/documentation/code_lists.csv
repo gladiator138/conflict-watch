@@ -1,0 +1,41 @@
+﻿field,code,meaning
+date_precision,1,Exact day
+date_precision,2,Two to six days
+date_precision,3,Week
+date_precision,4,Eight to 30 days or a known month
+date_precision,5,"Longer than a month, up to a year"
+violence_type_code,1,State-based violence
+violence_type_code,2,Non-state violence
+violence_type_code,3,One-sided violence
+source_location_precision,1,Exact location in the upstream data
+source_location_precision,2,Within 25 km of a known point upstream
+source_location_precision,3,Second-level administrative area known upstream
+source_location_precision,4,First-level administrative area known upstream
+source_location_precision,5,Approximate location such as a broad area or linear feature
+source_location_precision,6,Only the country is known
+source_location_precision,7,International waters or airspace
+event_clarity,1,Source identifies a discrete event
+event_clarity,2,Source reports an inseparable aggregate
+population_type_code,REF_UNHCR,Refugees under the UNHCR mandate
+population_type_code,ASY,Asylum seekers
+population_type_code,OIP,Other people in need of international protection
+sex_code,F,Female
+sex_code,M,Male
+sex_code,_X,Unspecified
+age_code,Y0T4,0–4 years
+age_code,Y5T11,5–11 years
+age_code,Y12T17,12–17 years
+age_code,Y18T59,18–59 years
+age_code,Y_GE60,60 years or older
+age_code,_X,Unspecified
+urbanisation_code,U,Urban
+urbanisation_code,R,Rural
+urbanisation_code,_X,Unspecified
+accommodation_code,C,Collective centre
+accommodation_code,I,Individual accommodation
+accommodation_code,P,Formal settlement
+accommodation_code,R,Transit centre
+accommodation_code,S,Informal settlement
+accommodation_code,_X,Unspecified
+series_code,IDMC_CONFLICT_IDP,IDMC estimate of people living in internal displacement associated with conflict and violence at year-end
+series_code,UNRWA_REGISTERED_REFUGEE,"Palestine refugees registered under UNRWA’s mandate, by reporting area"

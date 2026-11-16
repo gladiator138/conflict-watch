@@ -23,13 +23,13 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 
 ## Data
 
-Only the **official participant package** is used:
-`final dataset/7. scraped data/for participants/data/*.csv`
-(UCDP GED 26.1 + Candidate 26.01.26.09, source references, UNHCR bilateral and demographics,
-IDMC/UNRWA reference stocks, World Bank context). Source files are read-only and are never modified.
+Only the **official participant package** is used, and it is bundled in this repository under
+`data/raw/for participants/` (`data/*.csv` and `documentation/`): UCDP GED 26.1 + Candidate 26.01.26.09,
+source references, UNHCR bilateral and demographics, IDMC/UNRWA reference stocks and World Bank context.
+Licences and attributions are in `data/raw/for participants/documentation/Sources_and_Licenses.md`
+(UCDP data are CC BY 4.0). Source files are read-only and are never modified.
 
-The data folder is found automatically by searching up to six levels above this folder for
-`for participants/data`. To point elsewhere:
+To use a copy stored elsewhere:
 
 ```bash
 export CONFLICT_DATA_DIR="/path/to/for participants/data"

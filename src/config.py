@@ -19,12 +19,16 @@ for _p in (PROCESSED, FIG_DIR, TAB_DIR):
 def _find_raw_dir() -> Path:
     """Locate the official 'for participants/data' folder.
 
-    Order: $CONFLICT_DATA_DIR, then any 'for participants/data' folder under the
-    parent of the submission folder (the layout the dataset ships in).
+    Order: $CONFLICT_DATA_DIR, then the copy bundled in this repository
+    (data/raw/for participants/data), then any 'for participants/data' folder
+    under the parent of the submission folder (the layout the dataset ships in).
     """
     env = os.environ.get("CONFLICT_DATA_DIR")
     if env:
         return Path(env)
+    bundled = ROOT / "data" / "raw" / "for participants" / "data"
+    if (bundled / "conflict_events.csv").exists():
+        return bundled
     for dirpath, dirnames, _ in os.walk(ROOT.parent, followlinks=True):
         if dirpath.count(os.sep) - str(ROOT.parent).count(os.sep) > 6:
             dirnames[:] = []

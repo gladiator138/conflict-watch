@@ -7,10 +7,7 @@
    git remote add origin https://github.com/<account>/conflict-watch.git
    git push -u origin main
    ```
-The repository already contains everything the dashboard needs: processed data (`data/processed`), result
-tables (`outputs/tables`), fitted models (`models/`) and the map outline (`assets/`). The raw competition CSVs
-are **not** included; add them under `data/raw/for participants/data/` only if the organisers allow redistribution
-(the pipeline finds them there automatically).
+The repository contains everything: the raw competition CSVs (`data/raw/for participants/`), processed data (`data/processed`), result tables (`outputs/tables`), fitted models (`models/`) and the map outline (`assets/`). A fresh clone can run the dashboard at once, or rebuild everything with `python run_pipeline.py`.
 
 ## Streamlit Community Cloud (free, public URL)
 1. Go to share.streamlit.io and sign in with the GitHub account that owns the repository.

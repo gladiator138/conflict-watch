@@ -1,0 +1,40 @@
+﻿ucdp_dyad_id,conflict_case,case_scope,ucdp_dyad_name,ucdp_location_codes_included,scope_note
+14117,Russia–Ukraine,Focal,Government of Russia (Soviet Union) - Government of Ukraine,,Russia and Ukraine government dyad.
+14113,Russia–Ukraine,Context,Supporters of independence for Eastern Ukraine - Supporters of Ukrainian unity,,Selected Donbas dyads.
+14124,Russia–Ukraine,Context,Government of Ukraine - DPR,,Selected Donbas dyads.
+14184,Russia–Ukraine,Context,Government of Ukraine - LPR,,Selected Donbas dyads.
+14210,Russia–Ukraine,Context,Government of Ukraine - United Armed Forces of Novorossiya,,Selected Donbas dyads.
+15100,Russia–Ukraine,Context,Government of Ukraine - DPR,,Selected Donbas dyads.
+15101,Russia–Ukraine,Context,Government of Ukraine - LPR,,Selected Donbas dyads.
+920,Russia–Ukraine,Context,Government of Russia (Soviet Union) - Civilians,365|369,Selected one-sided violence by the Russian or Ukrainian government in the two countries.
+1150,Russia–Ukraine,Context,Government of Ukraine - Civilians,365|369,Selected one-sided violence by the Russian or Ukrainian government in the two countries.
+477,Israel–Hamas,Focal,Government of Israel - Hamas,,Israel government and Hamas dyad.
+474,Israel–Hamas,Context,Government of Israel - PFLP,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+475,Israel–Hamas,Context,Government of Israel - PFLP-GC,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+476,Israel–Hamas,Context,Government of Israel - Fatah,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+478,Israel–Hamas,Context,Government of Israel - PIJ,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+479,Israel–Hamas,Context,Government of Israel - PNA,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+481,Israel–Hamas,Context,Government of Israel - PRC,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+18806,Israel–Hamas,Context,Government of Israel - Palestinian Mujahideen Movement,,Other selected state-based dyads in the UCDP Israel: Palestine conflict.
+950,Israel–Hamas,Context,Government of Israel - Civilians,666,"Selected one-sided or non-state dyads in Israel, the Gaza Strip or the West Bank."
+967,Israel–Hamas,Context,PIJ - Civilians,666,"Selected one-sided or non-state dyads in Israel, the Gaza Strip or the West Bank."
+968,Israel–Hamas,Context,Hamas - Civilians,666,"Selected one-sided or non-state dyads in Israel, the Gaza Strip or the West Bank."
+18787,Israel–Hamas,Context,The Popular Forces - Hamas,666,"Selected one-sided or non-state dyads in Israel, the Gaza Strip or the West Bank."
+19057,Israel–Hamas,Context,Hamas - Rami Halas militia,666,"Selected one-sided or non-state dyads in Israel, the Gaza Strip or the West Bank."
+12291,Afghanistan–Pakistan,Focal,Government of Afghanistan - Government of Pakistan,,Afghanistan and Pakistan government dyad.
+857,Afghanistan–Pakistan,Context,Government of Pakistan - TTP,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+951,Afghanistan–Pakistan,Context,Government of Afghanistan - Civilians,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+973,Afghanistan–Pakistan,Context,IS - Civilians,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+997,Afghanistan–Pakistan,Context,TTP - Civilians,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+1197,Afghanistan–Pakistan,Context,Government of Pakistan - Civilians,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+14319,Afghanistan–Pakistan,Context,Government of Pakistan - IS,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+14320,Afghanistan–Pakistan,Context,Government of Afghanistan - IS,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+14542,Afghanistan–Pakistan,Context,IS - Taleban,700|770,"Selected TTP, Islamic State and one-sided government dyads in Afghanistan or Pakistan."
+735,Afghanistan–Pakistan,Context,Government of Afghanistan - Taleban,770,Selected Afghan Taleban dyads with an event location coded as Pakistan.
+981,Afghanistan–Pakistan,Context,Taleban - Civilians,770,Selected Afghan Taleban dyads with an event location coded as Pakistan.
+18868,US–Iran,Focal,"Government of Iran - Government of Israel, Government of United States of America",,Iran against a joint UCDP actor comprising Israel and the United States.
+15633,US–Iran,Context,Government of Iran - Government of Israel,,Selected Iran–Israel and regional coalition dyads involving Iraq or Yemen.
+17738,US–Iran,Context,"Government of United Kingdom, Government of United States of America - Government of Yemen (North Yemen)",,Selected Iran–Israel and regional coalition dyads involving Iraq or Yemen.
+18195,US–Iran,Context,Government of Israel - Government of Yemen (North Yemen),,Selected Iran–Israel and regional coalition dyads involving Iraq or Yemen.
+18904,US–Iran,Context,"Government of Iraq - Government of Israel, Government of United States of America",,Selected Iran–Israel and regional coalition dyads involving Iraq or Yemen.
+18907,US–Iran,Context,"Government of Israel, Government of United States of America - Kataib Hezbollah",,Selected Iran–Israel and regional coalition dyads involving Iraq or Yemen.

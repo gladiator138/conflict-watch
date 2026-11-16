@@ -1,0 +1,70 @@
+﻿file,field,type,definition
+conflict_events.csv,event_id,Integer,UCDP’s persistent event ID. Primary key in this file.
+conflict_events.csv,conflict_case,Text,Competition case assigned by the documented UCDP dyad selection.
+conflict_events.csv,case_scope,Category,Focal is the designated UCDP dyad for the named case. Context identifies other selected dyads.
+conflict_events.csv,source_release,Category,GED 26.1 for 2014–2025. Candidate 26.01.26.09 for January–September 2026.
+conflict_events.csv,event_year,Integer,UCDP event year.
+conflict_events.csv,date_start,Date,Earliest possible event date (YYYY-MM-DD).
+conflict_events.csv,date_end,Date,Latest possible event date (YYYY-MM-DD). A range may extend beyond the selection window.
+conflict_events.csv,date_precision,Integer code,Precision of the original dates. See the code list.
+conflict_events.csv,violence_type_code,Integer code,UCDP category of organised violence. See the code list.
+conflict_events.csv,ucdp_conflict_id,Integer,UCDP conflict ID in the source release. Some Candidate IDs and names are provisional.
+conflict_events.csv,ucdp_conflict_name,Text,UCDP conflict name as published. Some Candidate names are temporary placeholders.
+conflict_events.csv,ucdp_dyad_id,Integer,UCDP dyad ID in the source release. Links to documentation/event_scope.csv.
+conflict_events.csv,ucdp_dyad_name,Text,UCDP name of the actor pairing. A side can consist of multiple actors.
+conflict_events.csv,side_a_id,Integer,UCDP identifier for side A. A side can be a coalition.
+conflict_events.csv,side_a_name,Text,UCDP name for side A. For one-sided violence this is the perpetrating side.
+conflict_events.csv,side_b_id,Integer,UCDP identifier for side B. A side can be a coalition.
+conflict_events.csv,side_b_name,Text,UCDP name for side B. For one-sided violence this is civilians.
+conflict_events.csv,location_iso3,Text,"Derived economy join code for event location. Blank where international waters or airspace, or UCDP code 666 with no first-level area, prevent a reliable match."
+conflict_events.csv,ucdp_location_code,Integer,Original UCDP Gleditsch–Ward location code. A location code is independent of the actors’ countries.
+conflict_events.csv,ucdp_location_name,Text,Original UCDP geographic label.
+conflict_events.csv,admin1_name,Text,"First-level administrative area supplied by UCDP, when available."
+conflict_events.csv,ucdp_region,Text,Broad UCDP region for the event location.
+conflict_events.csv,source_location_precision,Integer code,Precision of the original UCDP location. The competition file provides first-level geography. See the code list.
+conflict_events.csv,event_clarity,Integer code,Whether the source reporting identifies a discrete incident or gives an inseparable aggregate. See the code list.
+conflict_events.csv,ucdp_active_year,Integer code,"1 means UCDP coded an active conflict, dyad or actor year. 0 means it did not. Candidate classification is provisional."
+conflict_events.csv,ucdp_coding_status,Text,UCDP coding review status. Clear indicates source coding status. Check labels identify a question under review.
+conflict_events.csv,source_count,Integer,Number of references consulted by UCDP for the event. Matches the number of rows in event_sources.csv for this event ID.
+conflict_events.csv,deaths_side_a,Integer,UCDP best estimate of fatalities sustained by side A. UCDP uses 0 for one-sided violence.
+conflict_events.csv,deaths_side_b,Integer,UCDP best estimate of fatalities sustained by side B. UCDP uses 0 for one-sided violence.
+conflict_events.csv,deaths_civilians,Integer,UCDP best estimate of civilian fatalities within this event.
+conflict_events.csv,deaths_unknown_status,Integer,UCDP best estimate of fatalities with unknown civilian or combatant status.
+conflict_events.csv,deaths_best,Integer,UCDP best estimate of total direct fatalities. Equals the sum of the four component fields.
+conflict_events.csv,deaths_low,Integer,UCDP low estimate of total direct fatalities. Preserved as published.
+conflict_events.csv,deaths_high,Integer,UCDP high estimate of total direct fatalities. Preserved as published.
+event_sources.csv,event_id,Integer,Parent event ID in conflict_events.csv.
+event_sources.csv,reference_order,Integer,One-based order of the reference in the UCDP event record. Composite key with event_id.
+event_sources.csv,publisher,Text,"Outlet, organisation or account recorded by UCDP. A few labels carry a Source: prefix for spreadsheet compatibility."
+event_sources.csv,published_date,Date,Publication date recorded by UCDP (YYYY-MM-DD). References may precede or follow an event.
+bilateral_displacement_stocks.csv,year,Integer,Calendar year of the UNHCR end-year stock.
+bilateral_displacement_stocks.csv,origin_iso3,Text,Origin code used by UNHCR. Composite key with year and asylum_iso3.
+bilateral_displacement_stocks.csv,asylum_iso3,Text,Asylum location code used by UNHCR.
+bilateral_displacement_stocks.csv,origin_name,Text,Country or territory of origin label used by UNHCR.
+bilateral_displacement_stocks.csv,asylum_name,Text,Country or territory of asylum label used by UNHCR.
+bilateral_displacement_stocks.csv,refugees_unhcr,Integer,"End-year refugees under UNHCR’s mandate, including persons in refugee-like situations as covered by UNHCR."
+bilateral_displacement_stocks.csv,asylum_seekers,Integer,End-year asylum seekers in the UNHCR population series.
+bilateral_displacement_stocks.csv,other_international_protection,Integer or blank,End-year persons in other international protection situations in UNHCR’s source. A dash in the source becomes a blank.
+unhcr_demographics.csv,unhcr_record_id,Text,Published Refugee Data Portal record ID. Primary key in this file.
+unhcr_demographics.csv,reference_month,Year-month,Reference month in the UNHCR source (YYYY-MM). This extract contains December values.
+unhcr_demographics.csv,year,Integer,Calendar year derived from the reference month.
+unhcr_demographics.csv,origin_iso3,Text,Country or territory of origin code in the source.
+unhcr_demographics.csv,asylum_iso3,Text,Country or territory where the population is recorded.
+unhcr_demographics.csv,population_type_code,Category,UNHCR stock category code. See the code list.
+unhcr_demographics.csv,population_type,Text,UNHCR stock category label.
+unhcr_demographics.csv,sex_code,Category,Sex code from the source. See the code list.
+unhcr_demographics.csv,age_code,Category,Age band code from the source. See the code list.
+unhcr_demographics.csv,urbanisation_code,Category,Urban or rural residence code. See the code list.
+unhcr_demographics.csv,accommodation_code,Category,Accommodation setting code. See the code list.
+unhcr_demographics.csv,people,Integer,Reported people in the coded population and demographic cell. Reporting coverage varies.
+displacement_reference_stocks.csv,series_code,Category,IDMC conflict-related internal displacement or UNRWA refugee registration. See the code list.
+displacement_reference_stocks.csv,year,Integer,Reference year of the stock or registration count.
+displacement_reference_stocks.csv,reporting_iso3,Text,Source economy or reporting area code. IDMC uses the area of internal displacement. UNRWA uses the area of registration. UNK is unknown.
+displacement_reference_stocks.csv,reporting_name,Text,Reporting area label from the relevant source.
+displacement_reference_stocks.csv,people,Integer,"People in the reference stock, as published. Interpret together with series_code."
+country_year_context.csv,iso3,Text,World Bank economy code. Composite key with year.
+country_year_context.csv,economy_name,Text,Economy name in the World Bank source.
+country_year_context.csv,year,Integer,"Calendar year, 2014–2025."
+country_year_context.csv,population_total,Integer or blank,"World Bank SP.POP.TOTL, midyear resident population estimate."
+country_year_context.csv,gdp_growth_annual_pct,Decimal or blank,"World Bank NY.GDP.MKTP.KD.ZG, annual real GDP growth in percent."
+country_year_context.csv,consumer_inflation_annual_pct,Decimal or blank,"World Bank FP.CPI.TOTL.ZG, annual consumer price inflation in percent."
