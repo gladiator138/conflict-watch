@@ -163,7 +163,7 @@ with st.sidebar:
     if mode == MODES[0]:
         st.markdown("The **Ops site** is the story and the ops console in one: scroll the story, or press "
                     "**OPS CONSOLE** for the staff-officer view. Switch to *Analyst dashboard* for the 12-page tool.")
-        st.link_button("⤢ Open full screen", "app/static/site/index.html", use_container_width=True)
+        st.link_button("⤢ Open full screen", "https://conflictmonitor2026.streamlit.app/~/+/app/static/site/index.html", use_container_width=True)
     st.markdown("---")
     st.caption(f"Data: UCDP GED 26.1 (2014–25) + Candidate 26.01.26.09 (Jan–Sep 2026, provisional), UNHCR, IDMC, "
                f"UNRWA, World Bank. Latest month: {LAST:%b %Y}.")
