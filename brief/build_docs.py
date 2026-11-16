@@ -261,13 +261,13 @@ speak = f"""
 <h2>RUN OF SHOW (15-MINUTE SLOT, TARGET 14:40 + Q&amp;A)</h2>
 <table><tr><th>Time</th><th>Slides / demo</th><th>Speaker</th><th>Key line</th></tr>
 <tr><td>0:00–2:40</td><td>1 Cover, 2 BLUF, 3 Why it matters</td><td>Maj Shivam Mehta</td><td>"Four wars, three warning signals, one exposed neighbour."</td></tr>
-<tr><td>2:40–3:35</td><td>4 Data and method</td><td>Capt Siddharth Sangwan</td><td>"36 checks; 2026 withheld; one command reproduces everything."</td></tr>
-<tr><td>3:35–7:05</td><td>5–9 Findings</td><td>Maj Shivam Mehta</td><td>"The front is widening, not moving. Pakistan fights on two fronts."</td></tr>
-<tr><td>7:05–8:40</td><td>10–11 Prediction and warning</td><td>Capt Siddharth Sangwan</td><td>"−{pooled:.0f}% error on unseen data; watch-list 3.5× random."</td></tr>
-<tr><td>8:40–9:20</td><td>12 GDELT (new results)</td><td>Capt Siddharth Sangwan</td><td>"News sees past UCDP's cut-off. It does not see ahead."</td></tr>
-<tr><td>9:20–11:50</td><td>13 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the rating, and here is where it comes from."</td></tr>
-<tr><td>11:50–13:10</td><td>14–15 Recommendations</td><td>Capt Sahil Singh</td><td>"SENSE and WARN need no new platform."</td></tr>
-<tr><td>13:10–14:40</td><td>16 Limits, 17 Scorecard</td><td>Capt Sahil Singh</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
+<tr><td>2:40–3:50</td><td>4 Approach, 5 Data and pipeline</td><td>Capt Siddharth Sangwan</td><td>"One question, five sub-questions, four rules; one command reproduces everything."</td></tr>
+<tr><td>3:50–7:20</td><td>6–10 Findings</td><td>Maj Shivam Mehta</td><td>"The front is widening, not moving. Pakistan fights on two fronts."</td></tr>
+<tr><td>7:20–8:55</td><td>11–12 Prediction and warning</td><td>Capt Siddharth Sangwan</td><td>"−{pooled:.0f}% error on unseen data; watch-list 3.5× random."</td></tr>
+<tr><td>8:55–9:35</td><td>13 GDELT (new results)</td><td>Capt Siddharth Sangwan</td><td>"News sees past UCDP's cut-off. It does not see ahead."</td></tr>
+<tr><td>9:35–11:50</td><td>14 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the rating, and here is where it comes from."</td></tr>
+<tr><td>11:50–13:10</td><td>15–16 Recommendations</td><td>Capt Sahil Singh</td><td>"SENSE and WARN need no new platform."</td></tr>
+<tr><td>13:10–14:40</td><td>17 Limits, 18 Scorecard</td><td>Capt Sahil Singh</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
 </table>
 <p><b>Speaker split:</b> <b>Maj Shivam Mehta</b> opens: bottom line, why it matters for India, and the military findings. <b>Capt Siddharth Sangwan</b> covers data, models and runs the live demo. <b>Capt Sahil Singh</b> closes with recommendations, limits and the scorecard, and chairs Q&amp;A. In Q&amp;A the chair routes data and model questions to Capt Sangwan, and military and India questions to Maj Mehta. The word-for-word script is in <i>Presenter_Script.pdf</i>.</p>
 

@@ -23,6 +23,7 @@ from pptx.util import Emu, Inches, Pt
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from src import config as C  # noqa: E402
+from deck import hud  # noqa: E402
 
 FIG = ROOT / "outputs" / "figures"
 SHOT = ROOT / "deck" / "shots"
@@ -46,6 +47,15 @@ RUN_ID = (C.TAB_DIR / "run_id.txt").read_text().strip()
 FOOTER = f"CONFLICT WATCH   |   DATA ANALYTICS COMPETITION 2026   |   UNCLASSIFIED - OPEN-SOURCE DATA ONLY   |   RUN {RUN_ID}"
 
 prs = Presentation()
+BGS = hud.backgrounds()
+META: dict = {}
+ICON_FOR = [("BOTTOM LINE", "target"), ("WHY IT MATTERS", "globe"), ("OUR APPROACH", "compass"),
+            ("DATA AND PIPELINE", "workflow"), ("FINDING 1", "activity"), ("FINDING 2", "crosshair"),
+            ("FINDING 3", "shield-alert"), ("FINDING 4", "newspaper"), ("FINDING 5", "tent"),
+            ("FINDING 6", "trending-up"), ("FINDING 7", "radar"), ("FINDING 8", "satellite"),
+            ("LIVE", "monitor-play"), ("RECOMMENDATIONS   |   OPERATIONAL", "swords"),
+            ("RECOMMENDATIONS   |   EXECUTION", "list-checks"), ("LIMITS", "scale"), ("THREAT SCORECARD", "siren"),
+            ("BACKUP", "archive"), ("ANNEX", "file-text")]
 prs.slide_width, prs.slide_height = Inches(13.333), Inches(7.5)
 BLANK = prs.slide_layouts[6]
 _n = [0]
@@ -87,6 +97,12 @@ def box(slide, x, y, w, h, fill=PANEL, line=BORDER, shape=MSO_SHAPE.ROUNDED_RECT
         s.adjustments[0] = radius
     if fill is None:
         s.fill.background()
+    elif fill == PANEL and shape in (MSO_SHAPE.ROUNDED_RECTANGLE, MSO_SHAPE.RECTANGLE):
+        s.fill.gradient()
+        s.fill.gradient_angle = 90
+        st = s.fill.gradient_stops
+        st[0].color.rgb, st[0].position = rgb("12304A"), 0.0
+        st[1].color.rgb, st[1].position = rgb("0A1A2B"), 1.0
     else:
         s.fill.solid()
         s.fill.fore_color.rgb = fill
@@ -96,6 +112,8 @@ def box(slide, x, y, w, h, fill=PANEL, line=BORDER, shape=MSO_SHAPE.ROUNDED_RECT
         s.line.color.rgb = line
         s.line.width = Pt(lw)
     s.shadow.inherit = False
+    if line is not None and line not in (BORDER, WHITE) and shape != MSO_SHAPE.OVAL:
+        glow(s, "%02X%02X%02X" % (line[0], line[1], line[2]), rad=6, alpha=30)
     return s
 
 
@@ -104,16 +122,80 @@ def new_slide(kicker=None, title=None, footer=True):
     s.background.fill.solid()
     s.background.fill.fore_color.rgb = BG
     _n[0] += 1
+    section = "cover" if kicker is None else ("plain" if kicker.startswith(("ANNEX", "BACKUP")) else "content")
+    bg = s.shapes.add_picture(str(BGS[section]), 0, 0, prs.slide_width, prs.slide_height)
+    bg.name = "!!bg"
     if kicker:
-        text(s, 0.55, 0.32, 12, 0.3, kicker, size=12, color=AMBER, bold=True)
-        spaced(s.shapes[-1])
+        ic = next((n for k, n in ICON_FOR if kicker.startswith(k)), "radar")
+        s.shapes.add_picture(str(hud.icon(ic, "F0B03A")), Inches(0.47), Inches(0.21), Inches(0.42), Inches(0.42)).name = "!!icon"
+        text(s, 0.92, 0.32, 9.6, 0.3, kicker, size=12, color=AMBER, bold=True)
+        spaced(s.shapes[-1]); s.shapes[-1].name = "!!kicker"
+        text(s, 9.9, 0.3, 2.9, 0.3, [[("● ", {"color": TEAL, "size": 10}), (f"LIVE  ·  {_n[0]:02d}", {})]],
+             size=10, color=TEXT3, bold=True, align=PP_ALIGN.RIGHT)
+        spaced(s.shapes[-1], 150); s.shapes[-1].name = "!!hud"
     if title:
         text(s, 0.55, 0.62, 12.3, 0.6, title, size=28, bold=True)
+        s.shapes[-1].name = "!!title"
     if footer:
         text(s, 0.55, 7.08, 10, 0.25, FOOTER, size=9, color=MUTED)
-        spaced(s.shapes[-1], 100)
+        spaced(s.shapes[-1], 100); s.shapes[-1].name = "!!footer"
         text(s, 12.2, 7.08, 0.6, 0.25, str(_n[0]), size=10, color=MUTED, align=PP_ALIGN.RIGHT)
+        s.shapes[-1].name = "!!num"
+    main = section != "plain"
+    META[s.slide_id] = dict(hdr=len(s.shapes), motion="morph" if main else "fade", build=main)
     return s
+
+
+def glow(shape, colour="4FD6E8", rad=8, alpha=35):
+    """Soft outer glow on a shape (ops-room accent)."""
+    from lxml import etree
+    spPr = shape._element.spPr
+    ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    el = spPr.find("{%s}effectLst" % ns)
+    if el is None:
+        el = etree.SubElement(spPr, "{%s}effectLst" % ns)
+    for c in list(el):
+        el.remove(c)
+    g = etree.SubElement(el, "{%s}glow" % ns, rad=str(int(rad * 12700)))
+    c = etree.SubElement(g, "{%s}srgbClr" % ns, val=colour)
+    etree.SubElement(c, "{%s}alpha" % ns, val=str(alpha * 1000))
+    return shape
+
+
+def text_glow(tb, colour="4FD6E8", rad=10, alpha=45):
+    from lxml import etree
+    ns = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    for p_ in tb.text_frame.paragraphs:
+        for r in p_.runs:
+            rPr = r.font._element
+            e = etree.SubElement(rPr, "{%s}effectLst" % ns)
+            g = etree.SubElement(e, "{%s}glow" % ns, rad=str(int(rad * 12700)))
+            c = etree.SubElement(g, "{%s}srgbClr" % ns, val=colour)
+            etree.SubElement(c, "{%s}alpha" % ns, val=str(alpha * 1000))
+            # effectLst must follow solidFill and precede latin in rPr
+            latin = rPr.find("{%s}latin" % ns)
+            if latin is not None:
+                latin.addprevious(e)
+    return tb
+
+
+def brackets(slide, x, y, w, h, colour=CYAN, arm=0.22, t=0.035):
+    """HUD corner brackets around a rectangle."""
+    for (bx, by, sx, sy) in ((x, y, 1, 1), (x + w, y, -1, 1), (x, y + h, 1, -1), (x + w, y + h, -1, -1)):
+        hx = bx if sx > 0 else bx - arm
+        vy = by if sy > 0 else by - arm
+        box(slide, hx, by - (0 if sy > 0 else t), arm, t, fill=colour, line=None, shape=MSO_SHAPE.RECTANGLE)
+        box(slide, bx - (0 if sx > 0 else t), vy, t, arm, fill=colour, line=None, shape=MSO_SHAPE.RECTANGLE)
+
+
+def node(slide, x, y, d, icon_name, colour=CYAN, hexcol="4FD6E8"):
+    """Glowing circular node with an icon."""
+    c = box(slide, x, y, d, d, fill=PANEL2, line=colour, shape=MSO_SHAPE.OVAL, lw=1.75)
+    glow(c, hexcol, rad=9, alpha=45)
+    pad = d * 0.2
+    slide.shapes.add_picture(str(hud.icon(icon_name, hexcol, glow=False)), Inches(x + pad * 0.62), Inches(y + pad * 0.62),
+                             Inches(d - pad * 1.24), Inches(d - pad * 1.24))
+    return c
 
 
 def spaced(shape, spc=200):
@@ -134,7 +216,8 @@ def kpi(slide, x, y, w, h, num, label, sub=None, color=AMBER, numsize=36, kick=N
     if kick:
         kicker_lbl(slide, x + 0.22, yy, w - 0.4, kick, size=11, color=TEXT3)
         yy += 0.32
-    text(slide, x + 0.22, yy, w - 0.4, 0.7, num, size=numsize, bold=True, color=color)
+    text_glow(text(slide, x + 0.22, yy, w - 0.4, 0.7, num, size=numsize, bold=True, color=color),
+              "%02X%02X%02X" % (color[0], color[1], color[2]), rad=8, alpha=35)
     yy += numsize / 72 * 1.12 + 0.05
     text(slide, x + 0.22, yy, w - 0.4, 0.8, label, size=15, bold=True, color=WHITE)
     if sub:
@@ -151,7 +234,8 @@ def kpi_row(slide, x, y, w, h, num, label, color=AMBER, numsize=26):
 def kpi_side(slide, x, y, w, h, num, label, color=AMBER, numsize=28):
     """Stacked side KPI card: number above, label below."""
     box(slide, x, y, w, h)
-    text(slide, x + 0.2, y + 0.12, w - 0.35, 0.55, num, size=numsize, bold=True, color=color)
+    text_glow(text(slide, x + 0.2, y + 0.12, w - 0.35, 0.55, num, size=numsize, bold=True, color=color),
+              "%02X%02X%02X" % (color[0], color[1], color[2]), rad=8, alpha=35)
     text(slide, x + 0.2, y + 0.12 + numsize / 72 * 1.15, w - 0.35, h - 0.6, label, size=13, color=TEXT2)
 
 
@@ -170,8 +254,12 @@ def picture(slide, path, x, y, w, h, frame=False, caption=None, cap_color=CYAN):
     pw, ph = iw * r, ih * r
     px, py = x + (w - pw) / 2, y + (h - ph) / 2
     if frame:
-        box(slide, px - 0.06, py - 0.06, pw + 0.12, ph + 0.12, fill=WHITE, line=None, radius=0.02)
+        fr = box(slide, px - 0.07, py - 0.07, pw + 0.14, ph + 0.14, fill=PANEL2, line=BORDER, radius=0.02,
+                 shape=MSO_SHAPE.RECTANGLE)
+        glow(fr, "4FD6E8", rad=10, alpha=22)
     slide.shapes.add_picture(str(path), Inches(px), Inches(py), Inches(pw), Inches(ph))
+    if frame:
+        brackets(slide, px - 0.12, py - 0.12, pw + 0.24, ph + 0.24)
     if caption:
         kicker_lbl(slide, px, py + ph + 0.1, pw, caption, color=cap_color, size=10)
     return px, py, pw, ph
@@ -339,29 +427,70 @@ sowhat(s, "Diaspora, energy routes, Chabahar and the IOR now sit inside the stri
 notes(s, "This is why the question matters to us. These are counts from the competition data, not opinion. "
          "The 9 million diaspora figure is domain knowledge and is marked as such.")
 
-# =========================================================================== 4 DATA & METHOD
-s = new_slide("DATA AND METHOD", "Official competition data, 36 quality checks, one reproducible pipeline")
-steps = [("DATA", "UCDP events + sources, UNHCR, IDMC, UNRWA, World Bank"),
-         ("CLEAN", "36 checks logged; nothing silently dropped"),
-         ("FEATURES", "4 conflicts + 222 area series, 153 months"),
-         ("FORECAST", "7 models, back-test 2022–25, test 2026"),
-         ("WARN", "Escalation classifier, RAG scorecard, what-if")]
-for i, (h, d) in enumerate(steps):
-    x = 0.55 + i * 2.47
-    sh = box(s, x, 1.42, 2.4, 0.62, fill=PANEL2 if i % 2 else PANEL, line=CYAN,
-             shape=MSO_SHAPE.PENTAGON if i == 0 else MSO_SHAPE.CHEVRON, lw=1.25)
-    text(s, x + 0.25, 1.42, 1.95, 0.62, h, size=15, bold=True, color=CYAN, align=PP_ALIGN.CENTER,
+# =========================================================================== 4 APPROACH
+s = new_slide("OUR APPROACH   |   HOW WE WENT ABOUT THE PROBLEM", "One operational question, five sub-questions, four rules we held to")
+box(s, 0.55, 1.45, 4.15, 3.85, line=AMBER, lw=1.5)
+kicker_lbl(s, 0.8, 1.68, 3.7, "THE QUESTION WE ASKED", color=AMBER, size=11)
+text(s, 0.8, 2.05, 3.7, 1.9, "When and where will conflict deaths rise next, and what does it mean for India?",
+     size=22, bold=True)
+text(s, 0.8, 3.85, 3.7, 1.3, ["Operational, not descriptive: a forecast can be scored on withheld data and turned "
+     "into tasking for ISR, plans and logistics."], size=13, color=TEXT3)
+QS = [("Q1", "activity", "How intense is each war, and how is it changing?", "Monthly panels, tempo, lethality, seasons", "6"),
+      ("Q2", "crosshair", "How are the wars fought: attrition, fronts, spread?", "Dyads, located events, theatre spread", "7–8"),
+      ("Q3", "trending-up", "Can we forecast deaths better than simple rules?", "7 models, back-test 2022–25, 2026 withheld", "11"),
+      ("Q4", "radar", "Can we warn which districts escalate next month?", "Sub-national classifier, watch-list", "12"),
+      ("Q5", "flag", "What does it mean for India?", "Exposure analysis + labelled domain reasoning", "3, 15")]
+for i, (q, ic, qq, mth, sl) in enumerate(QS):
+    y = 1.45 + i * 0.78
+    box(s, 4.9, y, 7.88, 0.68)
+    s.shapes.add_picture(str(hud.icon(ic, "4FD6E8")), Inches(5.0), Inches(y + 0.08), Inches(0.52), Inches(0.52))
+    text(s, 5.6, y, 0.55, 0.68, q, size=15, bold=True, color=CYAN, anchor=MSO_ANCHOR.MIDDLE)
+    text(s, 6.15, y + 0.05, 4.9, 0.34, qq, size=14, bold=True)
+    text(s, 6.15, y + 0.36, 4.9, 0.3, mth, size=11.5, color=TEXT3)
+    text(s, 11.2, y, 1.45, 0.68, f"SLIDE {sl}", size=10, bold=True, color=AMBER, align=PP_ALIGN.RIGHT,
          anchor=MSO_ANCHOR.MIDDLE)
+    spaced(s.shapes[-1], 120)
+RULES = [("lock", "2026 WITHHELD", "Every choice made on 2022–25; 2026 scored once"),
+         ("scale", "BEAT SIMPLE RULES", "Every model faces the 'no change' rule, and we show where it lost"),
+         ("badge-check", "DATA vs DOMAIN", "Each claim tagged: computed from the files, or expert reasoning"),
+         ("git-branch", "ONE COMMAND", f"Rebuilds every number; run ID {RUN_ID} on every output")]
+for i, (ic, h, d) in enumerate(RULES):
+    x = 0.55 + i * 3.08
+    box(s, x, 5.45, 2.95, 0.8, fill=PANEL2)
+    s.shapes.add_picture(str(hud.icon(ic, "35C2A6")), Inches(x + 0.1), Inches(5.55), Inches(0.58), Inches(0.58))
+    text(s, x + 0.75, 5.5, 2.15, 0.3, h, size=11, bold=True, color=TEAL)
+    spaced(s.shapes[-1], 120)
+    text(s, x + 0.75, 5.78, 2.15, 0.45, d, size=10.5, color=TEXT2)
+sowhat(s, "We framed it as a commander would: where to look next month, and how far to trust the answer.",
+       label="APPROACH")
+notes(s, "How we went about it. One operational question, broken into five sub-questions, each answered by a method "
+         "and a slide. Four rules: 2026 was withheld and scored once; every model faces the no-change rule; every claim "
+         "is tagged DATA or DOMAIN; and one command rebuilds every number, stamped with the run ID.")
+
+# =========================================================================== 5 DATA & PIPELINE
+s = new_slide("DATA AND PIPELINE", "From raw files to a monthly warning: one reproducible pipeline")
+box(s, 1.05, 1.98, 11.25, 0.045, fill=CYAN, line=None, shape=MSO_SHAPE.RECTANGLE)
+glow(s.shapes[-1], "4FD6E8", rad=6, alpha=55)
+STAGES = [("database", "INGEST", f"{ov.events.sum():,} UCDP events + UNHCR, IDMC, UNRWA, World Bank"),
+          ("filter", "CLEAN", f"{len(dq)} checks logged; raw kept beside every fix"),
+          ("layers", "FEATURES", "4 conflicts + 222 area series × 153 months; 9 families"),
+          ("scan-search", "EXPLORE", "Military lens + India exposure; DATA / DOMAIN tags"),
+          ("brain-circuit", "MODEL", "7 models; back-test 2022–25; 2026 withheld"),
+          ("radar", "WARN", "Escalation classifier, RAG scorecard, what-if"),
+          ("layout-dashboard", "DELIVER", "Dashboard, Ops site, brief; run ID on all")]
+for i, (ic, h, d) in enumerate(STAGES):
+    cx = 1.05 + i * (11.25 / 6)
+    node(s, cx - 0.42, 1.58, 0.84, ic)
+    text(s, cx - 0.85, 2.5, 1.7, 0.3, h, size=13, bold=True, color=CYAN, align=PP_ALIGN.CENTER)
     spaced(s.shapes[-1], 150)
-    text(s, x + 0.05, 2.12, 2.3, 0.7, d, size=12, color=TEXT3, align=PP_ALIGN.CENTER)
-kpi(s, 0.55, 3.0, 2.35, 3.1, f"{ov.events.sum():,}", "conflict events", "UCDP GED 26.1 2014–25 + Candidate Jan–Sep 2026",
-    color=AMBER, numsize=32)
-kpi(s, 3.05, 3.0, 2.35, 3.1, f"{len(dq)}", "quality checks", "Estimate repairs, month splitting, FATA→KP, outlet names",
-    color=CYAN, numsize=32)
-kpi(s, 5.55, 3.0, 2.35, 3.1, "2026", "withheld test", "Every design choice made on 2022–25 back-test only",
-    color=TEAL, numsize=32)
-picture(s, SHOT / "page01.png", 8.15, 3.0, 4.6, 2.75, frame=True,
-        caption="DASHBOARD   |   PAGE 1   |   COMMANDER'S BRIEF")
+    text(s, cx - 0.86, 2.82, 1.72, 0.85, d, size=11, color=TEXT2, align=PP_ALIGN.CENTER)
+kpi(s, 0.55, 3.85, 2.35, 2.35, f"{ov.events.sum():,}", "conflict events", "UCDP GED 26.1 2014–25 + Candidate Jan–Sep 2026",
+    color=AMBER, numsize=30)
+kpi(s, 3.05, 3.85, 2.35, 2.35, f"{len(dq)}", "quality checks", "Estimate repairs, month splitting, FATA→KP, outlet names",
+    color=CYAN, numsize=30)
+kpi(s, 5.55, 3.85, 2.35, 2.35, "2026", "withheld test", "Every design choice made on 2022–25 back-test only",
+    color=TEAL, numsize=30)
+picture(s, SHOT / "page01.png", 8.15, 3.9, 4.6, 2.0, frame=True, caption="DASHBOARD  |  COMMANDER'S BRIEF")
 sowhat(s, "Every number on these slides is regenerated by one command and matches the dashboard.",
        label="REPRODUCIBLE")
 notes(s, "Only the official participant package is used. Key cleaning decisions: 692 out-of-order estimates "
@@ -717,5 +846,6 @@ for i, name in enumerate(PAGES, 1):
     s = new_slide(f"ANNEX   |   DASHBOARD PAGE {i} OF 12", name)
     picture(s, SHOT / f"page{i:02d}.png", 1.6, 1.3, 10.13, 5.7, frame=True)
 
+hud.finish(prs, META)
 prs.save(OUT)
 print("deck saved:", OUT, "slides:", len(prs.slides))

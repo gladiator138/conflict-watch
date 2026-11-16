@@ -14,7 +14,7 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 | Path | What it is |
 |---|---|
 | `report/Conflict_Watch_Report.pdf` | Full analysis report: method, results, assumptions and limitations (10 pages + appendices); footer carries the run ID |
-| `deck/` | Presentation deck (PPTX + PDF), commander's brief, Q&A prep sheet, demo-video script |
+| `deck/` | Presentation deck (PPTX with Morph transitions and automatic build-ins via `deck/hud.py`; static PDF), commander's brief, Q&A prep sheet, demo-video script |
 | `app/app.py` | Hosted app: opens on the Ops site; classic 12-page Streamlit dashboard in *Analyst dashboard* mode |
 | `web/`, `scripts/export_web.py` | Ops site source (Vite + TypeScript + ECharts + d3-geo) and its data export with asserts |
 | `notebooks/01–05` | Executed notebooks: cleaning, features, EDA (military + India), forecasting, early warning |
