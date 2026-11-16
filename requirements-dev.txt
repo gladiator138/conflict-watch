@@ -8,3 +8,4 @@ markdown>=3.5
 python-pptx>=1.0
 pillow>=10
 qrcode>=7.4         # QR code on the closing slide
+openpyxl>=3.1
