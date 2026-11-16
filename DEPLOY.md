@@ -4,7 +4,7 @@
 1. Create an empty repository on GitHub (no README, no licence), for example `conflict-watch`.
 2. From this folder:
    ```bash
-   git remote add origin https://github.com/<account>/conflict-watch.git
+   git remote add origin https://github.com/gladiator138/conflict-watch.git
    git push -u origin main
    ```
 The repository contains everything: the raw competition CSVs (`data/raw/for participants/`), processed data (`data/processed`), result tables (`outputs/tables`), fitted models (`models/`) and the map outline (`assets/`). A fresh clone can run the dashboard at once, or rebuild everything with `python run_pipeline.py`.

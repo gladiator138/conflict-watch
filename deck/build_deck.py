@@ -29,7 +29,7 @@ SHOT = ROOT / "deck" / "shots"
 DF = ROOT / "deck" / "figs"
 TB = C.TAB_DIR
 OUT = ROOT / "deck" / "Conflict_Watch_Jury_Deck.pptx"
-QR_URL = ""   # set to the hosted dashboard or repository URL to print a QR code on the closing slide
+QR_URL = "https://github.com/gladiator138/conflict-watch"   # set to the hosted dashboard or repository URL to print a QR code on the closing slide
 
 
 def rgb(h):
@@ -560,7 +560,7 @@ if QR_URL:
     qrcode.make(QR_URL, box_size=12, border=2).save(qr_path)
     box(s, 11.02, 4.33, 1.34, 1.34, fill=WHITE, line=None, radius=0.03)
     s.shapes.add_picture(str(qr_path), Inches(11.06), Inches(4.37), Inches(1.26), Inches(1.26))
-    text(s, 10.6, 5.75, 2.18, 0.35, "SCAN: LIVE DASHBOARD", size=10, color=CYAN, bold=True, align=PP_ALIGN.CENTER)
+    text(s, 10.6, 5.75, 2.18, 0.35, "SCAN: REPOSITORY" if "github.com" in QR_URL else "SCAN: LIVE DASHBOARD", size=10, color=CYAN, bold=True, align=PP_ALIGN.CENTER)
 else:
     text(s, 10.6, 4.35, 2.18, 1.3, ["QR CODE", "link to be added"], size=13, color=MUTED, bold=True,
          align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
