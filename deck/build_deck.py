@@ -439,7 +439,7 @@ notes(s, "Protocol: fit on data to Dec 2025, freeze, score Jan–Sep 2026. Track
 
 # =========================================================================== 11 EARLY WARNING
 s = new_slide("FINDING 7   |   EARLY WARNING", "A district-level watch-list, one month ahead")
-picture(s, SHOT / "page09.png", 0.62, 1.48, 7.3, 4.25, frame=True, caption="DASHBOARD   |   PAGE 9   |   EARLY WARNING")
+picture(s, SHOT / "ops_warning.png", 0.62, 1.48, 7.3, 4.11, frame=True, caption="OPS SITE   |   EARLY WARNING REPLAY, MAR 2026")
 kpi_side(s, 8.3, 1.4, 4.48, 1.12, f"AUC {lg.ROC_AUC:.2f}", f"on 2026 withheld months (rule of thumb {rule.ROC_AUC:.2f}; "
          f"back-test 0.80–0.91)", color=AMBER, numsize=28)
 kpi_side(s, 8.3, 2.62, 4.48, 1.12, f"{lg.precision_at_10 / lg.base_rate:.1f}×", f"top-10 list precision "
@@ -450,21 +450,21 @@ kpi_side(s, 8.3, 5.06, 4.48, 1.12, "Contagion", "top signals: own intensity, cou
 sowhat(s, "ISR and analyst effort can be tasked on predicted risk before the escalation, not after.")
 
 # =========================================================================== LIVE DEMO SLIDE
-s = new_slide("LIVE DEMONSTRATION   |   INTERACTIVE DASHBOARD", "Twelve pages the jury can drive: drill down, replay, re-train, re-rule")
-picture(s, SHOT / "page03.png", 0.62, 1.48, 5.9, 3.35, frame=True, caption="PAGE 3   |   AREA DRILL-DOWN")
-picture(s, SHOT / "page11.png", 6.85, 1.48, 5.9, 3.35, frame=True, caption="PAGE 11   |   SCORECARD LAB")
+s = new_slide("LIVE DEMONSTRATION   |   CONFLICT WATCH OPS SITE", "A briefing site and an ops console the jury can drive")
+picture(s, SHOT / "ops_hero.png", 0.62, 1.48, 5.9, 3.32, frame=True, caption="OPS SITE   |   STORY: FOUR WARS, ONE EXPOSED NEIGHBOUR")
+picture(s, SHOT / "ops_console_whatif.png", 6.85, 1.48, 5.9, 3.32, frame=True, caption="OPS CONSOLE   |   WHAT-IF: AF-PAK +30% x 3 MONTHS = 359")
 for i, (h, d, col) in enumerate([
-        ("Drill down", "Any of 222 areas: deaths, events, forecast, warning history", CYAN),
+        ("Story", "14 chapters: globe, BLUF, fog of war, FATA fix, India ring", CYAN),
         ("Replay", "Pick a 2026 month: what was flagged, what escalated", AMBER),
-        ("What-if + re-train", "Shock a conflict; refit the model live in seconds", RED),
-        ("Re-rule", "Move the scorecard and alert thresholds; ratings update", TEAL)]):
+        ("What-if", "Shock a conflict: the exact submitted model answers", RED),
+        ("Console", "Ctrl+K to any of 222 areas; print brief and I&W bulletin", TEAL)]):
     x = 0.55 + i * 3.1
     box(s, x, 5.3, 2.93, 0.98)
     text(s, x + 0.15, 5.36, 2.7, 0.35, h, size=16, bold=True, color=col)
     text(s, x + 0.15, 5.7, 2.7, 0.55, d, size=11, color=TEXT2)
-sowhat(s, "Runs offline on a laptop; every table downloads as CSV; nothing on screen is a static picture.", label="DEMO")
-notes(s, "Switch to the browser here. Order: Commander's brief, Area drill-down, Military lens, Forecast, Early warning "
-         "(replay and alert threshold), What-if and live re-train, Scorecard lab.")
+sowhat(s, "Live at conflictmonitor2026.streamlit.app  ·  offline single-file backup  ·  every number traced to the pipeline.", label="DEMO")
+notes(s, "Switch to the browser. Story: globe, Af-Pak card flip, fog-of-war toggle, FATA switch, forecast PLAY, "
+         "warning replay Mar 2026, what-if Af-Pak +30% x 3 = 359, scorecard lab reset. Then OPS CONSOLE, Ctrl+K Kandahar.")
 
 # =========================================================================== 12 RECOMMENDATIONS
 s = new_slide("RECOMMENDATIONS   |   OPERATIONAL DESIGN", "Four lines of effort for the Armed Forces: sense, warn, shield, sustain")
