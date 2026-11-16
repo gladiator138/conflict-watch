@@ -156,12 +156,31 @@ with st.sidebar:
                 f"<div style='color:{T['text']};font-weight:900;font-size:1.9rem;line-height:1.1'>CONFLICT WATCH</div>"
                 f"<div style='color:{T['text3']};font-size:0.95rem;margin-bottom:12px'>When and where will deaths rise next, "
                 f"and what does it mean for India?</div>", unsafe_allow_html=True)
-    page = st.radio("Navigate", PAGES, label_visibility="collapsed")
+    MODES = ["🛰️ Ops site", "📊 Analyst dashboard"]
+    mode = st.radio("Mode", MODES, horizontal=True, label_visibility="collapsed", key="mode")
+    st.markdown("---")
+    page = st.radio("Navigate", PAGES, label_visibility="collapsed") if mode == MODES[1] else None
+    if mode == MODES[0]:
+        st.markdown("The **Ops site** is the story and the ops console in one: scroll the story, or press "
+                    "**OPS CONSOLE** for the staff-officer view. Switch to *Analyst dashboard* for the 12-page tool.")
+        st.link_button("⤢ Open full screen", "app/static/site/index.html", use_container_width=True)
     st.markdown("---")
     st.caption(f"Data: UCDP GED 26.1 (2014–25) + Candidate 26.01.26.09 (Jan–Sep 2026, provisional), UNHCR, IDMC, "
                f"UNRWA, World Bank. Latest month: {LAST:%b %Y}.")
     st.caption("Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh")
     st.caption("UNCLASSIFIED · OPEN-SOURCE DATA ONLY")
+
+
+SITE = ROOT / "app" / "static" / "conflictwatch.html"
+if page is None:
+    import streamlit.components.v1 as components
+    st.markdown("<style>.block-container,[data-testid=stMainBlockContainer]{padding:0.6rem 1rem 0 1rem!important;max-width:100%!important}"
+                "header[data-testid='stHeader']{background:transparent}</style>", unsafe_allow_html=True)
+    if SITE.exists():
+        components.html(SITE.read_text(encoding="utf-8"), height=940, scrolling=True)
+    else:
+        st.warning("Ops site not built. Run `cd web && npm run build` then `python scripts/build_site.py`.")
+    st.stop()
 
 
 def footer():

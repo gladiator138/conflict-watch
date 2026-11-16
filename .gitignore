@@ -4,3 +4,6 @@ __pycache__/
 deck/demo_raw/
 .DS_Store
 .venv/
+web/node_modules/
+web/dist/
+web/dist-single/

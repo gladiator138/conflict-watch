@@ -15,7 +15,8 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 |---|---|
 | `report/Conflict_Watch_Report.pdf` | Full analysis report: method, results, assumptions and limitations (17 pages) |
 | `deck/` | Presentation deck (PPTX + PDF), commander's brief, Q&A prep sheet, demo-video script |
-| `app/app.py` | Interactive Streamlit dashboard used for the live demo (12 pages, works offline) |
+| `app/app.py` | Hosted app: opens on the Ops site; classic 12-page Streamlit dashboard in *Analyst dashboard* mode |
+| `web/`, `scripts/export_web.py` | Ops site source (Vite + TypeScript + ECharts + d3-geo) and its data export with asserts |
 | `notebooks/01–05` | Executed notebooks: cleaning, features, EDA (military + India), forecasting, early warning |
 | `src/` | All pipeline code: `cleaning`, `features`, `insights`, `models`, `viz`, `config` |
 | `run_pipeline.py` | One command that reproduces every table, model and figure |
@@ -53,6 +54,24 @@ python deck/build_deck.py         # rebuild the slide deck
 
 The dashboard needs the outputs of `run_pipeline.py` (already included). It makes no internet calls.
 Its maps use a bundled Natural Earth outline (`assets/world_lowres.geojson`).
+
+## Ops site (story website + ops console)
+
+The hosted app opens on the **Ops site**: a scroll-driven briefing (14 chapters) and a staff-officer console
+(Brief, Map, Area, Forecast, Warning, What-if, Scorecard, Data quality), in a dark ops-room design.
+The classic 12-page Streamlit dashboard is one click away in the sidebar (*Analyst dashboard*).
+
+```bash
+python scripts/export_web.py     # frozen outputs -> web/public/data; asserts every headline number (fails on any mismatch)
+python scripts/build_site.py     # Vite build -> app/static/site/ (PWA, works offline) + app/static/conflictwatch.html (single file)
+cd web && npm run dev            # live development server
+```
+
+* Every number comes from `web/public/data/facts.json`, generated from `outputs/tables`. The what-if simulator ships the
+  exact Python ensemble output for every slider position (Af–Pak +30% × 3 months = 359, asserted).
+* Maps draw India's boundary from Natural Earth's India point-of-view layer; PoK areas are shown as points inside it.
+* Keys: **P** presenter mode (15-min timer, arrows jump chapters), **N** speaker notes, **Ctrl/⌘ K** command palette in the console.
+* `deck/conflictwatch.html` is the single-file offline backup. `DEMO_SCRIPT.md` is the 3-minute live-demo walkthrough.
 
 ## Method in one paragraph
 
