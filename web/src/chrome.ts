@@ -1,9 +1,12 @@
 // Shared page chrome: classification strip, nav, footer, presenter mode, Q&A drawer, theme.
 import { RAG_COLOR } from "./data";
+import LOGO_L from "./img/jimmy.png";   // Corps of Signals "Jimmy", top left
+import LOGO_R from "./img/mcte.png";    // MCTE formation sign, top right
 
-export const strip = (F: any) => `<div class="strip" role="note"><span>UNCLASSIFIED — OPEN-SOURCE DATA ONLY</span><span class="sep">·</span><span>DATA AS OF 30 SEP 2026</span><span class="sep">·</span><span>RUN ${F.run_id}</span></div>`;
+export const strip = (F: any) => `<div class="strip" role="note"><span>UNCLASSIFIED — COMPETITION DATA ONLY</span><span class="sep">·</span><span>DATA AS OF 30 SEP 2026</span><span class="sep">·</span><span>RUN ${F.run_id}</span></div>`;
 
 export const navBar = (F: any, mode: "story" | "console") => `<header class="nav">
+  <img class="logo" src="${LOGO_L}" alt="Corps of Signals" />
   <div class="brand"><span class="dot"></span>CONFLICT WATCH</div>
   <div class="ragstrip">${F.scorecard.map((s: any) => `<span class="chip-rag" style="color:${RAG_COLOR[s.rating]}" title="${s.name}: ${s.rating}">${s.short} ${s.rating}</span>`).join("")}</div>
   <div class="grow"></div>
@@ -11,6 +14,7 @@ export const navBar = (F: any, mode: "story" | "console") => `<header class="nav
   ${mode === "story" ? `<a class="btn" href="console/index.html" id="to-console">OPS CONSOLE ▸</a>` : `<a class="btn" href="../index.html" id="to-story">◂ STORY</a>`}
   <button class="btn hide-sm" id="theme" aria-label="Toggle light or dark theme">◐</button>
   <button class="btn hide-sm" id="pres" aria-label="Presenter mode (P)">P</button>
+  <img class="logo" src="${LOGO_R}" alt="MCTE formation sign" />
 </header>`;
 
 export const footer = (F: any) => `<footer>

@@ -66,14 +66,14 @@ def _glow(im, box, colour, radius, alpha):
 def _brackets(im, colour="4FD6E8", inset=34, arm=70, width=4, alpha=170):
     d = ImageDraw.Draw(im)
     c = _hex(colour, alpha)
-    for (x, y, sx, sy) in ((inset, inset, 1, 1), (W - inset, inset, -1, 1), (inset, H - inset, 1, -1),
-                           (W - inset, H - inset, -1, -1)):
+    # bottom corners only: the two formation logos sit in the top corners
+    for (x, y, sx, sy) in ((inset, H - inset, 1, -1), (W - inset, H - inset, -1, -1)):
         d.line([(x, y), (x + sx * arm, y)], fill=c, width=width)
         d.line([(x, y), (x, y + sy * arm)], fill=c, width=width)
     return im
 
 
-def _title_line(im, y=255, x0=110, length=900):
+def _title_line(im, y=255, x0=148, length=900):
     g = Image.new("RGBA", im.size, (0, 0, 0, 0))
     d = ImageDraw.Draw(g)
     for i in range(length):

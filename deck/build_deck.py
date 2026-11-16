@@ -44,7 +44,7 @@ AMBER, RED, CYAN, TEAL, VIOLET, AMBER_BG = (rgb("F0B03A"), rgb("FF4D5E"), rgb("4
                                             rgb("A794FF"), rgb("2A2008"))
 FONT = "Calibri"
 RUN_ID = (C.TAB_DIR / "run_id.txt").read_text().strip()
-FOOTER = f"CONFLICT WATCH   |   DATA ANALYTICS COMPETITION 2026   |   UNCLASSIFIED - OPEN-SOURCE DATA ONLY   |   RUN {RUN_ID}"
+FOOTER = f"CONFLICT WATCH   |   DATA ANALYTICS COMPETITION 2026   |   UNCLASSIFIED - COMPETITION DATA ONLY   |   RUN {RUN_ID}"
 
 prs = Presentation()
 BGS = hud.backgrounds()
@@ -117,6 +117,13 @@ def box(slide, x, y, w, h, fill=PANEL, line=BORDER, shape=MSO_SHAPE.ROUNDED_RECT
     return s
 
 
+LOGO_L = ROOT / "assets" / "logos" / "jimmy_sm.png"     # Corps of Signals 'Jimmy', top left
+LOGO_R = ROOT / "assets" / "logos" / "mcte_sm.png"      # MCTE formation sign, top right
+from PIL import Image as _PI
+JIMMY_AR = (lambda im: im.width / im.height)(_PI.open(LOGO_L))
+MCTE_AR = (lambda im: im.width / im.height)(_PI.open(LOGO_R))
+
+
 def new_slide(kicker=None, title=None, footer=True):
     s = prs.slides.add_slide(BLANK)
     s.background.fill.solid()
@@ -125,16 +132,21 @@ def new_slide(kicker=None, title=None, footer=True):
     section = "cover" if kicker is None else ("plain" if kicker.startswith(("ANNEX", "BACKUP")) else "content")
     bg = s.shapes.add_picture(str(BGS[section]), 0, 0, prs.slide_width, prs.slide_height)
     bg.name = "!!bg"
+    lh = 1.05 if section == "cover" else 0.82          # logo height, inches
+    jw = lh * JIMMY_AR
+    s.shapes.add_picture(str(LOGO_L), Inches(0.14), Inches(0.1), Inches(jw), Inches(lh)).name = "!!logoL"
+    mw = lh * MCTE_AR
+    s.shapes.add_picture(str(LOGO_R), prs.slide_width - Inches(0.14 + mw), Inches(0.1), Inches(mw), Inches(lh)).name = "!!logoR"
     if kicker:
         ic = next((n for k, n in ICON_FOR if kicker.startswith(k)), "radar")
-        s.shapes.add_picture(str(hud.icon(ic, "F0B03A")), Inches(0.47), Inches(0.21), Inches(0.42), Inches(0.42)).name = "!!icon"
-        text(s, 0.92, 0.32, 9.6, 0.3, kicker, size=12, color=AMBER, bold=True)
+        s.shapes.add_picture(str(hud.icon(ic, "F0B03A")), Inches(0.74), Inches(0.21), Inches(0.42), Inches(0.42)).name = "!!icon"
+        text(s, 1.2, 0.32, 8.0, 0.3, kicker, size=12, color=AMBER, bold=True)
         spaced(s.shapes[-1]); s.shapes[-1].name = "!!kicker"
-        text(s, 9.9, 0.3, 2.9, 0.3, [[("● ", {"color": TEAL, "size": 10}), (f"LIVE  ·  {_n[0]:02d}", {})]],
+        text(s, 9.3, 0.3, 2.85, 0.3, [[("● ", {"color": TEAL, "size": 10}), (f"LIVE  ·  {_n[0]:02d}", {})]],
              size=10, color=TEXT3, bold=True, align=PP_ALIGN.RIGHT)
         spaced(s.shapes[-1], 150); s.shapes[-1].name = "!!hud"
     if title:
-        text(s, 0.55, 0.62, 12.3, 0.6, title, size=28, bold=True)
+        text(s, 0.74, 0.62, 11.5, 0.6, title, size=28, bold=True)
         s.shapes[-1].name = "!!title"
     if footer:
         text(s, 0.55, 7.08, 10, 0.25, FOOTER, size=9, color=MUTED)
@@ -379,7 +391,7 @@ _rg, _rb = gifs.radar_gif(BGS["cover"], int(hud.W * 0.72), int(hud.H * 0.5), 660
 s.shapes.add_picture(str(_rg), Inches(_rb[0] / 200), Inches(_rb[1] / 200), Inches((_rb[2] - _rb[0]) / 200),
                      Inches((_rb[3] - _rb[1]) / 200))
 kicker_lbl(s, 6.6, 6.55, 6.4, f"SYSTEM ONLINE  ·  4 CONFLICTS  ·  222 AREAS  ·  RUN {RUN_ID}", color=CYAN, size=10)
-kicker_lbl(s, 0.6, 0.55, 12, "DATA ANALYTICS COMPETITION 2026", size=13)
+kicker_lbl(s, 0.85, 0.55, 8, "DATA ANALYTICS COMPETITION 2026", size=13)
 text(s, 0.6, 1.55, 5.6, 1.2, "CONFLICT WATCH", size=52, bold=True)
 text(s, 0.6, 2.75, 5.3, 1.6, "When and where will conflict deaths rise next, and what does it mean for India?",
      size=22, color=TEXT2)
@@ -387,7 +399,7 @@ text(s, 0.6, 4.2, 5.3, 0.8, ["Russia–Ukraine  ·  Israel–Hamas", "Afghanista
      size=16, color=AMBER, bold=True)
 kicker_lbl(s, 0.6, 5.05, 5.3, "TEAM", color=TEXT3, size=11)
 text(s, 0.6, 5.38, 5.3, 1.2, ["Maj Shivam Mehta", "Capt Siddharth Sangwan", "Capt Sahil Singh"], size=18, bold=True)
-text(s, 0.6, 6.85, 12, 0.3, "CONFLICT ESCALATION FORECASTING & EARLY WARNING   |   UNCLASSIFIED - OPEN-SOURCE DATA ONLY",
+text(s, 0.6, 6.85, 12, 0.3, "CONFLICT ESCALATION FORECASTING & EARLY WARNING   |   UNCLASSIFIED - COMPETITION DATA ONLY",
      size=10, color=MUTED)
 spaced(s.shapes[-1], 100)
 notes(s, "Good morning. In one sentence: we built a system that forecasts where conflict deaths will rise next "

@@ -163,7 +163,7 @@ export function renderConsole(D: Data) {
 function bulletin(D: Data) {
   const F = D.facts;
   const top = D.areas.areas.filter((a) => !a.unloc).slice(0, 20);
-  return `<h2>MONTHLY I&amp;W BULLETIN · OCTOBER 2026</h2><p class="small">UNCLASSIFIED — OPEN-SOURCE DATA ONLY · RUN ${F.run_id} · Data as of 30 Sep 2026</p>
+  return `<h2>MONTHLY I&amp;W BULLETIN · OCTOBER 2026</h2><p class="small">UNCLASSIFIED — COMPETITION DATA ONLY · RUN ${F.run_id} · Data as of 30 Sep 2026</p>
   <p><b>RAG:</b> ${F.scorecard.map((s: Score) => `${s.short} ${s.rating} (${fmt(s.forecast)})`).join(" · ")}. No rating changed from the model's September run.</p>
   <table class="t small"><tr><th>#</th><th>Area</th><th>Country</th><th>Conflict</th><th class="num">P(escalate)</th></tr>${top.map((a, i) => `<tr><td>${i + 1}</td><td>${a.name}</td><td>${a.iso}</td><td>${CASE_NAME[a.c]}</td><td class="num">${pct(a.p)}</td></tr>`).join("")}</table>
   <p><b>Signposts to watch:</b> Af–Pak interstate clashes above 150 deaths a month; any US–Iran strike in a Gulf state or Indian Ocean waters; RU–UA deaths above 10,000 a month; any hotspot rising above 25%.</p>`;

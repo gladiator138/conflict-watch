@@ -151,7 +151,12 @@ LAST = cm.month.max()
 PAGES = ["🎯 Commander's brief", "📊 Conflict explorer", "📍 Area drill-down", "⚔️ Military lens", "🇮🇳 India impact",
          "🏠 Displacement", "📡 Media attention", "📈 Forecast (2026 test)", "🚨 Early warning",
          "🧪 What-if simulator", "🎛️ Scorecard lab", "🧹 Data quality & method"]
+from src.brand import data_uri, JIMMY, MCTE
+_LJ, _LM = data_uri(JIMMY), data_uri(MCTE)
 with st.sidebar:
+    st.markdown(f"<div style='display:flex;justify-content:space-between;align-items:flex-start;margin:-6px 0 10px 0'>"
+                f"<img src='{_LJ}' alt='Corps of Signals' style='height:78px'/>"
+                f"<img src='{_LM}' alt='MCTE formation sign' style='height:72px'/></div>", unsafe_allow_html=True)
     st.markdown(f"<div style='color:{T['amber']};font-weight:800;letter-spacing:3px;font-size:1.0rem'>DATA ANALYTICS COMPETITION 2026</div>"
                 f"<div style='color:{T['text']};font-weight:900;font-size:1.9rem;line-height:1.1'>CONFLICT WATCH</div>"
                 f"<div style='color:{T['text3']};font-size:0.95rem;margin-bottom:12px'>When and where will deaths rise next, "
@@ -168,7 +173,7 @@ with st.sidebar:
     st.caption(f"Data: UCDP GED 26.1 (2014–25) + Candidate 26.01.26.09 (Jan–Sep 2026, provisional), UNHCR, IDMC, "
                f"UNRWA, World Bank. Latest month: {LAST:%b %Y}.")
     st.caption("Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh")
-    st.caption("UNCLASSIFIED · OPEN-SOURCE DATA ONLY")
+    st.caption("UNCLASSIFIED · COMPETITION DATA ONLY")
     _rid = C.TAB_DIR / "run_id.txt"
     if _rid.exists():
         st.caption(f"RUN {_rid.read_text().strip()} · matches the report, deck and Ops site")
@@ -186,10 +191,20 @@ if page is None:
     st.stop()
 
 
+# Formation banner on every analyst page: Corps of Signals 'Jimmy' top left, MCTE formation sign top right
+st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-between;gap:16px;padding:4px 2px 10px 2px;"
+            f"border-bottom:1px solid {T['border']};margin-bottom:10px'>"
+            f"<img src='{_LJ}' alt='Corps of Signals' style='height:64px'/>"
+            f"<div style='text-align:center;flex:1'><div style='color:{T['amber']};font-weight:800;letter-spacing:4px;font-size:0.85rem'>"
+            f"DATA ANALYTICS COMPETITION 2026</div><div style='color:{T['text']};font-weight:900;letter-spacing:3px;font-size:1.25rem'>"
+            f"CONFLICT WATCH</div></div>"
+            f"<img src='{_LM}' alt='MCTE formation sign' style='height:60px'/></div>", unsafe_allow_html=True)
+
+
 def footer():
     _rid = C.TAB_DIR / "run_id.txt"
     run = f"  |  RUN {_rid.read_text().strip()}" if _rid.exists() else ""
-    st.markdown(f'<div class="footer">CONFLICT WATCH  |  DATA ANALYTICS COMPETITION 2026  |  UNCLASSIFIED - OPEN-SOURCE DATA ONLY{run}</div>',
+    st.markdown(f'<div class="footer">CONFLICT WATCH  |  DATA ANALYTICS COMPETITION 2026  |  UNCLASSIFIED - COMPETITION DATA ONLY{run}</div>',
                 unsafe_allow_html=True)
 
 

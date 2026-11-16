@@ -94,8 +94,10 @@ cards = "".join(
     f"{rag.loc[c, 'pi80_hi']:,.0f} · top area {str(rag.loc[c, 'top_areas']).split(' (')[0]}</span></div>"
     for c in C.CASES)
 
+from src.brand import brand_corners
+BRAND_CSS = "position:relative;padding-left:24mm;padding-right:24mm;min-height:18mm"
 brief = f"""
-<div class="hdr"><div class="k">COMMANDER'S BRIEF &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026 &nbsp;|&nbsp; AS OF 30 SEP 2026</div>
+<div class="hdr" style="{BRAND_CSS}">{{BRAND}}<div class="k">COMMANDER'S BRIEF &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026 &nbsp;|&nbsp; AS OF 30 SEP 2026</div>
 <h1>Conflict Watch: where deaths rise next, and what it means for India</h1>
 <div class="m">Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh &nbsp;·&nbsp; Source: official competition package (UCDP, UNHCR, IDMC,
 UNRWA, World Bank) &nbsp;·&nbsp; <span class="d">DATA</span> computed from the files &nbsp;
@@ -147,9 +149,9 @@ Israel–Hamas −{red['Israel–Hamas']:.0f}%); {cov80:.0f}% of outcomes inside
 <li>UCDP counts <i>reported</i> deaths; 2026 data are provisional; 92% of 2026 RU–UA deaths lack a location; decisions to
 start a war (Feb 2022, Feb 2026) are not predictable from death counts.</li>
 </ul>
-<div class="foot">UNCLASSIFIED – OPEN-SOURCE DATA ONLY &nbsp;|&nbsp; Full method: Conflict Watch analysis report &nbsp;|&nbsp; Live: Conflict Watch dashboard</div>
+<div class="foot">UNCLASSIFIED – COMPETITION DATA ONLY &nbsp;|&nbsp; Full method: Conflict Watch analysis report &nbsp;|&nbsp; Live: Conflict Watch dashboard</div>
 """
-(OUT / "Commanders_Brief.html").write_text(page("Commander's Brief – Conflict Watch", brief))
+(OUT / "Commanders_Brief.html").write_text(page("Commander's Brief – Conflict Watch", brief.replace("{BRAND}", brand_corners(16))))
 
 # ----------------------------------------------------------------------------------- Q&A + speaker split
 QA = [
@@ -254,7 +256,7 @@ qa_html = "".join(f"<h3>{sec}</h3>" + "".join(f"<div class='q'>Q. {q}</div><div 
                   for sec, items in QA)
 
 speak = f"""
-<div class="hdr"><div class="k">PRESENTER PACK &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026</div>
+<div class="hdr" style="{BRAND_CSS}">{{BRAND}}<div class="k">PRESENTER PACK &nbsp;|&nbsp; DATA ANALYTICS COMPETITION 2026</div>
 <h1>Run of show, speaker split and Q&amp;A preparation</h1>
 <div class="m">Designed for a Google Meet presentation: share the deck window, then switch to the live Ops site tab for the demo. Run {RUN_ID}.</div></div>
 
@@ -294,7 +296,7 @@ speak = f"""
 
 <h2>LIKELY QUESTIONS AND ANSWERS</h2>
 <div class="cols"><div>{qa_html}</div></div>
-<div class="foot">UNCLASSIFIED – OPEN-SOURCE DATA ONLY</div>
+<div class="foot">UNCLASSIFIED – COMPETITION DATA ONLY</div>
 """
-(OUT / "QA_Prep_and_Speaker_Split.html").write_text(page("Q&A Prep – Conflict Watch", speak))
+(OUT / "QA_Prep_and_Speaker_Split.html").write_text(page("Q&A Prep – Conflict Watch", speak.replace("{BRAND}", brand_corners(16))))
 print("brief and Q&A written")

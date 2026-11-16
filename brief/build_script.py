@@ -183,6 +183,16 @@ sec.left_margin = sec.right_margin = Cm(2); sec.top_margin = sec.bottom_margin =
 st = doc.styles["Normal"]; st.font.name = "Calibri"; st.font.size = Pt(11)
 st.element.rPr.rFonts.set(qn("w:eastAsia"), "Calibri")
 
+# Formation logos in the page header: Corps of Signals 'Jimmy' left, MCTE formation sign right
+from docx.enum.text import WD_TAB_ALIGNMENT
+sec.header_distance = Cm(0.7)
+hp = sec.header.paragraphs[0]
+hp.paragraph_format.tab_stops.add_tab_stop(sec.page_width - sec.left_margin - sec.right_margin, WD_TAB_ALIGNMENT.RIGHT)
+hp.add_run().add_picture(str(ROOT / "assets" / "logos" / "jimmy_sm.png"), height=Cm(1.6))
+hp.add_run("\t")
+hp.add_run().add_picture(str(ROOT / "assets" / "logos" / "mcte_sm.png"), height=Cm(1.6))
+sec.top_margin = Cm(3.0)
+
 p = doc.add_paragraph(); run(p, "DATA ANALYTICS COMPETITION 2026", True, 10, AMBER)
 p = doc.add_paragraph(); run(p, "Conflict Watch: presenter script", True, 22, NAVY)
 p = doc.add_paragraph(); run(p, f"{M} · {S} · {H}   |   15-minute slot, target 14:40   |   Deck: Conflict_Watch_Jury_Deck (45 slides: 23 main, 6 backup, 16 annex)", False, 10, GREY)
