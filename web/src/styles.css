@@ -425,3 +425,4 @@ svg.map text.mk-v { display: none; }
   .cmd-detail .o-w { display: none; } .cmd-detail .o-m { text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .cmd-detail .cmd-side .side-h:first-child { display: flex; }
 }
+.cmd-t { line-height: 1.2; padding-bottom: 2px; }
