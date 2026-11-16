@@ -66,8 +66,16 @@ Its maps use a bundled Natural Earth outline (`assets/world_lowres.geojson`).
 
 ## Ops site (story website + ops console)
 
-The hosted app opens on the **Ops site**: a scroll-driven briefing (14 chapters) and a staff-officer console
-(Brief, Theatre, Map, Area, Forecast, Warning, What-if, Scorecard, Data quality), in a dark ops-room design.
+The hosted app opens on the **Ops site**, which has three levels of depth:
+
+1. **Commander view** (landing screen, one screen, no scrolling): four status tiles, the India exposure map, the
+   orders for the month and the top-10 watch-list. Select any tile, marker or order for its evidence sheet.
+2. **Briefing** (scroll story): nine chapters by default; `FULL EVIDENCE` (key `E`) adds the seven supporting
+   chapters, and `SHOW EVIDENCE` opens the second-level charts inside a chapter.
+3. **Ops console** for staff officers (Decide: Brief, Theatre, Warning · Explore: Map, Area, Forecast, What-if ·
+   Verify: Scorecard, Data quality, About), each page with a summary header.
+
+`P` toggles presentation mode (larger text, shorter animations, 15-minute timer) for screen sharing.
 The classic 15-page Streamlit dashboard is one click away in the sidebar (*Analyst dashboard*).
 
 ```bash

@@ -413,3 +413,5 @@ svg.map text.mk-v { font: 600 12px var(--mono); fill: var(--amber); letter-spaci
 .sb-a .mono { font-weight: 700; letter-spacing: .14em; color: var(--amber); font-size: 13px; }
 .sb-a em { display: block; font: 500 12px var(--mono); color: var(--tx2); font-style: normal; margin-top: 3px; }
 @media print { .sheet, .sheet-bg, .deepbtn, .l2btn, .prog { display: none !important; } .l2-closed .l2 { display: revert !important; } }
+#afpak.l2-closed .grid.g2 { align-items: start; }
+#india.l2-closed .grid.g2 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
