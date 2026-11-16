@@ -1,0 +1,18 @@
+conflict_case,date,event,basis,nearest_episode_day0,days_from_episode,within_45d
+Russia–Ukraine,2014-02-22,Ukraine: Yanukovych flees after Maidan; Crimea seized within weeks,DOMAIN,2014-07-11,139,False
+Russia–Ukraine,2022-02-28,Russia: reserves frozen by G7/EU; SWIFT cut-offs; MOEX shut for four weeks,DOMAIN,2022-02-24,-4,True
+Russia–Ukraine,2022-09-21,Russia: 'partial mobilisation'; exodus of working-age men,DOMAIN,2022-12-01,71,False
+Russia–Ukraine,2023-06-24,Russia: Wagner mutiny marches towards Moscow,DOMAIN,2023-10-01,99,False
+Russia–Ukraine,2024-05-20,"Ukraine: presidential term lapses under martial law, no election",DOMAIN,2023-10-01,-232,False
+Israel–Hamas,2023-01-07,Israel: mass protests over judicial overhaul begin,DOMAIN,2023-10-07,273,False
+Israel–Hamas,2023-10-11,Israel: emergency unity government formed,DOMAIN,2023-10-07,-4,True
+Israel–Hamas,2024-06-09,Israel: Gantz quits war cabinet,DOMAIN,2023-10-07,-246,False
+Israel–Hamas,2024-11-05,Israel: defence minister Gallant dismissed,DOMAIN,2025-05-01,177,False
+Afghanistan–Pakistan,2021-08-15,Afghanistan: Taliban take Kabul; central-bank reserves frozen,DOMAIN,2022-04-16,244,False
+Afghanistan–Pakistan,2022-04-10,Pakistan: PM Imran Khan ousted by no-confidence vote,DOMAIN,2022-04-16,6,True
+Afghanistan–Pakistan,2023-05-09,Pakistan: riots after Khan's arrest; army sites attacked,DOMAIN,2022-04-16,-388,False
+Afghanistan–Pakistan,2023-07-12,Pakistan: IMF $3B stand-by agreed at the edge of default,DOMAIN,2022-04-16,-452,False
+Afghanistan–Pakistan,2024-02-08,Pakistan: disputed general election,DOMAIN,2024-12-06,302,False
+US–Iran,2019-11-15,"Iran: fuel-price protests, internet shutdown",DOMAIN,2025-04-02,1965,False
+US–Iran,2022-09-16,Iran: Mahsa Amini protests begin,DOMAIN,2025-04-02,929,False
+US–Iran,2024-05-19,Iran: President Raisi killed in helicopter crash,DOMAIN,2025-04-02,318,False

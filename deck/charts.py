@@ -130,7 +130,7 @@ def _axes(chart, y_title=None, num_fmt=None, size=13, gridlines=True, cat_skip=N
 
 
 def line(slide, x, y, w, h, cats, series, title=None, y_title=None, num_fmt="#,##0", log_y=False, cat_skip=None,
-         legend=True, size=13):
+         legend=True, size=13, y_min=None, y_max=None):
     """series: list of dict(name, values, color, width=2.5, dash=False, marker=False)."""
     cd = CategoryChartData()
     cd.categories = cats
@@ -139,7 +139,7 @@ def line(slide, x, y, w, h, cats, series, title=None, y_title=None, num_fmt="#,#
     gf = slide.shapes.add_chart(XL_CHART_TYPE.LINE, Inches(x), Inches(y), Inches(w), Inches(h), cd)
     ch = gf.chart
     _style(ch, title, legend, size=size)
-    _axes(ch, y_title, num_fmt, size=size, cat_skip=cat_skip, log_y=log_y)
+    _axes(ch, y_title, num_fmt, size=size, cat_skip=cat_skip, log_y=log_y, y_min=y_min, y_max=y_max)
     for ser, s in zip(ch.plots[0].series, series):
         ser.smooth = False
         ln = ser.format.line

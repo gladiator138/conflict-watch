@@ -1,0 +1,11 @@
+claim,measured,verdict,basis
+Russia's MOEX fell about 33% on 24 Feb 2022,-33.3% on 24 Feb 2022 (MOEX ISS),CORRECT,DATA
+Trading stopped for a month,No MOEX index session from 26 Feb to 2022-03-24 (27 days),CORRECT (about four weeks),DATA
+Israel's TA-35 dropped sharply after 7 Oct 2023,"-5.6% at the first close in the data, -12.3% at the worst point in the month",CORRECT,DATA
+"India's Nifty dipped on the same shocks, mostly through oil",Nifty -4.8% on 24 Feb 2022 (Brent +26% in 20 days); -0.7% after 7 Oct 2023 (Brent +0%); -9.9% in 20 days of the 2026 Gulf war (Brent +55%),"CORRECT, with a caveat: the Nifty fell when oil rose; when oil did not move (Oct 2023), neither did India",DATA
+Russia had about $300B frozen,"Pre-war reserves $632B (World Bank, end-2021); ~$300B immobilised is the figure in G7/EU statements",CORRECT (order of magnitude; frozen amount is not in any data file),DOMAIN
+Israel's central bank committed $30B to defend the shekel,Shekel weakest at 4.08/USD after 7 Oct. Bank of Israel (9 Oct 2023): up to $30B spot FX sales plus up to $15B in swaps,CORRECT; the full package was up to $45B ($30B sales + $15B swaps),DOMAIN + DATA
+Pakistan's reserves fell to less than a month of imports in 2023,"World Bank end-2022: 1.4 months of imports (annual, end-year); SBP liquid reserves fell to about $3B in Feb 2023, roughly three weeks of imports",CORRECT,DATA + DOMAIN
+Afghanistan's $9.5B were frozen in 2021,World Bank end-2020 reserves $9.7B; about $9B frozen (about $7B of it in the US),CORRECT (about $9B),DATA + DOMAIN
+Iran's rial collapsed,"Rial lost 31% of its value between the 2026 war and 2026-11-16 (1,313,867 to 1,913,250 per USD, market rate)",CORRECT,DATA
+Political crises line up with conflict peaks,3 of 17 dated crises fall within 45 days of a UCDP spike episode in the same theatre,"PARTLY: onsets and regime shocks align; most domestic crises (Pakistan 2023-24, Iran 2022) do not",DATA + DOMAIN

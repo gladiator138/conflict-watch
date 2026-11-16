@@ -4,6 +4,7 @@ import { mount, update, axis, csv, resizeAll } from "./charts";
 import { regionMap, adminLayer, ramp, tip } from "./maps";
 import { $, $$, tag, ragCards, whatIf, scorecardLab, warningPanel, holdoutChart, leaderboard, areaDrill, topN } from "./widgets";
 import { strip, navBar, footer, qaDrawer } from "./chrome";
+import { renderTheatre } from "./theatre";
 
 const CSS = `
 .con { display:grid; grid-template-columns: 220px minmax(0,1fr); min-height:100vh; padding-top: calc(var(--strip) + var(--nav)); position:relative; z-index:1; }
@@ -23,7 +24,7 @@ const CSS = `
 .print-only { display:none; }
 `;
 
-const PAGES = [["brief", "◉", "BRIEF"], ["map", "◎", "MAP"], ["area", "⌖", "AREA"], ["forecast", "↗", "FORECAST"], ["warning", "⚠", "WARNING"],
+const PAGES = [["brief", "◉", "BRIEF"], ["theatre", "✪", "THEATRE"], ["map", "◎", "MAP"], ["area", "⌖", "AREA"], ["forecast", "↗", "FORECAST"], ["warning", "⚠", "WARNING"],
   ["whatif", "⚗", "WHAT-IF"], ["scorecard", "▦", "SCORECARD"], ["dq", "✓", "DATA QUALITY"], ["about", "ⓘ", "ABOUT"]] as const;
 
 export function renderConsole(D: Data) {
@@ -62,6 +63,7 @@ export function renderConsole(D: Data) {
       $("#b-bul").addEventListener("click", () => { $("#b-bulletin").innerHTML = bulletin(D); print(); });
       $("#b-csv").addEventListener("click", () => csv("watchlist_2026-10.csv", D.areas.areas.filter((a) => !a.unloc).slice(0, 20).map((a, i) => ({ rank: i + 1, area: a.name, country: a.iso, conflict: CASE_NAME[a.c], p_escalate_oct26: a.p }))));
     },
+    theatre(q) { renderTheatre(P, D, q); },
     map(q) {
       const lay = q.get("layer") ?? "p";
       P.innerHTML = `<div class="eyebrow">THEATRE MAP · ${D.areas.areas.length} AREA SERIES</div><h2>Map</h2><div class="sub">Click an area to drill down. India's boundary: Natural Earth India point of view.</div>

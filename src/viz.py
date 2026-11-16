@@ -590,3 +590,111 @@ def save(fig, name, width=1400, height=None, scale=2):
                         scale=scale)
     except Exception as ex:  # static export is optional
         print(f"[viz] PNG export skipped for {name}: {ex}")
+
+
+# ---------------------------------------------------------------------------
+# Economic front (new, separately labelled; public market data, see src/econ.py)
+# ---------------------------------------------------------------------------
+ECON_LABEL = {"MOEX": "MOEX Russia", "RUB": "Rouble value", "BRENT": "Brent crude", "WHEAT": "Wheat",
+              "NIFTY": "Nifty 50", "INR": "Rupee value", "TA35": "Tel Aviv 35", "ILS": "Shekel value",
+              "ZIM": "ZIM shipping", "VIX": "VIX fear gauge", "FRO": "Tanker stocks", "GOLD": "Gold",
+              "TTF": "EU gas (TTF)", "PKR": "PKR value", "AFN": "Afghani value", "IRR": "Rial value", "UAH": "Hryvnia value"}
+ECON_COL = {"MOEX": T["cyan"], "RUB": "#7FA7D9", "BRENT": T["amber"], "WHEAT": T["teal"], "NIFTY": T["red"],
+            "INR": "#FF9AA5", "TA35": T["cyan"], "ILS": "#7FA7D9", "ZIM": T["violet"], "VIX": T["violet"],
+            "FRO": T["teal"], "GOLD": "#E8D27A", "TTF": T["teal"]}
+
+
+def fig_econ_paths(ph: pd.DataFrame, case: str, title=None):
+    """Event-study paths: index = 100 at the last close before day 0."""
+    d = ph[ph.conflict_case == case]
+    fig = go.Figure()
+    fig.add_vline(x=0, line=dict(color=T["red"], width=2, dash="dash"))
+    fig.add_hline(y=100, line=dict(color=T["border"], width=1))
+    for k, g in d.groupby("series", sort=False):
+        w = 4 if k in ("NIFTY", "INR", "BRENT") else 2.5
+        fig.add_trace(go.Scatter(x=g.offset, y=g["index"], name=ECON_LABEL.get(k, k), mode="lines",
+                                 line=dict(color=ECON_COL.get(k, T["text3"]), width=w),
+                                 customdata=g.date, hovertemplate="day %{x} (%{customdata}): %{y:.1f}<extra>"
+                                 + ECON_LABEL.get(k, k) + "</extra>"))
+    day0 = d.day0.iloc[0] if len(d) else ""
+    fig.add_annotation(x=0, y=1.0, yref="paper", text=f"DAY 0  {day0}", showarrow=False, xanchor="left",
+                       font=dict(color=T["red"], size=13))
+    fig.update_layout(title=title or f"{case}: markets around the war shock (index, last close before day 0 = 100)",
+                      xaxis_title="Trading days from the shock (day 0 from UCDP deaths)", yaxis_title="Index",
+                      height=480)
+    return fig
+
+
+def fig_econ_event_bars(es: pd.DataFrame, horizon="d20_pct"):
+    """20-day move per episode and series, coloured by placebo significance."""
+    d = es.copy()
+    d["lab"] = d.conflict_case.map(C.CASE_SHORT) + " " + d.day0.str[:7] + " · " + d.series.map(lambda k: ECON_LABEL.get(k, k))
+    d = d.sort_values(horizon)
+    col = np.where(d.p20 < 0.05, T["red"], np.where(d.p20 < 0.10, T["amber"], T["muted"]))
+    fig = go.Figure(go.Bar(x=d[horizon], y=d.lab, orientation="h", marker_color=col,
+                           customdata=np.stack([d.p20, d.label], axis=1),
+                           hovertemplate="%{y}<br>%{x:+.1f}% in 20 trading days<br>placebo p = %{customdata[0]:.2f}<extra></extra>"))
+    fig.update_layout(title="Every war shock, every market: move over 20 trading days (red p<0.05, amber p<0.10 vs placebo days)",
+                      xaxis_title="% change (currencies: value vs USD)", height=max(520, 15 * len(d)),
+                      margin=dict(l=330), yaxis=dict(tickfont=dict(size=11)))
+    return fig
+
+
+def fig_econ_india(ind: pd.DataFrame, gp: pd.DataFrame | None = None):
+    d = ind.copy()
+    d["month"] = pd.to_datetime(d.month)
+    fig = make_subplots(rows=3, cols=1, shared_xaxes=True, vertical_spacing=0.06,
+                        subplot_titles=["Brent crude (USD/bbl, monthly mean)", "Nifty 50 and rupee (INR per USD)",
+                                        "War deaths per month (UCDP, log)"],
+                        specs=[[{}], [{"secondary_y": True}], [{}]], row_heights=[0.3, 0.35, 0.35])
+    fig.add_trace(go.Scatter(x=d.month, y=d.BRENT, name="Brent", line=dict(color=T["amber"], width=3)), 1, 1)
+    fig.add_trace(go.Scatter(x=d.month, y=d.NIFTY, name="Nifty 50", line=dict(color=T["red"], width=3)), 2, 1)
+    fig.add_trace(go.Scatter(x=d.month, y=d.INR, name="INR per USD", line=dict(color="#FF9AA5", width=2, dash="dot")),
+                  2, 1, secondary_y=True)
+    for case in C.CASES:
+        fig.add_trace(go.Scatter(x=d.month, y=d["deaths_" + C.CASE_SHORT[case]], name=case,
+                                 line=dict(color=CC[case], width=2)), 3, 1)
+    fig.update_yaxes(type="log", row=3, col=1)
+    for x, t in [("2022-02-24", "RU–UA"), ("2023-10-07", "7 Oct"), ("2026-02-28", "Gulf war")]:
+        fig.add_vline(x=x, line=dict(color=T["red"], width=1.5, dash="dash"))
+        fig.add_annotation(x=x, y=1.0, yref="paper", text=t, showarrow=False, font=dict(color=T["red"], size=12),
+                           xanchor="left")
+    fig.update_layout(title="India's exposure is economic: oil, equities and the rupee move with the wars", height=760,
+                      margin=dict(t=120), legend=dict(y=1.1, yanchor="bottom"))
+    return fig
+
+
+def fig_econ_fronts(fr: pd.DataFrame):
+    """Battlefield vs economic front, one row per theatre's largest episode."""
+    d = fr.copy()
+    fig = make_subplots(rows=1, cols=2, column_widths=[0.38, 0.62], horizontal_spacing=0.12,
+                        subplot_titles=["Battlefield: deaths in the episode (UCDP)", "Economic front: worst move within 60 trading days (%)"])
+    d["conflict_case"] = d.conflict_case.map(C.CASE_SHORT)
+    fig.add_trace(go.Bar(y=d.conflict_case, x=d.episode_deaths, orientation="h",
+                         marker_color=[CC[c] for c in fr.conflict_case], showlegend=False,
+                         text=[f"{v:,.0f} · {n} countries" for v, n in zip(d.episode_deaths, d.countries_with_deaths)],
+                         textposition="outside"), 1, 1)
+    for col, lab, colr in [("local_equity_worst60_pct", "Local stock index", T["cyan"]),
+                           ("local_fx_worst60_pct", "Local currency", "#7FA7D9"),
+                           ("brent_best60_pct", "Brent (peak rise)", T["amber"]),
+                           ("nifty_worst60_pct", "Nifty 50", T["red"]),
+                           ("inr_worst60_pct", "Rupee", "#FF9AA5")]:
+        fig.add_trace(go.Bar(y=d.conflict_case, x=d[col], name=lab, orientation="h", marker_color=colr), 1, 2)
+    fig.update_layout(barmode="group", height=520, title="Two fronts: who dies on the battlefield, who pays on the economic front",
+                      legend=dict(y=-0.18, yanchor="top"), margin=dict(l=90))
+    fig.update_xaxes(type="log", row=1, col=1, range=[2.5, 5.6])
+    return fig
+
+
+def fig_econ_reserves(res: pd.DataFrame):
+    d = res[res.iso3.isin(["IND", "PAK", "RUS", "ISR", "UKR"])].copy()
+    fig = go.Figure()
+    nm = {"IND": "India", "PAK": "Pakistan", "RUS": "Russia", "ISR": "Israel", "UKR": "Ukraine"}
+    cl = {"IND": T["red"], "PAK": T["teal"], "RUS": T["cyan"], "ISR": T["amber"], "UKR": T["violet"]}
+    for iso, g in d.groupby("iso3"):
+        fig.add_trace(go.Scatter(x=g.year, y=g.months_of_imports, name=nm[iso], mode="lines+markers",
+                                 line=dict(color=cl[iso], width=3)))
+    fig.add_hline(y=3, line=dict(color=T["amber"], dash="dot"), annotation_text="3-month import cover (IMF rule of thumb)")
+    fig.update_layout(title="Reserves in months of imports (World Bank, end-year)", yaxis_title="Months of imports",
+                      height=440)
+    return fig

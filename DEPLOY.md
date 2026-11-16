@@ -20,3 +20,15 @@ The repository contains everything: the raw competition CSVs (`data/raw/for part
 
 The app reads only files in the repository and makes no outbound calls, so it behaves the same hosted or on a laptop.
 For the live presentation, keep the local copy (`streamlit run app/app.py`) running as the fallback.
+
+## Daily 0600 IST theatre briefs (optional)
+`scripts/daily_briefs.py` rebuilds every theatre's brief (NOTIONAL theatres; NTC on SYNTHETIC data) and writes the in-app
+inbox and an outbox of `.eml`, SMS and WhatsApp previews. Schedule it at 0030 UTC:
+* Windows: `schtasks /Create /SC DAILY /ST 06:00 /TN ConflictWatchBriefs /TR "python <repo>\scripts\daily_briefs.py"`
+* Linux: `30 0 * * * cd <repo> && python scripts/daily_briefs.py`
+* GitHub: `.github/workflows/daily-briefs.yml` builds the briefs and uploads them as an artefact; it e-mails only if the
+  `CW_SMTP_*` secrets are set, and never commits.
+
+Real e-mail: set `CW_SMTP_HOST`, `CW_SMTP_PORT` (587), `CW_SMTP_USER`, `CW_SMTP_PASS`, `CW_MAIL_FROM` and
+`CW_MAIL_TO_WTC` / `_NTC` / `_MTC` / `_CDS`, then pass `--send-email`. The Streamlit page has a test-send form that
+uses the same variables. The hosted app itself makes no outbound calls.

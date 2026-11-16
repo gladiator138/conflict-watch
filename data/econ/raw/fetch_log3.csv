@@ -1,0 +1,14 @@
+source,key,n,status
+worldbank,remit_in,143,ok
+worldbank,gdp_growth,143,ok
+worldbank,cpi,143,ok
+worldbank,res_months_imports,143,ok
+worldbank,reserves_usd,143,ok
+worldbank,milex_gdp,143,ok
+worldbank,gdp_usd,143,ok
+worldbank,fx_official,143,ok
+worldbank,imports_usd,0,TimeoutError('The read operation timed out')
+imf,IN,0,"URLError(gaierror(11001, 'getaddrinfo failed'))"
+imf,IN,0,"URLError(gaierror(11001, 'getaddrinfo failed'))"
+gpr,gpr_daily,3276288,ok
+gpr,gpr_monthly,2718208,ok

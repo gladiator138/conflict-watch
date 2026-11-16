@@ -15,7 +15,7 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 |---|---|
 | `report/Conflict_Watch_Report.pdf` | Full analysis report: method, results, assumptions and limitations (10 pages + appendices); footer carries the run ID |
 | `deck/` | Presentation deck (PPTX with Morph transitions and automatic build-ins via `deck/hud.py`; static PDF), commander's brief, Q&A prep sheet, demo-video script |
-| `app/app.py` | Hosted app: opens on the Ops site; classic 12-page Streamlit dashboard in *Analyst dashboard* mode |
+| `app/app.py` | Hosted app: opens on the Ops site; classic 15-page Streamlit dashboard in *Analyst dashboard* mode (pages 14–15: theatre daily brief, brief history and OODA loop) |
 | `web/`, `scripts/export_web.py` | Ops site source (Vite + TypeScript + ECharts + d3-geo) and its data export with asserts |
 | `notebooks/01–05` | Executed notebooks: cleaning, features, EDA (military + India), forecasting, early warning |
 | `src/` | All pipeline code: `cleaning`, `features`, `insights`, `models`, `viz`, `config` |
@@ -23,9 +23,11 @@ Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSI
 | `score_holdout.py` | Scores the frozen Oct–Dec 2026 forecasts and watch-list against new UCDP events, with no refit (`--events FILE`, `--selftest`) |
 | `src/robustness.py` | Evidence strength: month-block bootstrap, Diebold–Mariano, late-data test, warning calibration → `outputs/tables/robustness.json` |
 | `src/gdelt.py`, `data/gdelt/` | GDELT media-coded events (Feb–12 Nov 2026) as compact aggregates plus the script that built them; compared with UCDP as **new, separately labelled** results |
+| `src/econ.py`, `data/econ/` | Economic front: event study of stock indices, currencies, Brent, gas, wheat and shipping around each war shock (day 0 from UCDP deaths), India panel, reserves, political-crisis timeline and a claims check. Public data (Yahoo Finance, MOEX ISS, World Bank, GPR index) with the fetch scripts; **separately labelled** from the competition data |
+| `src/theatre.py`, `src/theatre_viz.py`, `scripts/daily_briefs.py` | **Theatre commander layer (NOTIONAL).** Three illustrative theatre AORs (WTC, NTC, MTC) as GeoJSON plus linked conflicts, a demo login (WTC/NTC/MTC/CDS) that filters the whole dashboard, an auto-generated 0600 IST brief in OODA form with BLUF, FLASH alerts, inbox and e-mail/SMS/WhatsApp previews, and 7 days of history. LAC data are **SYNTHETIC** (seeded) because no issued file covers the LAC. Writes `outputs/theatre/` only, so the run ID is unchanged |
 | `outputs/tables/run_id.txt` | Run ID (hash of every result table) printed on the report, deck, dashboard and Ops site |
 | `outputs/tables/` | Every number quoted anywhere, as CSV (incl. `data_quality_log.csv`) |
-| `outputs/figures/` | 34 figures as PNG and interactive HTML |
+| `outputs/figures/` | 46 figures as PNG and interactive HTML |
 | `models/models.joblib` | Fitted forecaster, ensemble members, conformal intervals and early-warning classifier |
 
 ## Data
@@ -65,8 +67,8 @@ Its maps use a bundled Natural Earth outline (`assets/world_lowres.geojson`).
 ## Ops site (story website + ops console)
 
 The hosted app opens on the **Ops site**: a scroll-driven briefing (14 chapters) and a staff-officer console
-(Brief, Map, Area, Forecast, Warning, What-if, Scorecard, Data quality), in a dark ops-room design.
-The classic 12-page Streamlit dashboard is one click away in the sidebar (*Analyst dashboard*).
+(Brief, Theatre, Map, Area, Forecast, Warning, What-if, Scorecard, Data quality), in a dark ops-room design.
+The classic 15-page Streamlit dashboard is one click away in the sidebar (*Analyst dashboard*).
 
 ```bash
 python scripts/export_web.py     # frozen outputs -> web/public/data; asserts every headline number (fails on any mismatch)
@@ -78,7 +80,20 @@ cd web && npm run dev            # live development server
   exact Python ensemble output for every slider position (Af–Pak +30% × 3 months = 359, asserted).
 * Maps draw India's boundary from Natural Earth's India point-of-view layer; PoK areas are shown as points inside it.
 * Keys: **P** presenter mode (15-min timer, arrows jump chapters), **N** speaker notes, **Ctrl/⌘ K** command palette in the console.
-* `deck/conflictwatch.html` is the single-file offline backup. `DEMO_SCRIPT.md` is the 3-minute live-demo walkthrough.
+* `deck/conflictwatch.html` is the single-file offline backup. `DEMO_SCRIPT.md` is the 2-minute live-demo walkthrough.
+
+## Theatre commander briefs (notional)
+
+```bash
+python scripts/daily_briefs.py              # 4 theatres x 7 days of briefs, FLASH log, inbox, outbox (.eml, SMS, WhatsApp)
+python scripts/daily_briefs.py --figs       # also figures 34-38
+python scripts/daily_briefs.py --send-email # real e-mail via SMTP (CW_SMTP_HOST, CW_SMTP_USER, CW_SMTP_PASS, CW_MAIL_TO_<ROLE>)
+```
+
+Schedule it at 0600 IST (0030 UTC) with Windows Task Scheduler, cron, or `.github/workflows/daily-briefs.yml`.
+Scoring: 2 x monthly RAG level + daily GDELT, district and market modifiers (RED >= 6, AMBER 3-5). FLASH: a district
+nowcast crossing P 0.20 or a RAG change. The district nowcast is a heuristic and is not back-tested. The OODA timings
+(4-10 days -> 4-28 hours) are a DOMAIN estimate; data latency (43 d -> <1 d) and build time (~2 s) are measured.
 
 ## Method in one paragraph
 

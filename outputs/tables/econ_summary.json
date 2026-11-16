@@ -1,0 +1,187 @@
+{
+  "n_episodes": 20,
+  "n_moves": 109,
+  "share_significant_20d": 0.1743119266055046,
+  "sig_share_main_onsets": 0.5238095238095238,
+  "sig_share_other_episodes": 0.1590909090909091,
+  "median_abs_move20_main": 9.926068161820812,
+  "median_abs_move20_other": 1.7416510755438486,
+  "persistent": {
+    "Russia\u2013Ukraine": {
+      "BRENT": {
+        "pre": 87.63536592809166,
+        "post": 104.48964065277647,
+        "change_pct": 19.23227517360335
+      },
+      "NIFTY": {
+        "pre": 17531.478515625,
+        "post": 16863.207708253452,
+        "change_pct": -3.8118337068716035
+      },
+      "INR": {
+        "pre": 74.66587403763172,
+        "post": 78.42427670678427,
+        "change_pct": 5.033628438151405
+      }
+    },
+    "Israel\u2013Hamas": {
+      "BRENT": {
+        "pre": 88.9957139151437,
+        "post": 83.13696959524444,
+        "change_pct": -6.58317582067548
+      },
+      "NIFTY": {
+        "pre": 19604.176924542684,
+        "post": 21415.86906598328,
+        "change_pct": 9.241357841310439
+      },
+      "INR": {
+        "pre": 83.00638083524483,
+        "post": 83.21630966454221,
+        "change_pct": 0.252906857502988
+      }
+    },
+    "US\u2013Iran": {
+      "BRENT": {
+        "pre": 66.75146316900486,
+        "post": 96.26337340940913,
+        "change_pct": 44.21163048618793
+      },
+      "NIFTY": {
+        "pre": 25658.076311383928,
+        "post": 23731.899334217767,
+        "change_pct": -7.507098169754678
+      },
+      "INR": {
+        "pre": 90.69573956866597,
+        "post": 94.88675213982077,
+        "change_pct": 4.620958593078983
+      }
+    }
+  },
+  "india_oil_bill": {
+    "crude_mbd_domain": 4.8,
+    "brent_up_usd_2026": 29.511910240404262,
+    "extra_usd_bn_per_year_2026": 51.70486674118827,
+    "brent_up_usd_2022": 16.854274724684814,
+    "extra_usd_bn_per_year_2022": 29.528689317647792,
+    "per_10usd_bn_per_year": 17.52
+  },
+  "india_remittances": {
+    "year": 2025,
+    "usd_bn": 150.711596171493,
+    "gulf_share_domain": 0.38,
+    "gulf_usd_bn": 57.27040654516734
+  },
+  "fronts": [
+    {
+      "conflict_case": "Russia\u2013Ukraine",
+      "episode": "2022-02",
+      "day0": "2022-02-24",
+      "episode_deaths": 46155.87104737201,
+      "countries_with_deaths": 4,
+      "local_equity": "MOEX",
+      "local_equity_worst60_pct": -33.2806006340891,
+      "local_fx": "RUB",
+      "local_fx_worst60_pct": -43.28827895503093,
+      "brent_best60_pct": 32.15614229309796,
+      "brent_d20_pct": 25.567950302103238,
+      "nifty_worst60_pct": -7.507946079293215,
+      "inr_worst60_pct": -4.090199467371846,
+      "gdp_growth": "{\"UKR\": [3.44562065945944, -28.7585842155085, 5.53473354963334], \"RUS\": [5.866491772979, -1.43537063467896, 4.06661395813023]}"
+    },
+    {
+      "conflict_case": "Israel\u2013Hamas",
+      "episode": "2023-10",
+      "day0": "2023-10-07",
+      "episode_deaths": 27346.0,
+      "countries_with_deaths": 4,
+      "local_equity": "TA35",
+      "local_equity_worst60_pct": -12.315301681671652,
+      "local_fx": "ILS",
+      "local_fx_worst60_pct": -5.204417109074022,
+      "brent_best60_pct": 9.222032695084902,
+      "brent_d20_pct": 0.36651401263025907,
+      "nifty_worst60_pct": -4.051441219121276,
+      "inr_worst60_pct": -2.3113141142634186,
+      "gdp_growth": "{\"ISR\": [6.36407234798706, 2.06272504731618, 0.953618469238535], \"PSE\": [4.08276027347105, -0.97217780620403, -22.8573273913324]}"
+    },
+    {
+      "conflict_case": "Afghanistan\u2013Pakistan",
+      "episode": "2025-09",
+      "day0": "2025-09-12",
+      "episode_deaths": 792.6666666666667,
+      "countries_with_deaths": 2,
+      "local_equity": NaN,
+      "local_equity_worst60_pct": NaN,
+      "local_fx": "PKR",
+      "local_fx_worst60_pct": -0.7310300910858714,
+      "brent_best60_pct": NaN,
+      "brent_d20_pct": NaN,
+      "nifty_worst60_pct": -1.5772545664953674,
+      "inr_worst60_pct": -2.110336151774095,
+      "gdp_growth": "{\"PAK\": [3.08176295579301, 3.69842668749033, NaN], \"AFG\": [1.87319280045979, 1.87319280045979, NaN]}"
+    },
+    {
+      "conflict_case": "US\u2013Iran",
+      "episode": "2026-02",
+      "day0": "2026-02-28",
+      "episode_deaths": 3240.122956595226,
+      "countries_with_deaths": 15,
+      "local_equity": NaN,
+      "local_equity_worst60_pct": NaN,
+      "local_fx": "IRR",
+      "local_fx_worst60_pct": -0.5023097311624314,
+      "brent_best60_pct": 63.28641417315757,
+      "brent_d20_pct": 55.311802540163015,
+      "nifty_worst60_pct": -11.308191486943809,
+      "inr_worst60_pct": -5.75607804426822,
+      "gdp_growth": "{}"
+    }
+  ],
+  "reserves": {
+    "ind_2021_bn": 638.484779930835,
+    "ind_2022_bn": 567.29815391714,
+    "ind_2025_bn": 700.0737982407011,
+    "ind_2025_months": 7.85087469673437,
+    "pak_2021_bn": 22.8115228575294,
+    "pak_2022_bn": 9.92658707728489,
+    "pak_2022_months": 1.44062158684771
+  },
+  "gpr": {
+    "Russia\u2013Ukraine": {
+      "pre30": 181.75673611958823,
+      "peak10": 540.827392578125
+    },
+    "Israel\u2013Hamas": {
+      "pre30": 98.0245771408081,
+      "peak10": 290.3445739746094
+    },
+    "US\u2013Iran": {
+      "pre30": 121.58501453399658,
+      "peak10": 500.8071594238281
+    }
+  },
+  "headline": {
+    "moex_day1": -33.2806006340891,
+    "rub_worst": -43.28827895503093,
+    "ttf_best": 155.59506248368717,
+    "wheat_best": 62.699771689497716,
+    "nifty_day1_2022": -4.778103847083647,
+    "ta35_worst": -12.315301681671652,
+    "ils_worst": -5.204417109074022,
+    "zim_worst": -32.548619817605164,
+    "brent_d20_2026": 55.311802540163015,
+    "brent_best_2026": 63.28641417315757,
+    "nifty_d20_2026": -9.926068161820812,
+    "nifty_worst_2026": -11.308191486943809,
+    "inr_worst_2026": -5.75607804426822,
+    "vix_best_2026": 56.34440222965787
+  },
+  "irr_2026": {
+    "pre_war": 1313867.0,
+    "last": 1913250.0,
+    "last_date": "2026-11-16",
+    "value_change_pct": -31.328002090683395
+  }
+}

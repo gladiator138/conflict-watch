@@ -22,6 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from src import config as C, viz  # noqa: E402
 from src import models as M  # noqa: E402
+from src import theatre as TH, theatre_viz as TV  # noqa: E402
 
 T = C.THEME
 st.set_page_config(page_title="Conflict Watch | Data Analytics Competition 2026", page_icon="🛰️", layout="wide",
@@ -61,6 +62,23 @@ section[data-testid="stSidebar"] label, section[data-testid="stSidebar"] p {{ fo
 div[data-testid="stMetricValue"] {{ font-size: 2.2rem; }}
 .stTabs [data-baseweb="tab"] {{ font-size: 1.05rem; }}
 .footer {{ color: {T['muted']}; font-size: 0.8rem; letter-spacing: 1.5px; margin-top: 30px; }}
+.chip {{ display:inline-block; border-radius: 6px; padding: 2px 9px; font-weight: 800; font-size: 0.78rem; letter-spacing: 1.2px;
+        margin-right: 6px; }}
+.chip-notional {{ background: {T['amber_bg']}; color: {T['amber']}; border: 1px solid {T['amber']}; }}
+.chip-syn {{ background: #3A1420; color: {T['red']}; border: 1px solid {T['red']}; }}
+.chip-role {{ background: {T['panel2']}; color: {T['cyan']}; border: 1px solid {T['cyan']}; }}
+.ooda {{ background: {T['panel']}; border: 1px solid {T['border']}; border-radius: 12px; padding: 12px 16px; margin-bottom: 10px; }}
+.ooda .h {{ font-weight: 900; letter-spacing: 3px; font-size: 0.95rem; }}
+.ooda ol, .ooda ul {{ margin: 6px 0 2px 0; }}
+.msg {{ background: {T['panel']}; border: 1px solid {T['border']}; border-left: 6px solid {T['muted']}; border-radius: 8px;
+       padding: 8px 12px; margin-bottom: 8px; font-size: 0.95rem; }}
+.msg.flash {{ border-left-color: {T['red']}; background: #2A0F17; }}
+.msg .s {{ font-weight: 800; }} .msg .t {{ color: {T['text3']}; font-size: 0.8rem; letter-spacing: 1px; }}
+.phone {{ background: #0B1520; border: 2px solid {T['border']}; border-radius: 26px; padding: 18px 14px; max-width: 360px; }}
+.bubble {{ background: #1F3B2E; color: #E8F5EC; border-radius: 12px; padding: 10px 12px; font-size: 0.85rem;
+          white-space: pre-wrap; line-height: 1.35; }}
+.bubble.sms {{ background: #24364A; color: #EAF2FA; }}
+table.acts td, table.acts th {{ border-bottom: 1px solid {T['border']}; padding: 8px 6px; vertical-align: top; text-align: left; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -150,7 +168,43 @@ LAST = cm.month.max()
 # ---------------------------------------------------------------------------
 PAGES = ["🎯 Commander's brief", "📊 Conflict explorer", "📍 Area drill-down", "⚔️ Military lens", "🇮🇳 India impact",
          "🏠 Displacement", "📡 Media attention", "📈 Forecast (2026 test)", "🚨 Early warning",
-         "🧪 What-if simulator", "🎛️ Scorecard lab", "🧹 Data quality & method"]
+         "🧪 What-if simulator", "🎛️ Scorecard lab", "🧹 Data quality & method", "💹 Economic front",
+         "🎖️ Theatre daily brief", "🗂️ Brief history & OODA"]
+PAGE_THEATRE = PAGES[13]
+if "role" not in st.session_state:
+    st.session_state.role = "CDS"
+
+
+def _on_login():
+    """A commander who signs in lands on their theatre's daily brief."""
+    st.session_state.mode = "📊 Analyst dashboard"
+    st.session_state.nav = PAGE_THEATRE
+
+
+ROLE = st.session_state.role
+TT = TH.theatre(ROLE)
+# Conflicts linked to the signed-in theatre (own first, then context links); CDS sees all four
+TCASES = list(C.CASES) if ROLE == "CDS" else (TT["cases"] + TT["context_cases"])
+OWN = list(C.CASES) if ROLE == "CDS" else TT["cases"]
+
+
+def ordered(cases=C.CASES):
+    """Conflict options with the signed-in theatre's own conflicts first."""
+    return [c for c in TCASES if c in cases] + [c for c in cases if c not in TCASES]
+
+
+def idx(cds_index: int) -> int:
+    """Keep the original default for CDS; a theatre commander gets their own conflict first."""
+    return cds_index if ROLE == "CDS" else 0
+
+
+@st.cache_data(show_spinner=False)
+def aor_keys(role: str) -> set:
+    """admin1 keys whose centroid lies inside the theatre's notional AOR polygon."""
+    import json as _j
+    areas = _j.loads((ROOT / "web" / "public" / "data" / "areas.json").read_text(encoding="utf-8"))["areas"]
+    t = TH.theatre(role)
+    return {a["key"] for a in areas if t["polygon"] is None or TH.inside(a["lon"], a["lat"], t["polygon"])}
 from src.brand import data_uri, JIMMY, MCTE
 _LJ, _LM = data_uri(JIMMY), data_uri(MCTE)
 with st.sidebar:
@@ -162,12 +216,20 @@ with st.sidebar:
                 f"<div style='color:{T['text3']};font-size:0.95rem;margin-bottom:12px'>When and where will deaths rise next, "
                 f"and what does it mean for India?</div>", unsafe_allow_html=True)
     MODES = ["🛰️ Ops site", "📊 Analyst dashboard"]
+    st.markdown(f"<div style='color:{T['amber']};font-weight:800;letter-spacing:2px;font-size:0.8rem'>COMMANDER LOGIN (DEMO)</div>",
+                unsafe_allow_html=True)
+    st.selectbox("Role", TH.ROLES, format_func=lambda k: TH.ROLE_LABEL[k], key="role", on_change=_on_login,
+                 label_visibility="collapsed", help="Demo login, no password. WTC, NTC and MTC filter the whole "
+                 "dashboard to that theatre's AOR; CDS sees all theatres.")
+    st.markdown("<span class='chip chip-notional'>NOTIONAL THEATRES</span>"
+                + ("<span class='chip chip-syn'>SYNTHETIC LAC DATA</span>" if st.session_state.role == "NTC" else ""),
+                unsafe_allow_html=True)
     mode = st.radio("Mode", MODES, horizontal=True, label_visibility="collapsed", key="mode")
     st.markdown("---")
-    page = st.radio("Navigate", PAGES, label_visibility="collapsed") if mode == MODES[1] else None
+    page = st.radio("Navigate", PAGES, label_visibility="collapsed", key="nav") if mode == MODES[1] else None
     if mode == MODES[0]:
         st.markdown("The **Ops site** is the story and the ops console in one: scroll the story, or press "
-                    "**OPS CONSOLE** for the staff-officer view. Switch to *Analyst dashboard* for the 12-page tool.")
+                    "**OPS CONSOLE** for the staff-officer view. Switch to *Analyst dashboard* for the 15-page tool.")
         st.link_button("⤢ Open full screen", "https://conflictmonitor2026.streamlit.app/~/+/app/static/site/index.html", use_container_width=True)
     st.markdown("---")
     st.caption(f"Data: UCDP GED 26.1 (2014–25) + Candidate 26.01.26.09 (Jan–Sep 2026, provisional), UNHCR, IDMC, "
@@ -185,7 +247,8 @@ if page is None:
     st.markdown("<style>.block-container,[data-testid=stMainBlockContainer]{padding:0.6rem 1rem 0 1rem!important;max-width:100%!important}"
                 "header[data-testid='stHeader']{background:transparent}</style>", unsafe_allow_html=True)
     if SITE.exists():
-        components.html(SITE.read_text(encoding="utf-8"), height=940, scrolling=True)
+        components.html(SITE.read_text(encoding="utf-8").replace("<head>", f"<head><script>window.CW_ROLE='{ROLE}'</script>", 1),
+                        height=940, scrolling=True)
     else:
         st.warning("Ops site not built. Run `cd web && npm run build` then `python scripts/build_site.py`.")
     st.stop()
@@ -197,7 +260,11 @@ st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-
             f"<img src='{_LJ}' alt='Corps of Signals' style='height:64px'/>"
             f"<div style='text-align:center;flex:1'><div style='color:{T['amber']};font-weight:800;letter-spacing:4px;font-size:0.85rem'>"
             f"DATA ANALYTICS COMPETITION 2026</div><div style='color:{T['text']};font-weight:900;letter-spacing:3px;font-size:1.25rem'>"
-            f"CONFLICT WATCH</div></div>"
+            f"CONFLICT WATCH</div><div style='margin-top:4px'><span class='chip chip-role'>SIGNED IN: {ROLE} · {TT['name'].upper()}</span>"
+            f"<span class='chip chip-notional'>NOTIONAL</span>"
+            + ("<span class='chip chip-syn'>LAC DATA SYNTHETIC</span>" if ROLE == "NTC" else "")
+            + (f"<span style='color:{T['text3']};font-size:0.8rem'>filtered to {', '.join(TCASES)}</span>" if ROLE != "CDS" else "")
+            + f"</div></div>"
             f"<img src='{_LM}' alt='MCTE formation sign' style='height:60px'/></div>", unsafe_allow_html=True)
 
 
@@ -215,7 +282,11 @@ def page_brief():
     kicker("Bottom line up front")
     st.markdown("# Four wars, three warning signals, one exposed neighbour")
     rag = D["rag"]
-    cols = st.columns(4)
+    if ROLE != "CDS":
+        rag = rag.set_index("conflict_case").loc[TCASES].reset_index()
+        st.caption(f"Filtered to {TT['name']} (notional): " + ", ".join(
+            f"{c}{' (context link)' if c not in OWN else ''}" for c in TCASES) + ". Sign in as CDS for all four.")
+    cols = st.columns(max(len(rag), 1))
     for c, (_, r) in zip(cols, rag.iterrows()):
         col = C.RAG_COLORS[r.rating]
         with c:
@@ -292,7 +363,7 @@ def page_explorer():
     kicker("Explore the data")
     st.markdown("# Conflict explorer")
     c1, c2, c3 = st.columns([2, 2, 1])
-    cases = c1.multiselect("Conflicts", C.CASES, default=C.CASES)
+    cases = c1.multiselect("Conflicts", C.CASES, default=TCASES, key=f"ex_c_{ROLE}")
     yr = c2.slider("Years", 2014, 2026, (2014, 2026))
     logy = c3.toggle("Log scale", value=True)
     d = cm[(cm.month.dt.year >= yr[0]) & (cm.month.dt.year <= yr[1])]
@@ -309,7 +380,7 @@ def page_explorer():
     t1, t5, t6, t2, t3, t4 = st.tabs(["Map", "▶ Animated: where the dying happens", "Event browser", "Violence type",
                                       "Seasonality", "Top areas & dyads"])
     with t5:
-        anim_case = st.selectbox("Conflict", C.CASES, key="anim_case")
+        anim_case = st.selectbox("Conflict", ordered(), key=f"anim_case_{ROLE}")
         x = E[(E.conflict_case == anim_case) & ~E.admin1.str.startswith("(")]
         g = x.groupby([x.month.dt.year.rename("year"), "admin1"]).deaths_best.sum().reset_index()
         top = g.groupby("admin1").deaths_best.sum().nlargest(12).index
@@ -329,7 +400,8 @@ def page_explorer():
         st.caption("Located events only (country-level aggregates excluded). Press ▶ or drag the year slider.")
     with t6:
         f1, f2, f3, f4 = st.columns([1.4, 1.4, 1.2, 1])
-        bc = f1.multiselect("Conflicts", C.CASES, default=["Afghanistan–Pakistan"], key="eb_c")
+        bc = f1.multiselect("Conflicts", C.CASES, default=[ordered()[0] if ROLE != "CDS" else "Afghanistan–Pakistan"],
+                            key=f"eb_c_{ROLE}")
         vt = f2.multiselect("Violence type", sorted(E.violence_type.dropna().unique()), key="eb_v")
         md = f3.number_input("Minimum deaths per event", 0, 5000, 10, step=5, key="eb_m")
         q = f4.text_input("Search place / actor", key="eb_q")
@@ -354,7 +426,7 @@ def page_explorer():
         download(x[cols], "event_browser_selection", "Download this selection")
     with t1:
         yf = st.select_slider("Map period from", options=list(range(2014, 2027)), value=2024)
-        cs = st.selectbox("Conflict", ["All"] + C.CASES)
+        cs = st.selectbox("Conflict", ["All"] + ordered(), index=0 if ROLE == "CDS" else 1, key=f"map_cs_{ROLE}")
         show(viz.fig_country_map(D["country_deaths"], case=None if cs == "All" else cs, year_from=yf, height=720), "ex_map")
     with t2:
         show(viz.fig_violence_mix(D["violence_mix"]), "ex2")
@@ -363,7 +435,7 @@ def page_explorer():
         sowhat("Russia–Ukraine runs about 15–35% above trend in May–August and well below in Dec–Jan. Af–Pak peaks in "
                "Sep–Oct. Seasonal priors go into the forecast.")
     with t4:
-        case = st.selectbox("Conflict ", C.CASES, key="topa")
+        case = st.selectbox("Conflict ", ordered(), key=f"topa_{ROLE}")
         x = E[(E.conflict_case == case) & (E.month.dt.year >= yr[0]) & (E.month.dt.year <= yr[1])]
         a = (x.groupby(["country_iso3", "admin1"]).agg(deaths=("deaths_best", "sum"), events=("event_id", "count"),
                                                         civilians=("deaths_civilians", "sum"))
@@ -507,7 +579,7 @@ def page_media():
     st.markdown("")
     show(viz.fig_media_scatter(D["media"]), "md1")
     show(viz.fig_media_gap(D["media"]), "md2")
-    case = st.selectbox("Outlets cited for", C.CASES)
+    case = st.selectbox("Outlets cited for", ordered(), key=f"med_{ROLE}")
     om = D["outlet_mix"][D["outlet_mix"].conflict_case == case]
     st.dataframe(om[["publisher_norm", "refs", "share"]], hide_index=True,
                  column_config={"share": st.column_config.ProgressColumn("share", format="%.2f", min_value=0, max_value=1)})
@@ -524,7 +596,7 @@ def page_forecast():
     kicker("Model performance on withheld data")
     st.markdown("# Forecast: Jan–Sep 2026 withheld test")
     c1, c2, c3 = st.columns([2, 2, 2])
-    case = c1.selectbox("Conflict", C.CASES)
+    case = c1.selectbox("Conflict", ordered(), key=f"fc_{ROLE}")
     track = c2.radio("Question", ["A: next month (rolling)", "B: 1–9 months from Dec 2025"], horizontal=False)
     tr = "A" if track.startswith("A") else "B"
     model = c3.selectbox("Model", list(M.MODEL_LABELS), index=list(M.MODEL_LABELS).index("ensemble"),
@@ -626,9 +698,18 @@ def page_ew():
         sowhat("A lower threshold catches more escalations at the cost of more false alarms. Pick it by the ISR "
                "capacity available: about 10 alerts a month matches the top-10 list in the report.", "TRADE-OFF")
     with t1:
-        cs = st.multiselect("Filter conflicts", C.CASES, default=C.CASES, key="ewc")
+        a1, a2 = st.columns([3, 1])
+        cs = a1.multiselect("Filter conflicts", C.CASES, default=TCASES, key=f"ewc_{ROLE}")
+        only = a2.toggle("Only my AOR", value=ROLE != "CDS", key=f"ew_aor_{ROLE}", disabled=ROLE == "CDS",
+                         help="Keep only areas whose centroid is inside the signed-in theatre's notional AOR polygon")
         lv = D["ew_live"]
-        lv = lv[lv.conflict_case.isin(cs) & ~lv.admin1.str.startswith("(")].head(20).round({"deaths": 0, "base3": 0})
+        lv = lv[lv.conflict_case.isin(cs) & ~lv.admin1.str.startswith("(")]
+        if only:
+            lv = lv[lv.admin1_key.isin(aor_keys(ROLE))]
+            if ROLE == "NTC":
+                st.info("No real district in the NTC AOR except Gilgit-Baltistan (PoK). The LAC sectors are synthetic and "
+                        "are shown on 🎖️ Theatre daily brief.")
+        lv = lv.head(20).round({"deaths": 0, "base3": 0})
         st.dataframe(lv[["conflict_case", "country_iso3", "admin1", "deaths", "base3", "p_escalation"]].rename(
             columns={"conflict_case": "Conflict", "country_iso3": "Country", "admin1": "Area", "deaths": f"Deaths {LAST:%b}", "base3": "3-mo mean"}), hide_index=True, height=600, use_container_width=True,
             column_config={"p_escalation": st.column_config.ProgressColumn("P(escalation next month)", format="%.2f",
@@ -671,7 +752,7 @@ def page_whatif():
     art = load_models()
     l, r = st.columns([1, 2.4])
     with l:
-        case = st.selectbox("Conflict", C.CASES, index=2)
+        case = st.selectbox("Conflict", ordered(), index=idx(2), key=f"wi_{ROLE}")
         shock = st.slider("Change in violence over the last months (%)", -80, 200, 30, step=10)
         k = st.slider("…applied to the last N months", 1, 6, 3)
         st.caption("The frozen full-data LightGBM-Δ, a refitted ETS and the moving average are re-run on the modified "
@@ -785,8 +866,11 @@ def page_area():
     st.markdown("# Area drill-down")
     am_ = D["am"]
     c1, c2, c3 = st.columns([1.2, 1.6, 1])
-    case = c1.selectbox("Conflict", C.CASES, index=2, key="ar_case")
+    case = c1.selectbox("Conflict", ordered(), index=idx(2), key=f"ar_case_{ROLE}")
     a = am_[am_.conflict_case == case]
+    if ROLE != "CDS" and st.toggle("Only areas in my AOR", value=True, key=f"ar_aor_{ROLE}"):
+        _a = a[a.admin1_key.isin(aor_keys(ROLE))]
+        a = _a if len(_a) else a
     tot = a.groupby(["admin1_key", "admin1"]).deaths.sum().sort_values(ascending=False).reset_index()
     tot = tot[~tot.admin1.str.startswith("(")]
     key = c2.selectbox("Area (sorted by total deaths)", tot.admin1_key, format_func=lambda k: k.split(" | ", 1)[1]
@@ -794,7 +878,8 @@ def page_area():
     start = c3.select_slider("From", options=list(range(2014, 2027)), value=2020, key="ar_from")
     s_ = a[(a.admin1_key == key) & (a.month >= f"{start}-01-01")].sort_values("month")
     name = key.split(" | ", 1)[1]
-    lv = D["ew_live"].set_index("admin1_key")
+    # an area can appear under two conflicts (e.g. Tehran under US–Iran and Israel–Hamas): use this conflict's row
+    lv = D["ew_live"][D["ew_live"].conflict_case == case].set_index("admin1_key")
     af = D["admin_future"]
     af = af[af.admin1_key == key].sort_values("h")
     k1, k2, k3, k4 = st.columns(4)
@@ -808,7 +893,7 @@ def page_area():
         pe = lv.loc[key, "p_escalation"] if key in lv.index else np.nan
         rank = int((D["ew_live"].p_escalation > pe).sum() + 1) if pe == pe else None
         card(f"P(escalation) {(LAST + pd.DateOffset(months=1)):%b}", f"{pe:.0%}" if pe == pe else "n/a",
-             f"rank {rank} of {len(lv)} areas" if rank else "", T["amber"] if pe == pe and pe >= 0.15 else T["teal"])
+             f"rank {rank} of {len(D['ew_live'])} areas" if rank else "", T["amber"] if pe == pe and pe >= 0.15 else T["teal"])
     with k4:
         nxt = af.pred.iloc[0] if len(af) else np.nan
         card("Bottom-up forecast", f"{nxt:,.0f}" if nxt == nxt else "n/a", "deaths next month (LightGBM Tweedie)", T["violet"])
@@ -916,8 +1001,423 @@ def page_lab():
     footer()
 
 
+
+# ---------------------------------------------------------------------------
+# 13. Economic front
+# ---------------------------------------------------------------------------
+@st.cache_data(show_spinner=False)
+def load_econ():
+    import json
+    t = {k: pd.read_csv(TB / f"econ_{k}.csv") for k in
+         ["episodes", "event_study", "india_monthly", "reserves", "fronts", "political_timeline", "claims_check",
+          "paths", "gpr_monthly", "series_log", "protests_2026"]}
+    t["summary"] = json.loads((TB / "econ_summary.json").read_text())
+    return t
+
+
+def page_econ():
+    kicker("The second front")
+    st.markdown("# Economic front: markets, currencies, reserves and politics")
+    try:
+        X = load_econ()
+    except FileNotFoundError:
+        st.warning("Economic tables not found. Run `python run_pipeline.py` first.")
+        return
+    S = X["summary"]
+    H, OIL, RSV, REM = S["headline"], S["india_oil_bill"], S["reserves"], S["india_remittances"]
+    sowhat("The battlefield kills locally, but markets hit everyone. India took no fire in the 2026 Gulf war and still "
+           f"saw Brent {H['brent_d20_2026']:+.0f}% and the Nifty {H['nifty_d20_2026']:+.1f}% within 20 trading days.",
+           label="BLUF")
+    c = st.columns(4)
+    with c[0]:
+        card("Brent, 20 days after 28 Feb 2026", f"{H['brent_d20_2026']:+.0f}%", f"peak {H['brent_best_2026']:+.0f}%; VIX "
+             f"{H['vix_best_2026']:+.0f}%", T["amber"], "DATA: Yahoo BZ=F")
+    with c[1]:
+        card("Nifty 50 / rupee, 2026", f"{H['nifty_d20_2026']:+.1f}%", f"worst {H['nifty_worst_2026']:+.1f}%; rupee worst "
+             f"{H['inr_worst_2026']:+.1f}%", T["red"], "DATA: Yahoo ^NSEI, INR=X")
+    with c[2]:
+        card("India's extra crude bill", f"≈${OIL['extra_usd_bn_per_year_2026']:.0f}B/yr",
+             f"Brent +${OIL['brent_up_usd_2026']:.0f}/bbl since the war; ${OIL['per_10usd_bn_per_year']:.1f}B per $10",
+             T["amber"], f"DATA price × DOMAIN {OIL['crude_mbd_domain']} mb/d imports")
+    with c[3]:
+        card("India reserves drawn, 2022", f"−${RSV['ind_2021_bn'] - RSV['ind_2022_bn']:.0f}B",
+             f"${RSV['ind_2021_bn']:.0f}B → ${RSV['ind_2022_bn']:.0f}B defending the rupee; "
+             f"{RSV['ind_2025_months']:.1f} months cover in 2025", T["cyan"], "DATA: World Bank")
+    st.markdown("")
+    c = st.columns(4)
+    with c[0]:
+        card("MOEX, 24 Feb 2022", f"{H['moex_day1']:+.0f}%", "then no trading until 24 Mar", T["cyan"], "DATA: MOEX ISS")
+    with c[1]:
+        card("TA-35 after 7 Oct 2023", f"{H['ta35_worst']:+.1f}%", f"shekel {H['ils_worst']:+.1f}%; ZIM shipping "
+             f"{H['zim_worst']:+.0f}%", T["cyan"], "DATA: Yahoo")
+    with c[2]:
+        ir = S["irr_2026"]
+        card("Iranian rial since the war", f"{ir['value_change_pct']:+.0f}%", f"{ir['pre_war']:,.0f} → {ir['last']:,.0f} "
+             f"per USD ({ir['last_date']})", T["red"], "DATA: Yahoo IRR=X, free-market rate from Jan 2026")
+    with c[3]:
+        card("Gulf remittances at risk", f"≈${REM['gulf_usd_bn']:.0f}B/yr", f"of ${REM['usd_bn']:.0f}B total ({REM['year']}); "
+             f"{REM['gulf_share_domain']:.0%} Gulf share", T["violet"], "DATA World Bank × DOMAIN share")
+
+    st.markdown("")
+    show(viz.fig_econ_fronts(X["fronts"]), "e_fronts")
+    st.caption("One row per theatre's largest episode. Af–Pak has no stock-index series reachable (PSX blocked), so it "
+               "shows the rupee and India only.")
+
+    kicker("Event paths around each shock")
+    ph = X["paths"]
+    l, r = st.columns([1, 3])
+    with l:
+        case = st.radio("Shock", ordered(list(ph.conflict_case.unique())), key=f"e_case_{ROLE}")
+        sers = list(ph[ph.conflict_case == case].series.unique())
+        pick = st.multiselect("Series", sers, default=sers, key="e_ser",
+                              format_func=lambda k: viz.ECON_LABEL.get(k, k))
+        st.markdown(f"{DATA_TAG} Index = 100 at the last close before day 0. Day 0 is picked from UCDP daily deaths, "
+                    "not from the news.", unsafe_allow_html=True)
+    with r:
+        show(viz.fig_econ_paths(ph[ph.series.isin(pick)], case), "e_paths")
+
+    kicker("India panel")
+    show(viz.fig_econ_india(X["india_monthly"]), "e_india")
+    with st.expander("What-if: India's crude bill at a given Brent price", expanded=True):
+        a, b = st.columns([2, 3])
+        with a:
+            mbd = st.slider("Crude imports (million bbl/day)", 3.0, 6.0, float(OIL["crude_mbd_domain"]), 0.1, key="e_mbd")
+            px = st.slider("Brent rise vs pre-war (USD/bbl)", 0.0, 80.0, round(OIL["brent_up_usd_2026"] * 2) / 2, 0.5, key="e_px")
+        with b:
+            extra = mbd * 1e6 * 365 * px / 1e9
+            card("Extra import bill", f"≈${extra:.0f}B / year", f"{mbd:.1f} mb/d × ${px:.1f}/bbl × 365 days; about "
+                 f"{extra / RSV['ind_2025_bn']:.0%} of 2025 reserves", T["amber"],
+                 "DOMAIN estimate; ignores discounts on Russian crude and demand response")
+
+    l, r = st.columns(2)
+    with l:
+        show(viz.fig_econ_reserves(X["reserves"]), "e_res")
+    with r:
+        g = X["gpr_monthly"].copy()
+        g["month"] = pd.to_datetime(g.month)
+        fig = go.Figure(go.Scatter(x=g.month, y=g.GPR, name="GPR", line=dict(color=T["amber"], width=3)))
+        fig.update_layout(title="Geopolitical Risk index (Caldara–Iacoviello, monthly)", height=440, yaxis_title="Index")
+        show(fig, "e_gpr")
+
+    kicker("Every episode, every market")
+    es = X["event_study"]
+    hz = st.radio("Horizon", ["d1_pct", "d5_pct", "d20_pct", "d60_pct", "worst60_pct"], index=2, horizontal=True,
+                  format_func=lambda h: {"d1_pct": "1 day", "d5_pct": "5 days", "d20_pct": "20 days",
+                                         "d60_pct": "60 days", "worst60_pct": "worst in 60"}[h], key="e_hz")
+    _ecs = list(es.conflict_case.unique())
+    cases = st.multiselect("Theatres", _ecs, default=[c for c in TCASES if c in _ecs] or _ecs, key=f"e_cs_{ROLE}")
+    topn = st.slider("Show the largest moves", 10, len(es), 30, 5, key="e_top")
+    sel = es[es.conflict_case.isin(cases)]
+    sel = sel.loc[sel[hz].abs().sort_values(ascending=False).index[:topn]]
+    show(viz.fig_econ_event_bars(sel, hz), "e_bars")
+    st.markdown(f"{DATA_TAG} {S['n_episodes']} death-spike episodes, {S['n_moves']} market moves. Main onsets: median "
+                f"|20-day move| {S['median_abs_move20_main']:.1f}%, {S['sig_share_main_onsets']:.0%} significant at p<0.10 "
+                f"against every non-war 20-day window since 2014. Routine spikes: {S['median_abs_move20_other']:.1f}%, "
+                f"{S['sig_share_other_episodes']:.0%} significant. Markets react to new wars, not to more of the same war.",
+                unsafe_allow_html=True)
+    cols = ["conflict_case", "day0", "label", "d1_pct", "d5_pct", "d20_pct", "d60_pct", "worst60_pct", "p20"]
+    st.dataframe(es[es.conflict_case.isin(cases)][cols].round(2), hide_index=True, use_container_width=True)
+    download(es, "econ_event_study")
+
+    kicker("Political crises")
+    pt = X["political_timeline"]
+    st.markdown(f"{DOM_TAG} dated crises, aligned to the nearest death-spike episode (±45 days). War onsets and sanctions "
+                f"line up; domestic crises such as Pakistan 2022–24 mostly do not ({int(pt.within_45d.sum())} of {len(pt)}).",
+                unsafe_allow_html=True)
+    st.dataframe(pt, hide_index=True, use_container_width=True)
+    download(pt, "econ_political_timeline")
+
+    kicker("Checking the figures we quote")
+    st.dataframe(X["claims_check"], hide_index=True, use_container_width=True)
+    download(X["claims_check"], "econ_claims_check")
+    with st.expander("Sources and series log"):
+        st.dataframe(X["series_log"], hide_index=True, use_container_width=True)
+        st.caption("Yahoo Finance daily closes, MOEX ISS (IMOEX, RTSI), World Bank WDI (reserves, imports, remittances, "
+                   "GDP), Caldara–Iacoviello GPR. Currencies are shown as value vs USD (a fall = depreciation). "
+                   "Fetched by data/econ/fetch_econ*.py; built by src/econ.py.")
+    footer()
+
+
+# ---------------------------------------------------------------------------
+# 14. Theatre daily brief (role-based, notional theatres)
+# ---------------------------------------------------------------------------
+@st.cache_data(show_spinner=False)
+def load_briefs(_stamp: float):
+    import json as _j
+    f = TH.OUT / "briefs.json"
+    if not f.exists():
+        TH.run()
+    return _j.loads(f.read_text(encoding="utf-8"))
+
+
+@st.cache_resource(show_spinner=False)
+def theatre_inputs():
+    return TH.load_inputs()
+
+
+def _briefs():
+    f = TH.OUT / "briefs.json"
+    return load_briefs(f.stat().st_mtime if f.exists() else 0.0)
+
+
+def ooda_block(b: dict, compact: bool = False):
+    col = C.RAG_COLORS[b["rating"]]
+    tag = {"DATA": DATA_TAG, "MODEL": '<span class="tag-dom" style="background:#4FD6E8">MODEL</span>',
+           "SYNTHETIC": '<span class="chip chip-syn" style="font-size:0.7rem">SYNTHETIC</span>'}
+    obs = "".join(f"<li>{o['text']} <span style='color:{T['text3']}'>· {o['window']} · {o['source']}</span> "
+                  f"{tag.get(o['tag'], '')}</li>" for o in b["observe"])
+    st.markdown(f"<div class='ooda'><div class='h' style='color:{T['cyan']}'>① OBSERVE · top changes, last 24 h / 7 d</div>"
+                f"<ol>{obs}</ol></div>", unsafe_allow_html=True)
+    pts = "".join(f"<li><b>{p['pts']:+d}</b> {p['why']}</li>" for p in b["orient"]["points"])
+    st.markdown(f"<div class='ooda'><div class='h' style='color:{T['amber']}'>② ORIENT · threat level and why</div>"
+                f"<div style='font-size:1.5rem;font-weight:900;color:{col}'>{b['rating']} {b['arrow']} "
+                f"<span style='font-size:1rem;color:{T['text2']}'>{b['trend']} · score {b['score']} · confidence "
+                f"<b>{b['confidence']}</b></span></div><ul>{pts}</ul>"
+                f"<div style='color:{T['text3']};font-size:0.9rem'>{b['orient']['model_why']} {b['confidence_why']}</div></div>",
+                unsafe_allow_html=True)
+    if compact:
+        acts = "".join(f"<li><b>{a['short']}</b> · {a['owner']} · <b>{a['timeline']}</b></li>" for a in b["decide"])
+        st.markdown(f"<div class='ooda'><div class='h' style='color:{T['teal']}'>③ DECIDE + ④ ACT</div><ol>{acts}</ol></div>",
+                    unsafe_allow_html=True)
+        return
+    st.markdown(f"<div class='ooda' style='margin-bottom:4px'><div class='h' style='color:{T['teal']}'>③ DECIDE · three "
+                f"ranked actions &nbsp; ④ ACT · owner, timeline, trigger to escalate</div></div>", unsafe_allow_html=True)
+    rows = "".join(
+        f"<tr><td style='font-size:1.3rem;font-weight:900;color:{T['teal']}'>{a['rank']}</td><td><b>{a['kind']}</b><br>"
+        f"{a['text']}</td><td>{a['owner']}<br><b style='color:{T['amber']}'>{a['timeline']}</b></td>"
+        f"<td style='color:{T['text2']}'>{a['trigger']}</td></tr>" for a in b["decide"])
+    st.markdown(f"<table style='width:100%;font-size:0.92rem;border-collapse:collapse' class='acts'><tr style='color:{T['text3']}'>"
+                f"<th>#</th><th>DECIDE: action</th><th>ACT: owner, timeline</th><th>Trigger to escalate</th></tr>{rows}</table>",
+                unsafe_allow_html=True)
+
+
+def page_theatre():
+    B = _briefs()
+    meta = B["meta"]
+    kicker(f"{TT['name']} · notional · daily 0600 IST brief")
+    st.markdown(f"# {ROLE}: {TT['front']}")
+    st.markdown(f"<span class='chip chip-notional'>NOTIONAL</span> {TH.NOTIONAL}"
+                + (f"<br><span class='chip chip-syn'>SYNTHETIC</span> {TH.SYN_NOTE}" if ROLE in ("NTC", "CDS") else ""),
+                unsafe_allow_html=True)
+    dates = B["dates"]
+    d = st.select_slider("Brief for", options=dates, value=dates[-1], key=f"th_d_{ROLE}",
+                         format_func=lambda x: TH.dtg(pd.Timestamp(x)))
+    b = B["briefs"][ROLE][dates.index(d)]
+    col = C.RAG_COLORS[b["rating"]]
+    st.markdown(f"<div class='sowhat' style='border-color:{col};background:{T['panel']}'><b style='color:{col}'>BLUF</b>"
+                f"{b['bluf']}</div>", unsafe_allow_html=True)
+    my_flash = [f for f in B["flashes"] if ROLE in (f["code"], "CDS") and f["date"] <= d]
+    c = st.columns(4)
+    with c[0]:
+        card("Threat level", f"{b['rating']} {b['arrow']}", f"{b['trend']} · score {b['score']}", col,
+             "Monthly model RAG + daily signals")
+    with c[1]:
+        card("Confidence", b["confidence"], b["confidence_why"][:90] + ("…" if len(b["confidence_why"]) > 90 else ""),
+             T["cyan"])
+    with c[2]:
+        card("FLASH alerts, 7 days", f"{len(my_flash)}", (my_flash[-1]["text"][:80] + "…") if my_flash else "none raised",
+             T["red"] if my_flash else T["teal"], f"threshold P ≥ {TH.FLASH_P:.2f} or a RAG change")
+    with c[3]:
+        card("Data latency", f"{meta['ucdp_lag_days']} d → <1 d", f"UCDP ends {pd.Timestamp(meta['ucdp_end']):%d %b}; "
+             f"GDELT and markets to {pd.Timestamp(meta['data_end']):%d %b}", T["violet"],
+             f"All four briefs built in {meta['build_seconds']} s")
+    st.markdown("")
+    l, r = st.columns([1.05, 1])
+    with l:
+        ooda_block(b)
+    with r:
+        show(TV.fig_aor_map(b, ROLE, height=560), f"aor_{ROLE}")
+        if ROLE == "NTC":
+            st.caption("Diamonds are [SYNTHETIC] LAC sectors (seeded generator with a scripted demo surge at Tawang and "
+                       "Depsang). Gilgit-Baltistan (PoK) is the only real area in the AOR.")
+    t1, t2, t3, t4 = st.tabs(["📥 Inbox & notifications", "📡 GDELT nowcast", "💹 Second front (oil, shipping, rupee)",
+                              "🧪 Brief what-if"])
+    with t1:
+        inbox_panel(B, b)
+    with t2:
+        if TT["gdelt_case"] or TT["gdelt_geo"]:
+            show(TV.fig_gdelt_strip(ROLE, b["date"]), f"gd_{ROLE}")
+        g = pd.DataFrame(b["gdelt"])
+        if len(g):
+            st.dataframe(g[["series", "last", "mean28", "z", "last7", "prior28", "r7"]].rename(columns={
+                "last": "yesterday", "mean28": "28-day mean", "z": "24 h z", "last7": "7-day mean", "prior28": "4 weeks before",
+                "r7": "7-day ratio"}).round(2), hide_index=True, use_container_width=True)
+        st.markdown(f"{DATA_TAG} GDELT is media-coded news volume, not ground truth. It is not in the model; here it "
+                    "nudges the district nowcast and flags spikes. The NTC view uses India-wide GDELT only (no China "
+                    "file was issued).", unsafe_allow_html=True)
+    with t3:
+        show(TV.fig_econ_strip(ROLE, b["date"]), f"ec_{ROLE}")
+        e = pd.DataFrame(b["econ"])
+        if len(e):
+            st.dataframe(e[["series", "close", "asof", "ch5", "z5", "adverse"]].rename(columns={
+                "ch5": "5-session change", "z5": "z vs 2 years", "adverse": "adverse z (+ = bad for India)"}).round(3),
+                hide_index=True, use_container_width=True)
+        st.caption("Full analysis on 💹 Economic front. Market stress (adverse z ≥ 2) adds a point to the theatre score and "
+                   "raises the logistics-buffer action.")
+    with t4:
+        whatif_brief(b)
+    with st.expander("Brief as plain text (Markdown) and the AOR polygon (GeoJSON)"):
+        st.code(TH.to_markdown(b), language="markdown")
+        st.download_button("⬇ Brief (.md)", TH.to_markdown(b), file_name=f"{ROLE}_{b['date']}_brief.md", key=f"dlb_{ROLE}")
+        import json as _j
+        st.download_button("⬇ Notional AORs (.geojson)", _j.dumps(TH.aor_geojson()), file_name="aor_notional.geojson",
+                           key=f"dlg_{ROLE}")
+    footer()
+
+
+def inbox_panel(B: dict, b: dict):
+    msgs = [m for m in B["inbox"] if (ROLE == "CDS" or m["code"] == ROLE) and m["date"] <= b["date"]]
+    l, r = st.columns([1.1, 1])
+    with l:
+        st.markdown(f"**In-app inbox · {ROLE}** ({sum(m['kind'] == 'FLASH' for m in msgs)} FLASH, "
+                    f"{sum(m['kind'] != 'FLASH' for m in msgs)} daily briefs). Job: {B['meta']['schedule']}.")
+        for m in msgs[:8]:
+            fl = m["kind"] == "FLASH"
+            st.markdown(f"<div class='msg {'flash' if fl else ''}'><div class='t'>{m['dtg']} · {m['priority']} · "
+                        f"{' / '.join(m['channels'])}</div><div class='s' style='color:{T['red'] if fl else T['text']}'>"
+                        f"{'⚡ ' if fl else ''}{m['subject']}</div>{m['text']}</div>", unsafe_allow_html=True)
+        a, c2 = st.columns(2)
+        if a.button("▶ Run the 0600 job now", key=f"run_{ROLE}", help="Rebuilds every theatre's brief from the data "
+                    "(what the scheduler does at 0030 UTC)"):
+            with st.spinner("Building WTC, NTC, MTC and CDS briefs…"):
+                o = TH.run()
+            load_briefs.clear()
+            st.success(f"Built {len(TH.ROLES)} × {o['meta']['days']} briefs in {o['meta']['build_seconds']} s; "
+                       f"{o['meta']['n_flash']} FLASH alerts.")
+        c2.caption("Scheduler: `scripts/daily_briefs.py` via Windows Task Scheduler, cron (30 0 * * * UTC) or the "
+                   "GitHub workflow `daily-briefs.yml`.")
+    with r:
+        ch = st.radio("Preview channel", ["E-mail", "SMS", "WhatsApp"], horizontal=True, key=f"ch_{ROLE}")
+        if ch == "E-mail":
+            import streamlit.components.v1 as components
+            components.html(TH.to_email_html(b), height=760, scrolling=True)
+            with st.form(f"mail_{ROLE}"):
+                to = st.text_input("Send this brief by e-mail (optional, needs SMTP settings)", placeholder="name@example.com")
+                if st.form_submit_button("Send"):
+                    import os
+                    if not os.environ.get("CW_SMTP_HOST"):
+                        st.info("Demo mode: no SMTP server is configured (set CW_SMTP_HOST, CW_SMTP_USER, CW_SMTP_PASS). "
+                                "The .eml file is written to outputs/theatre/outbox/ by the daily job.")
+                    elif to:
+                        st.write(TH.send_email(b, [x.strip() for x in to.split(",") if x.strip()]))
+        else:
+            txt = TH.to_sms(b) if ch == "SMS" else TH.to_whatsapp(b)
+            txt = txt.replace("*", "").replace("_", "") if ch == "WhatsApp" else txt
+            st.markdown(f"<div class='phone'><div style='color:{T['text3']};font-size:0.75rem;text-align:center'>"
+                        f"{'Messages' if ch == 'SMS' else 'WhatsApp'} · Conflict Watch · {b['dtg']}</div>"
+                        f"<div class='bubble {'sms' if ch == 'SMS' else ''}'>{txt}</div></div>", unsafe_allow_html=True)
+            st.caption(f"Mock preview ({len(TH.to_sms(b))} characters for SMS). A gateway would be wired in "
+                       "`scripts/daily_briefs.py`; nothing is sent.")
+
+
+def whatif_brief(b: dict):
+    st.markdown("Change the inputs and the brief is rebuilt with the same rules: threat level, ranked actions and "
+                "timelines move with the evidence.")
+    a, c, e = st.columns(3)
+    gm = a.slider("GDELT conflict reporting in the last 7 days ×", 0.5, 4.0, 1.0, 0.25, key=f"wb_g_{ROLE}")
+    ps = c.slider("Shift the model's district probabilities (pp)", -10, 20, 0, 1, key=f"wb_p_{ROLE}")
+    lx = e.slider("[SYNTHETIC] extra LAC incidents today (NTC)", 0, 10, 0, 1, key=f"wb_l_{ROLE}", disabled=ROLE not in ("NTC", "CDS"))
+    I = theatre_inputs()
+    d = pd.Timestamp(b["date"])
+    nb = TH.build_brief(ROLE, d, TH.apply_shock(I, d, gm, ps / 100, lx))
+    col = C.RAG_COLORS[nb["rating"]]
+    x, y = st.columns([1, 2])
+    with x:
+        card("What-if threat level", f"{nb['rating']} {nb['arrow']}", f"was {b['rating']} {b['arrow']} · score "
+             f"{b['score']} → {nb['score']}", col)
+    with y:
+        st.markdown(f"**What-if BLUF:** {nb['bluf']}")
+        st.dataframe(pd.DataFrame([dict(Rank=r["rank"], Action=r["short"], Owner=r["owner"], Timeline=r["timeline"])
+                                   for r in nb["decide"]]), hide_index=True, use_container_width=True)
+    st.caption("The forecast what-if (deaths) is on 🧪 What-if simulator, filtered to this theatre's conflicts.")
+
+
+# ---------------------------------------------------------------------------
+# 15. Brief history, side by side, OODA
+# ---------------------------------------------------------------------------
+def page_history():
+    B = _briefs()
+    kicker("Seven days of briefs · two commanders, one dataset · the OODA loop")
+    st.markdown("# Brief history & OODA")
+    t1, t2, t3, t4 = st.tabs(["🗓️ 7-day history", "👥 Side by side", "⏱️ How it shortens the OODA loop", "⚡ FLASH log"])
+    with t1:
+        show(TV.fig_rag_history(B), "hist_rag")
+        who = st.radio("Theatre", TH.ROLES, index=TH.ROLES.index(ROLE), horizontal=True, key="hist_who",
+                       format_func=lambda k: TH.ROLE_LABEL[k])
+        rows = [dict(DTG=x["dtg"], Rating=f"{x['rating']} {x['arrow']}", Confidence=x["confidence"], BLUF=x["bluf"])
+                for x in B["briefs"][who]][::-1]
+        st.dataframe(pd.DataFrame(rows), hide_index=True, use_container_width=True,
+                     column_config={"BLUF": st.column_config.TextColumn(width="large")})
+        for x in B["briefs"][who][::-1]:
+            with st.expander(f"{x['dtg']} · {x['rating']} {x['arrow']} · {x['bluf'][:110]}…"):
+                ooda_block(x, compact=True)
+    with t2:
+        a, c, dd = st.columns(3)
+        r1 = a.selectbox("Commander A", TH.ROLES, index=0, format_func=lambda k: TH.ROLE_LABEL[k], key="sx_a")
+        r2 = c.selectbox("Commander B", TH.ROLES, index=2, format_func=lambda k: TH.ROLE_LABEL[k], key="sx_b")
+        d = dd.select_slider("Same day", options=B["dates"], value=B["dates"][-1], key="sx_d",
+                             format_func=lambda x: TH.dtg(pd.Timestamp(x)))
+        i = B["dates"].index(d)
+        sowhat(f"Same data run, same rules, same minute: {r1} and {r2} see different maps, different top changes and "
+               "different actions, because each brief is filtered to its own AOR and playbook. Nobody has to read the "
+               "other theatre's traffic to find their own.", "SAME DATA")
+        L, R = st.columns(2)
+        for colx, rr in ((L, r1), (R, r2)):
+            bb = B["briefs"][rr][i]
+            with colx:
+                cl = C.RAG_COLORS[bb["rating"]]
+                st.markdown(f"<div class='rag' style='border:3px solid {cl};text-align:left'><div class='case'>{rr} · "
+                            f"{TH.theatre(rr)['name']}</div><div class='rating' style='color:{cl};font-size:2rem'>"
+                            f"{bb['rating']} {bb['arrow']}</div><div class='line'>{bb['bluf']}</div></div>",
+                            unsafe_allow_html=True)
+                show(TV.fig_aor_map(bb, rr, height=420), f"sx_map_{rr}_{colx is L}")
+                ooda_block(bb, compact=True)
+    with t3:
+        tot = TH.ooda_totals()
+        meta = B["meta"]
+        sowhat(f"Event to decision: about {tot['today_days'][0]:.0f}–{tot['today_days'][1]:.0f} days in a weekly staff "
+               f"cycle, about {tot['cw_hours'][0]:.0f}–{tot['cw_hours'][1]:.0f} hours with an automatic 0600 brief and "
+               "pre-agreed triggers. Days to hours.", "OODA")
+        show(TV.fig_ooda(), "ooda_bar")
+        st.dataframe(pd.DataFrame([dict(Stage=o["stage"], Today=o["today"], **{"Today (h)": f"{o['today_h'][0]}–{o['today_h'][1]}"},
+                                        **{"With Conflict Watch": o["cw"]}, **{"CW (h)": f"{o['cw_h'][0]}–{o['cw_h'][1]}"},
+                                        **{"What shortens it": o["how"]}) for o in TH.OODA]),
+                     hide_index=True, use_container_width=True,
+                     column_config={k: st.column_config.TextColumn(width="medium") for k in
+                                    ["Today", "With Conflict Watch", "What shortens it"]})
+        c = st.columns(4)
+        with c[0]:
+            card("Observe: data latency", f"{meta['ucdp_lag_days']} d → <1 d", "UCDP's last record vs GDELT and market "
+                 "closes, same day", T["cyan"], "DATA (measured)")
+        with c[1]:
+            card("Orient: build time", f"{meta['build_seconds']} s", "four theatres × 7 days of briefs, scored and "
+                 "ranked", T["amber"], "DATA (measured on this run)")
+        with c[2]:
+            card("Decide: options ready", "3 / theatre", "ranked actions at 0600 for the 0700 update", T["teal"],
+                 "playbook rules")
+        with c[3]:
+            card("Act: trigger", "FLASH", "pushed to the owner on ingest; no new conference", T["red"],
+                 f"P ≥ {TH.FLASH_P:.2f} or a RAG change")
+        st.markdown(f"{DOM_TAG} The staff-cycle hours are an illustrative DOMAIN estimate, not a measurement. The "
+                    "measured parts are the data latency and the build time. The claim is about the loop, not the "
+                    "model: the brief removes collation, scoring and option-building from the critical path, so "
+                    "the commander's time goes to judgement.", unsafe_allow_html=True)
+    with t4:
+        F = pd.DataFrame(B["flashes"])
+        if len(F):
+            st.dataframe(F[["dtg", "code", "kind", "text"]].rename(columns={"dtg": "DTG", "code": "Theatre", "kind": "Type",
+                                                                           "text": "Message"}),
+                         hide_index=True, use_container_width=True,
+                         column_config={"Message": st.column_config.TextColumn(width="large")})
+        st.caption(f"FLASH rules: a district's nowcast P crosses {TH.FLASH_P:.2f} upward (with a 0.01 band to stop "
+                   "jitter), or a theatre's RAG changes between two daily runs. NTC FLASHes come from the scripted "
+                   "[SYNTHETIC] demo surge.")
+    footer()
+
+
 {
     PAGES[0]: page_brief, PAGES[1]: page_explorer, PAGES[2]: page_area, PAGES[3]: page_military, PAGES[4]: page_india,
     PAGES[5]: page_displacement, PAGES[6]: page_media, PAGES[7]: page_forecast, PAGES[8]: page_ew,
-    PAGES[9]: page_whatif, PAGES[10]: page_lab, PAGES[11]: page_dq,
+    PAGES[9]: page_whatif, PAGES[10]: page_lab, PAGES[11]: page_dq, PAGES[12]: page_econ,
+    PAGES[13]: page_theatre, PAGES[14]: page_history,
 }[page]()

@@ -205,6 +205,103 @@ cal_t = cal.assign(band=cal.band.str.replace("(-0.001", "(0", regex=False))
 cal_md = mdtable(cal_t.rename(columns={"band": "Predicted band", "areas": "Area-months", "mean_pred": "Mean predicted",
                                        "escalated": "Escalated"}), floatfmt={"Mean predicted": "{:.1%}", "Escalated": "{:.1%}"})
 
+# ---- economic front (new; public market data, src/econ.py)
+ECS = json.loads((TB / "econ_summary.json").read_text())
+EHH, EOIL, ERSV, EREM = ECS["headline"], ECS["india_oil_bill"], ECS["reserves"], ECS["india_remittances"]
+EFR = t("econ_fronts.csv").set_index("conflict_case")
+ECK = t("econ_claims_check.csv")
+EPA = t("econ_political_timeline.csv")
+EEP = t("econ_episodes.csv")
+_esr = t("econ_event_study.csv")
+_main = _esr[_esr.day0.isin(["2022-02-24", "2023-10-07", "2026-02-28"])]
+_lab = {"Russia–Ukraine": "RU–UA 24 Feb 2022", "Israel–Hamas": "Israel–Hamas 7 Oct 2023", "US–Iran": "US–Iran 28 Feb 2026"}
+_et = _main.assign(Shock=_main.conflict_case.map(_lab))[["Shock", "label", "d1_pct", "d20_pct", "worst60_pct", "best60_pct", "p20"]]
+_et = _et.rename(columns={"label": "Series", "d1_pct": "Day 1 %", "d20_pct": "20 days %", "worst60_pct": "Worst in 60 d %",
+                          "best60_pct": "Best in 60 d %", "p20": "Placebo p (20 d)"})
+econ_md = mdtable(_et, floatfmt={"Day 1 %": "{:+.1f}", "20 days %": "{:+.1f}", "Worst in 60 d %": "{:+.1f}",
+                                 "Best in 60 d %": "{:+.1f}", "Placebo p (20 d)": "{:.2f}"})
+_fr = EFR.reset_index()
+_frt = pd.DataFrame({"Theatre (largest episode)": _fr.conflict_case + " (" + _fr.episode + ")",
+                     "Battlefield: deaths [D1]": _fr.episode_deaths.map("{:,.0f}".format),
+                     "Countries with deaths [D1]": _fr.countries_with_deaths,
+                     "Local equity, worst %": _fr.local_equity_worst60_pct.map(lambda v: "n/a" if pd.isna(v) else f"{v:+.0f}"),
+                     "Local currency, worst %": _fr.local_fx_worst60_pct.map(lambda v: "n/a" if pd.isna(v) else f"{v:+.0f}"),
+                     "Brent, peak %": _fr.brent_best60_pct.map(lambda v: "n/a" if pd.isna(v) else f"{v:+.0f}"),
+                     "Nifty, worst %": _fr.nifty_worst60_pct.map(lambda v: f"{v:+.0f}"),
+                     "Rupee, worst %": _fr.inr_worst60_pct.map(lambda v: f"{v:+.0f}")})
+fronts_md = mdtable(_frt)
+claims_md = mdtable(ECK.rename(columns={"claim": "Figure quoted", "measured": "What the data say", "verdict": "Verdict",
+                                        "basis": "Basis"}))
+_gdp = json.loads(EFR.loc["Russia–Ukraine", "gdp_growth"])
+_gdpi = json.loads(EFR.loc["Israel–Hamas", "gdp_growth"])
+
+
+# ---- §8.1 theatre commander briefs (notional) -------------------------------------------------------------
+from src import theatre as _TH
+_TBJ = json.loads((_TH.OUT / "briefs.json").read_text(encoding="utf-8"))
+_TMM, _TBR = _TBJ["meta"], {k: v[-1] for k, v in _TBJ["briefs"].items()}
+_TOT = _TH.ooda_totals()
+_ooda_rows = "\n".join(
+    f"| **{o['stage']}** | {o['today']} | {o['today_h'][0]}–{o['today_h'][1]} h | {o['cw']} | {o['cw_h'][0]:g}–{o['cw_h'][1]:g} h | "
+    f"{(o['today_h'][0] - o['cw_h'][0]):g}–{(o['today_h'][1] - o['cw_h'][1]):g} h | {o['how']} |" for o in _TH.OODA)
+_brief_rows = "\n".join(
+    f"| **{k}** | {_TBR[k]['rating']} {_TBR[k]['arrow']} ({_TBR[k]['trend']}) | {_TBR[k]['confidence']} | "
+    f"{(_TBR[k]['decide'][0]['kind'] + ': ' + _TBR[k]['decide'][0]['short'] + ' (' + _TBR[k]['decide'][0]['timeline'] + ', ' + _TBR[k]['decide'][0]['owner'] + ')') if _TBR[k].get('decide') else '–'} |" for k in _TH.ROLES)
+_flash_rows = "; ".join(f"{f['date'][8:]} Nov: {f['text'].replace('FLASH ', '').split(':')[0]} – "
+                        f"{'RAG change' if 'RAG' in f['text'] else 'district crossed P ' + format(_TMM['flash_threshold'], '.2f')}"
+                        for f in _TBJ["flashes"])
+THEATRE_MD = f"""
+### 8.1 Theatre commander briefs (notional) and the OODA loop
+
+**What it is.** Three **notional** theatre commands, drawn from public reporting and not an official structure:
+**WTC** (Pakistan front: LoC/IB, Af–Pak spillover, J&K, Punjab, Rajasthan, Gujarat), **NTC** (China/LAC: Ladakh, central
+sector, Sikkim, Arunachal) and **MTC** (IOR: Arabian Sea, Gulf/Hormuz, Red Sea, Bay of Bengal, Sri Lankan waters,
+Chabahar). Each area of responsibility (AOR) is a GeoJSON polygon plus a list of linked conflicts and countries
+(`outputs/theatre/aor_notional.geojson`). A demo login (WTC, NTC, MTC or CDS for all three) filters the whole dashboard
+to that AOR: map, scorecard, watch-list, GDELT nowcast, economic indicators and what-if.
+
+**The 0600 brief.** A scheduled job (`scripts/daily_briefs.py`, 0030 UTC) builds one brief per theatre from the frozen
+model outputs, the GDELT daily series (D7) and market closes, in OODA form under a one-line BLUF. **Observe**: the top
+five changes in 24 h / 7 d (GDELT spikes, district alerts, market moves). **Orient**: RAG, trend arrow, confidence and
+the model drivers (TreeSHAP). **Decide**: three ranked actions (ISR tasking, force posture, evacuation readiness,
+logistics buffers). **Act**: owner, timeline (24 h / 72 h / 7 d) and the trigger to escalate. The brief is
+"sent" to an in-app inbox with e-mail, SMS and WhatsApp previews; real e-mail is optional through SMTP.
+
+**Scoring [DOMAIN rules on DATA inputs].** Score = 2 × the monthly RAG level of the linked conflicts (GREEN 2, AMBER 4,
+RED 6) plus daily modifiers: GDELT 7-day ratio vs the prior 4 weeks (≥ 1.3 → +1, ≥ 1.75 → +2, ≤ 0.75 → −1), a 24-h z-score
+≥ 3 (+1), two or more districts over the FLASH threshold (+1), an adverse market move (5-day z ≥ 2, +1). RED ≥ 6,
+AMBER 3–5, GREEN ≤ 2. The district **nowcast** shifts the monthly probability by the theatre's GDELT momentum:
+logit(p_now) = logit(p) + 0.5 · clip(ln r₇, −1, 1). This is a heuristic and is **not back-tested**. A **FLASH**
+fires when a district crosses P {_TMM['flash_threshold']:.2f} upward or the RAG changes between daily runs.
+
+**Synthetic data.** No issued file covers the LAC, so NTC runs on a seeded synthetic incident generator (9 sectors,
+seed 2026) with a scripted demo surge; every NTC item is tagged **SYNTHETIC**, NTC confidence is LOW, and the CDS brief
+picks its main effort from real-data theatres only. Over {_TMM['days']} days to {_TMM['data_end']}, {_TMM['n_flash']}
+FLASH alerts fired, all on synthetic NTC data: {_flash_rows}.
+
+| Theatre | Rating, {_TMM['brief_dtg']} | Confidence | First action |
+|---|---|---|---|
+{_brief_rows}
+
+{fig("34_theatre_aor", "Figure 14 – Notional AORs (WTC, NTC, MTC) and the districts each commander sees")}
+
+**How it shortens the OODA loop.** The "today" timings are a DOMAIN estimate of a weekly int/ops staff cycle; the
+"with Conflict Watch" timings assume the brief is read at 0600 and actioned at the 0700 update.
+
+| Stage | Today | Hours | With Conflict Watch | Hours | Time saved | How |
+|---|---|---|---|---|---|---|
+{_ooda_rows}
+| **Total** | | **{_TOT['today_days'][0]:.0f}–{_TOT['today_days'][1]:.0f} days** | | **{_TOT['cw_hours'][0]:.0f}–{_TOT['cw_hours'][1]:.0f} h** | | Event to decision: days to hours |
+
+Two numbers are **measured [DATA]**: data latency falls from {_TMM['ucdp_lag_days']} days (UCDP's last record,
+{_TMM['ucdp_end']}) to under one day (GDELT and market closes), and the four theatres × {_TMM['days']} days of briefs
+build in {_TMM['build_seconds']:.1f} s. The staff-cycle hours are **[DOMAIN]** estimates. The model does not decide: it
+takes collation, scoring and option-building off the critical path.
+
+{fig("36_theatre_ooda", "Figure 15 – Event to decision, today vs with Conflict Watch (DOMAIN estimate, midpoints)")}
+{fig("35_theatre_history", "Figure 16 – Seven days of theatre ratings; NTC is synthetic")}
+"""
+
 author = "Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh"
 from src.brand import brand_row
 HEAD = brand_row('<div class="kick">DATA ANALYTICS COMPETITION 2026</div><h1 class="title">CONFLICT WATCH</h1>'
@@ -229,6 +326,10 @@ md = f"""
 * **The war reached India's neighbourhood.** In 2026 strikes hit 5 Gulf states that host the Indian diaspora
   ({int(gulf26.events.sum())} events), Iran's Hormuz/Chabahar coast ({int(hz26.deaths.sum())} deaths) and Sri Lankan waters
   (**104 killed, 4 Mar 2026**).
+* **Fighting is one front; the economy is the second, and it reaches India first.** No Indian unit fought in the 2026
+  Gulf war, yet in 20 trading days Brent rose **{EHH['brent_d20_2026']:+.0f}%**, the Nifty moved **{EHH['nifty_d20_2026']:+.0f}%**
+  and the rupee lost up to **{-EHH['inr_worst_2026']:.0f}%**; Brent then held about ${EOIL['brent_up_usd_2026']:.0f}/bbl higher
+  for eight months, roughly **${EOIL['extra_usd_bn_per_year_2026']:.0f}B a year** on India's crude bill (§5.7).
 * **Forecasting works on unseen data.** Trained only on 2014–2025, the ensemble cut 1-month-ahead error against the
   "no-change" rule by **{pooled_red:.0f}%** on Jan–Sep 2026 (90% interval {ci(P['ci'])}). Its 80% bands held
   **{cov80_26:.0%}** of 2026 outcomes overall, but only {pct(RB['US–Iran']['coverage80'])} for US–Iran (§7.4).
@@ -499,6 +600,66 @@ before 28 Feb ({X9['iran_strategic_pre_2026']['pre4']} events), against a backdr
 | Ground truth is robust | Israel + Palestine fatalities (D1) | ρ = {X9['israel_palestine_rho']:.2f} with D9; {X10['d1_events_found']:.1%} of D1 events match D10 | Except unrest, which UCDP excludes |
 | Beyond Sep 2026 | Our Oct forecast (D1) | GDELT to 12 Nov agrees on direction for {XO['agree']} of {XO['of']} (D8) | Consistent |
 
+
+### 5.7 The economic front: markets, currencies, reserves and politics [Public market data · shock dates from D1 · D6]
+
+**Question.** Do the wars show up in stock indices, currencies, reserves and political crises, and is that front larger
+than the battlefield? **Data.** Public daily series fetched once on the team laptop and frozen in `data/econ/raw/`
+(Yahoo Finance: Nifty 50, rupee, rouble, hryvnia, shekel, Pakistani rupee, afghani, rial, Brent, EU gas, wheat, gold,
+VIX, tanker and container-shipping equities; MOEX ISS: MOEX Russia index; World Bank: reserves, remittances;
+Caldara–Iacoviello geopolitical-risk index). These are **not** competition files; they are labelled and kept out of the
+models. FRED and IMF could not be reached from the laptop, so reserves are World Bank end-year values; no KSE-100 or
+Tehran index was reachable, and the rial is the 2026 market rate only (it was a fixed 42,000 peg before Jan 2026).
+
+**Method.** Shock dates come from **our own data, not hindsight**: a spike month has UCDP deaths ≥ 1.75× the trailing
+six-month mean and ≥ 300; day 0 is its first day with ≥ 30 deaths and ≥ 5× the 90-day daily mean. This finds
+**{ECS['n_episodes']} episodes** (2014–2026), including 24 Feb 2022, 7 Oct 2023, 13 Jun 2025 and 28 Feb 2026. For each episode
+and market we measure the log change from the last close before day 0 to 1, 5, 20 and 60 trading days later, and compare
+the 20-day move with every other 20-day window of the same series since 2014 (a **placebo** distribution; two-sided p).
+Currencies are measured as value against the dollar. Cleaning: a one-day rial tick of 1,212 and stray non-positive
+closes were dropped; the Tel Aviv data lack Sunday sessions, so the first post-7-Oct close spans two sessions.
+
+**Result 1: markets price shocks, not attrition.** After the three regime-changing onsets the median 20-day move was
+**{ECS['median_abs_move20_main']:.1f}%** and {ECS['sig_share_main_onsets']:.0%} of moves were unusual (p < 0.10). After the
+other {ECS['n_episodes'] - 3} spike episodes it was **{ECS['median_abs_move20_other']:.1f}%** and {ECS['sig_share_other_episodes']:.0%}:
+close to chance. Af–Pak escalations left the Pakistani rupee and the afghani almost unmoved; Pakistan's 2022–23 crisis
+was economic (reserves fell from ${ERSV['pak_2021_bn']:.0f}B to ${ERSV['pak_2022_bn']:.0f}B, {ERSV['pak_2022_months']:.1f} months of
+imports, World Bank), not caused by the border war.
+
+{econ_md}
+
+**Result 2: two fronts.** The battlefield is local; the economic front is not.
+
+{fronts_md}
+
+Russia's index fell **{EHH['moex_day1']:.0f}%** on 24 Feb 2022 and the rouble lost up to **{-EHH['rub_worst']:.0f}%**; EU gas rose
+up to **{EHH['ttf_best']:.0f}%** and wheat **{EHH['wheat_best']:.0f}%**, which reached importers far from Donbas. Ukraine's
+GDP fell **{_gdp['UKR'][1]:.1f}%** in 2022 (D6). After 7 Oct 2023 the Tel Aviv 35 fell up to {-EHH['ta35_worst']:.0f}% and
+container shipping (ZIM) {-EHH['zim_worst']:.0f}%, but Brent barely moved, and **neither did India**. The 2026 Gulf war
+killed people in {int(EFR.loc['US–Iran', 'countries_with_deaths'])} countries (D1) but its oil shock (Brent peak
+**+{EHH['brent_best_2026']:.0f}%**, VIX +{EHH['vix_best_2026']:.0f}%) reached every importer; the rial lost
+{-ECS['irr_2026']['value_change_pct']:.0f}% of its value by mid-November.
+
+**Result 3: India's exposure is economic.** {fig("32_econ_india", "Figure 9b – Brent, Nifty 50 and rupee against the four wars' monthly deaths (public market data; deaths D1)")}
+On 24 Feb 2022 the Nifty fell **{EHH['nifty_day1_2022']:.1f}%** and India's reserves ended 2022 **${ERSV['ind_2021_bn'] - ERSV['ind_2022_bn']:.0f}B lower**
+(World Bank), largely spent holding the rupee. In the Gulf war the Nifty fell **{EHH['nifty_d20_2026']:.1f}%** in 20 trading days.
+Each $10/bbl costs India about **${EOIL['per_10usd_bn_per_year']:.1f}B a year** at {EOIL['crude_mbd_domain']} mb/d of crude
+imports [Domain: PPAC volume], so the 2026 rise of ${EOIL['brent_up_usd_2026']:.0f}/bbl is roughly
+**${EOIL['extra_usd_bn_per_year_2026']:.0f}B a year** (2022: ${EOIL['extra_usd_bn_per_year_2022']:.0f}B). About
+**${EREM['gulf_usd_bn']:.0f}B a year** of India's ${EREM['usd_bn']:.0f}B remittances ({EREM['year']}, World Bank) come from the
+Gulf [Domain: {EREM['gulf_share_domain']:.0%} GCC share, RBI survey]. India now holds {ERSV['ind_2025_months']:.1f} months of import
+cover (${ERSV['ind_2025_bn']:.0f}B, 2025).
+
+**Result 4: political crises.** Of {len(EPA)} dated crises [Domain], **{int(EPA.within_45d.sum())}** fall within 45 days of a spike
+episode in the same theatre: the sanctions on Russia, Israel's emergency government and Imran Khan's removal (which
+coincided with Pakistan's April 2022 strikes in Afghanistan). Wagner's mutiny, Israel's 2023 judicial protests,
+Pakistan's 2023–24 turmoil and Iran's 2022 protests do not line up. Wars trigger sanctions and emergency cabinets;
+most civil unrest is home-grown. In 2026 GDELT protest-coded events in Iran nearly tripled in March (D7/D8).
+
+**Checking figures quoted before this analysis.**
+
+{claims_md}
+
 ## 6 · India impact
 
 | Theatre | What the data show [Data] | What it means for India [Domain] |
@@ -508,6 +669,7 @@ before 28 Feb ({X9['iran_strategic_pre_2026']['pre4']} events), against a backdr
 | Indian Ocean | 104 killed in one strike off Sri Lanka's west coast, 4 Mar 2026 | The war entered India's maritime neighbourhood: IFC-IOR and Navy need a belligerent-movement picture |
 | Russia–Ukraine | 4–11k deaths a month; front widening; extreme recorded attrition asymmetry | Spares for legacy Russian platforms at risk; drone, counter-drone and EW lessons |
 | Israel–Hamas | De-escalated to about 130 a month in 2026 | A key supplier of UAVs, missiles and sensors is at war: hold buffer stocks |
+| Economic front | Gulf war: Brent {EHH['brent_d20_2026']:+.0f}%, Nifty {EHH['nifty_d20_2026']:+.0f}% in 20 trading days; reserves −${ERSV['ind_2021_bn'] - ERSV['ind_2022_bn']:.0f}B in 2022 (§5.7, public data) | ≈ ${EOIL['extra_usd_bn_per_year_2026']:.0f}B a year on the crude bill; ≈ ${EREM['gulf_usd_bn']:.0f}B a year of Gulf remittances at risk: stocks, rupee buffers, sea-lane escort |
 | Refugees in India | Afghans {ihp['AFG'].get(2021, np.nan):,.0f} (2021) → {ihp['AFG'].get(2025, np.nan):,.0f} (2025); Russian asylum seekers {ihp['RUS'].get(2015, np.nan):,.0f} (2015) → {ihp['RUS'].get(2025, np.nan):,.0f} (2025) | Small numbers; monitor the rising Russian flow |
 
 ## 7 · Forecasting model
@@ -606,6 +768,8 @@ Chernihiv, Dnipropetrovsk and Sumy (RU–UA, 14–15%). The dashboard lists the 
 three months raises the Oct 2026 forecast by about 13% (318 → 359). `python score_holdout.py --events <file>` scores the
 forecasts and watch-list frozen in this submission against any new month of events, without refitting.
 
+{THEATRE_MD}
+
 ## 9 · Recommendations
 
 | Line | Action | Triggering finding [Data] | Lead [Domain] | When |
@@ -615,8 +779,10 @@ forecasts and watch-list frozen in this submission against any new month of even
 | **WARN** | Adopt the Af–Pak interstate dyad and KP/Balochistan scores as standing LoC I&W indicators | State clashes since Oct 2025; 3 hotspots (§5.2, §8) | Northern / Western Comds | Now |
 | **WARN** | Run a weekly precursor watch per state pair: unrest and strategic developments (D9), tone (D7/D8) | Preceded Feb 2026, not Jun 2025 (§5.6) | DIA / HQ IDS | 90 days |
 | **WARN** | Publish the scorecard monthly; escalate any move to RED or rise in countries hit | US–Iran {int(usir_ts.get(2025, 0))} → {int(usir_ts.get(2026, 0))} countries with no build-up (§5.2) | HQ IDS | 90 days |
+| **WARN** | Issue a daily 0600 theatre brief in OODA form with FLASH triggers (district over P {_TMM['flash_threshold']:.2f}, RAG change) | Data latency {_TMM['ucdp_lag_days']} d → < 1 d; event to decision {_TOT['today_days'][0]:.0f}–{_TOT['today_days'][1]:.0f} days → {_TOT['cw_hours'][0]:.0f}–{_TOT['cw_hours'][1]:.0f} h [Domain] (§8.1) | HQ IDS / theatre HQs (notional) | 90 days |
 | **SHIELD** | Keep Gulf NEO plans current while US–Iran is AMBER; sealift/airlift options | 5 Gulf states struck, {int(gulf26.events.sum())} events (§6) | HQ IDS / Navy / IAF / MEA | Now |
 | **SHIELD** | Belligerent-movement picture for the IOR | 104 killed off Sri Lanka, 4 Mar 2026 (§6) | Navy / IFC-IOR | 90 days |
+| **SHIELD** | Treat the economic front as a front: strategic crude stocks sized to a Hormuz closure, rupee/reserve buffers, escort and insurance for India-flagged shipping | Brent +{EHH['brent_d20_2026']:.0f}% and Nifty {EHH['nifty_d20_2026']:+.0f}% in 20 days of the Gulf war; only onsets move markets (§5.7) | MoPNG / RBI / Navy | Now / 90 days |
 | **SUSTAIN** | Buffer and indigenise critical spares for Russian- and Israeli-origin platforms | RU–UA 4–11k deaths a month, no decline forecast (§7) | MoD / DPSUs | 6–12 months |
 | **SUSTAIN** | HADR kits weighted to women, children and under-fives; trigger on escalation flags | {dpl.loc['UKR', 'women_children_share']:.0%} of Ukrainian refugees are women or children (§5.4) | HQ IDS / NDMA | 6–12 months |
 
@@ -633,6 +799,8 @@ forecasts and watch-list frozen in this submission against any new month of even
 * D10 holds {X10['rows']:,} rows against {X10['rows_stated']:,} stated (capped "other country" rows). D11 stops UCDP at
   {X11['latest_ucdp_month']} and keys GDELT on event date, so we rebuilt those joins. D9 counts protest and riot deaths that
   UCDP excludes by definition; it is never added to UCDP totals.
+* §5.7 uses public market data that are **not** competition files. Market moves are associations with dated shocks,
+  not proof of cause; the oil-bill and remittance figures rest on labelled domain inputs (4.8 mb/d; 38% GCC share).
 * Map boundaries follow the Government of India's depiction. [Domain] statements are expert reasoning and are labelled.
 
 **Tools.** Python 3.13: pandas, NumPy, SciPy, openpyxl (D9), statsmodels (ETS, SARIMA), LightGBM (forecaster, classifier, TreeSHAP),

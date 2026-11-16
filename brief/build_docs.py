@@ -92,6 +92,10 @@ def page(title, body):
             f"<body>{body}</body></html>")
 
 
+# ----------------------------------------------------------------------------------- economic front (new)
+E = json.loads((C.TAB_DIR / "econ_summary.json").read_text())
+EH, OIL, RSV, REM = E["headline"], E["india_oil_bill"], E["reserves"], E["india_remittances"]
+
 # ----------------------------------------------------------------------------------- commander's brief
 cards = "".join(
     f"<div style='border-color:{RC[rag.loc[c, 'rating']]}'><b>{c}</b>"
@@ -114,7 +118,7 @@ UNRWA, World Bank, GDELT, ACLED-style) &nbsp;·&nbsp; <span class="d">DATA</span
 <b style="color:#c77d00">AMBER</b>; Israel–Hamas is <b style="color:#1f9e83">GREEN</b>. The 2026 US–Iran war reached
 India's neighbourhood (Gulf, Hormuz, Sri Lankan waters). Our models, tested on unseen 2026 data, forecast
 monthly deaths {pooled:.0f}% more accurately than "no change" and flag escalating districts a month ahead
-(AUC {lg.ROC_AUC:.2f}). <b>Use them to task ISR, keep Gulf NEO plans current, and watch Pakistan's western front.</b></div>
+(AUC {lg.ROC_AUC:.2f}). On the economic front India paid without taking fire. <b>Use them to task ISR, keep Gulf NEO plans current, and watch Pakistan's western front.</b></div>
 
 <h2>THREAT ASSESSMENT – OCTOBER 2026</h2>
 <div class="rag">{cards}</div>
@@ -135,7 +139,8 @@ Recorded losses: Iran 1,274 vs Israel–US 11. <span class="d">DATA</span></li>
 <tr><td><b>Western front</b></td><td>Af–Pak interstate clashes since Oct 2025; deaths in Pakistan areas adjoining India rose 2 → 52 (2022–25)</td><td>Pakistan Army stretched west: risk of diversionary LoC activity, TTP/IS-K spill-over</td></tr>
 <tr><td><b>Gulf / Hormuz</b></td><td>5 Gulf states struck in 2026 (25 events); 299 deaths on Iran's Hormuz/Chabahar coast; 945 deaths in Yemen in 2025</td><td>Large Indian diaspora needs NEO readiness; Gulf energy via Hormuz; Chabahar and INSTC exposed</td></tr>
 <tr><td><b>IOR</b></td><td>104 killed in one strike off Sri Lanka, 4 Mar 2026</td><td>Belligerents operating in India's maritime neighbourhood</td></tr>
-<tr><td><b>Supply chains</b></td><td>RU–UA at 4–11k deaths/month; Israel at war since 2023</td><td>Spares and deliveries for Russian- and Israeli-origin platforms at risk</td></tr>
+<tr><td><b>Supply chains</b></td><td>RU–UA at 4–11k deaths/month; Israel at war since 2023</td><td>Spares for Russian- and Israeli-origin platforms at risk</td></tr>
+<tr><td><b>Economic front</b></td><td>Gulf war: Brent +{EH['brent_d20_2026']:.0f}%, Nifty {EH['nifty_d20_2026']:.0f}% in 20 days (public market data)</td><td>≈ ${OIL['extra_usd_bn_per_year_2026']:.0f}B/yr extra crude bill: oil stocks, rupee buffers, escort</td></tr>
 <tr><td><b>Information</b></td><td>In UCDP's record, Indian outlets appear in 17% of Af–Pak events, about 0% elsewhere; media volume does not lead escalation (p = {stats.media_lead_p:.2f})</td><td>The record of West Asia rests on non-Indian wires: build Indian coverage; do not warn on headlines</td></tr>
 </table>
 
@@ -166,6 +171,22 @@ QA = [
          "series is comparable across the four conflicts. Events drive media volume, not lethality, as our index shows."),
         ("Why only these four conflicts?", "They are the competition scope. The pipeline is generic: any UCDP "
          "conflict can be added by extending the case list in config.py."),
+    ]),
+    ("The economic front (new, public market data)", [
+        ("Where do the market numbers come from?", "Public daily series (Yahoo Finance, MOEX ISS, World Bank, the "
+         "Caldara–Iacoviello risk index), fetched once on the team laptop and frozen in data/econ/raw so the run is "
+         "reproducible offline. They are not competition files and are labelled as such."),
+        ("How do you know a market move was caused by the war?", f"We do not claim cause. We date each shock from the UCDP "
+         f"deaths, then compare the 20-day move with every other 20-day window of the same series since 2014 (placebo). "
+         f"{E['sig_share_main_onsets']:.0%} of moves after the three onsets are unusual at p < 0.10, against "
+         f"{E['sig_share_other_episodes']:.0%} after routine spikes."),
+        ("Is the economic front really bigger than the battlefield?", f"For India, yes: no Indian unit fought, but the Gulf war "
+         f"added about ${OIL['extra_usd_bn_per_year_2026']:.0f}B a year to the crude bill (4.8 mb/d is a domain input) and cut the "
+         f"Nifty {-EH['nifty_d20_2026']:.0f}%. We do not put a money value on a life."),
+        ("Were the figures quoted earlier right?", "Mostly. MOEX −33% on 24 Feb 2022 and a four-week halt: correct. ~$300B "
+         "of Russian reserves frozen: correct (G7/EU figure). Bank of Israel: $30B of FX sales plus $15B of swaps, so up to $45B. "
+         "Pakistan under a month of imports and Afghanistan's ~$9B frozen: correct. Political crises lining up with war peaks: "
+         "only partly (3 of 17)."),
     ]),
     ("Data and cleaning", [
         ("Did you change the source data?", "No. Raw CSVs are read-only. Repairs go into new columns (e.g. deaths_low_c) "
@@ -244,6 +265,30 @@ QA = [
         ("What would you do with classified data?", "Fuse it as extra features (e.g. movement indicators). The pipeline "
          "already accepts new features; the walk-forward protocol would test their value."),
     ]),
+    ("Theatre commander view and the OODA loop (notional)", [
+        ("Are these real theatre commands?", "No. WTC, NTC and MTC are notional, drawn from public reporting, and are labelled "
+         "NOTIONAL on every screen, slide and brief. Each AOR is an illustrative polygon plus a list of linked conflicts and countries."),
+        ("Is the LAC data real?", "No. No issued file covers the LAC, so NTC runs on a seeded synthetic incident generator "
+         "(9 sectors, seed 2026) with a scripted surge at Yangtse and Depsang to show the FLASH path. Every item is tagged "
+         "SYNTHETIC, NTC confidence is LOW, and the CDS brief never picks its main effort from synthetic data."),
+        ("How are the theatre RAG, trend and confidence computed?", "Twice the monthly RAG level of the linked conflicts "
+         "(GREEN 2, AMBER 4, RED 6), plus daily modifiers: the GDELT 7-day ratio against the prior 4 weeks, a 24-hour z-score, "
+         "districts over the FLASH threshold and adverse market moves. RED is 6 or more, AMBER 3–5. The trend arrow is the "
+         "GDELT 7-day ratio. Confidence falls with synthetic inputs, low news volume and the UCDP lag."),
+        ("What is the district nowcast? Is it validated?", "The monthly watch-list probability shifted by the theatre's GDELT "
+         "momentum: logit(p_now) = logit(p) + 0.5 × clip(ln r7, −1, 1). It is a heuristic and is not back-tested; the "
+         "monthly model underneath is (AUC 0.795 on 2026)."),
+        ("When does a FLASH fire?", "When a district's nowcast crosses P 0.20 upward (with a small band to stop flicker) or "
+         "a theatre's RAG changes between daily runs. In the 7-day demo, three fired, all on synthetic NTC data."),
+        ("Where do the OODA hours come from?", "The staff-cycle timings (4–10 days today, 4–28 hours with the brief) are our "
+         "domain estimate of a weekly int/ops conference cycle, not a measurement. Two numbers are measured: data latency "
+         "falls from 43 days (UCDP) to under one day (GDELT, markets), and all briefs build in about 2 seconds."),
+        ("Does the model make the decision?", "No. It takes collation, scoring and option-building off the critical path. "
+         "The commander chooses among three ranked options, each with an owner, a timeline and a trigger."),
+        ("Is the 0600 job real?", "Yes: scripts/daily_briefs.py runs on a schedule (Windows Task Scheduler, cron or a GitHub "
+         "workflow at 0030 UTC). The demo writes an in-app inbox and e-mail, SMS and WhatsApp previews; real e-mail works "
+         "through SMTP if configured. SMS and WhatsApp gateways are not wired."),
+    ]),
     ("Dashboard and reproducibility", [
         ("Can it run offline at an HQ?", "Yes. The Ops site is one offline HTML file and the Streamlit dashboard runs on "
          "a laptop with no internet calls and a bundled map outline. One command rebuilds everything in about 4 minutes."),
@@ -274,7 +319,7 @@ QA = [
          "points labelled PoK."),
         ("How do we know the demo matches the submission?", f"The run ID {RUN_ID} is a hash of the result tables. It is "
          "printed on the report, every slide, the dashboard sidebar and the Ops site strip, and the deck annex holds all "
-         "12 dashboard pages and every metric."),
+         "15 dashboard pages and every metric."),
         ("What is the single decision a commander should take on Monday?", "Put the top-10 watch-list into the monthly ISR "
          "tasking cycle and keep the Gulf NEO plan current while US–Iran is AMBER."),
     ]),
@@ -288,20 +333,23 @@ speak = f"""
 <h1>Run of show, speaker split and Q&amp;A preparation</h1>
 <div class="m">Designed for a Google Meet presentation: share the deck window, then switch to the live Ops site tab for the demo. Run {RUN_ID}.</div></div>
 
-<h2>RUN OF SHOW (TARGET 13:45 + Q&amp;A; HARD STOP 15:00)</h2>
+<h2>RUN OF SHOW (TARGET 14:55 + Q&amp;A; HARD STOP 15:00)</h2>
 <table><tr><th>Time</th><th>Slides / demo</th><th>Speaker</th><th>Key line</th></tr>
 <tr><td>0:00–1:30</td><td>1 Cover, 2 BLUF</td><td>Maj Shivam Mehta</td><td>"Error cut by {pooled:.0f}% on unseen data; RED, two AMBER, one GREEN; four tasks for India."</td></tr>
-<tr><td>1:30–3:30</td><td>3 Approach, 4 Data and pipeline, 5 Method</td><td>Capt Siddharth Sangwan</td><td>"Twelve issued files, 36 checks, joined only by country and calendar; the back-test chose the ensemble."</td></tr>
-<tr><td>3:30–5:15</td><td>6–8 Validation on withheld 2026</td><td>Capt Siddharth Sangwan</td><td>"It beats simple rules, and we show where it does not."</td></tr>
-<tr><td>5:15–7:30</td><td>9 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the RED card, and here is where it comes from."</td></tr>
-<tr><td>7:30–8:45</td><td>10–11 Finding 1: borders and the LoC</td><td>Capt Sahil Singh</td><td>"Pakistan fights on two fronts: watch the LoC more closely."</td></tr>
-<tr><td>8:45–9:45</td><td>12 Finding 2: Gulf, diaspora, sea lanes</td><td>Capt Sahil Singh</td><td>"14 countries, five Gulf states and Sri Lankan waters."</td></tr>
-<tr><td>9:45–10:45</td><td>13 Finding 3: defence sustainment</td><td>Capt Sahil Singh</td><td>"The front is widening, not moving, and the war will last."</td></tr>
-<tr><td>10:45–12:45</td><td>14–16 Recommendations</td><td>Maj Shivam Mehta</td><td>"Sense, warn, shield, sustain: SENSE and WARN need no new platform."</td></tr>
-<tr><td>12:45–13:45</td><td>17 Scorecard</td><td>Maj Shivam Mehta</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
-<tr><td>Q&amp;A</td><td>18–26 support, then backup and annex</td><td>All</td><td>Pull the slide that answers the question.</td></tr>
+<tr><td>1:30–3:15</td><td>3 Approach, 4 Data and pipeline, 5 Method</td><td>Capt Siddharth Sangwan</td><td>"Twelve issued files, 36 checks, joined only by country and calendar; the back-test chose the ensemble."</td></tr>
+<tr><td>3:15–5:00</td><td>6–8 Validation on withheld 2026</td><td>Capt Siddharth Sangwan</td><td>"It beats simple rules, and we show where it does not."</td></tr>
+<tr><td>5:00–6:50</td><td>9 <b>LIVE DEMO</b>: Ops site story → console</td><td>Capt Siddharth Sangwan</td><td>"Here is the RED card, and here is where it comes from."</td></tr>
+<tr><td>6:50–7:35</td><td>10 Theatre commander view (notional)</td><td>Capt Siddharth Sangwan</td><td>"One dataset, four commanders: a 0600 brief in OODA form."</td></tr>
+<tr><td>7:35–8:50</td><td>11–12 Finding 1: borders and the LoC</td><td>Capt Sahil Singh</td><td>"Pakistan fights on two fronts: watch the LoC more closely."</td></tr>
+<tr><td>8:50–9:50</td><td>13 Finding 2: Gulf, diaspora, sea lanes</td><td>Capt Sahil Singh</td><td>"14 countries, five Gulf states and Sri Lankan waters."</td></tr>
+<tr><td>9:50–10:25</td><td>14 Finding 3: defence sustainment</td><td>Capt Sahil Singh</td><td>"The front is widening, not moving, and the war will last."</td></tr>
+<tr><td>10:25–11:50</td><td>15–16 Finding 4: the economic front</td><td>Capt Sahil Singh</td><td>"The guns stay far away; oil, the rupee and markets reach India first."</td></tr>
+<tr><td>11:50–12:55</td><td>17–18 Recommendations</td><td>Maj Shivam Mehta</td><td>"Sense, warn, shield, sustain: SENSE and WARN need no new platform."</td></tr>
+<tr><td>12:55–13:40</td><td>19 Shortening the OODA loop</td><td>Maj Shivam Mehta</td><td>"Event to decision: from days to hours."</td></tr>
+<tr><td>13:40–14:55</td><td>20 Execution, 21 Scorecard</td><td>Maj Shivam Mehta</td><td>"Open data and an honest model tell India where to look next month."</td></tr>
+<tr><td>Q&amp;A</td><td>22–33 support, 34–38 backup, 39–57 annex</td><td>All</td><td>Pull the slide that answers the question.</td></tr>
 </table>
-<p><b>Speaker split:</b> <b>Maj Shivam Mehta</b> opens with the bottom line and closes with the recommendations and scorecard. <b>Capt Siddharth Sangwan</b> covers approach, data, method and validation and runs the live demo. <b>Capt Sahil Singh</b> presents the three India findings and chairs Q&amp;A, routing data and model questions to Capt Sangwan and military questions to Maj Mehta. The word-for-word script is in <i>Presenter_Script.pdf</i>.</p>
+<p><b>Speaker split:</b> <b>Maj Shivam Mehta</b> opens with the bottom line and closes with the recommendations and scorecard. <b>Capt Siddharth Sangwan</b> covers approach, data, method and validation and runs the live demo. <b>Capt Sahil Singh</b> presents the four India findings, including the economic front, and chairs Q&amp;A, routing data and model questions to Capt Sangwan and military questions to Maj Mehta. The word-for-word script is in <i>Presenter_Script.pdf</i>.</p>
 
 <h2>VIDEO-CALL CHECKLIST</h2>
 <ul>
@@ -312,16 +360,17 @@ speak = f"""
 <li>Mute notifications; use a wired connection; cameras on for Q&amp;A.</li>
 </ul>
 
-<h2>DEMO SCRIPT (ABOUT 3 MINUTES, OPS SITE)</h2>
+<h2>DEMO SCRIPT (ABOUT 2 MINUTES, OPS SITE)</h2>
 <ol>
 <li><b>Globe:</b> twelve years of deaths; scroll so it turns to India and draws the exposure ring (Gulf, Hormuz, Chabahar, Sri Lanka, LoC).</li>
 <li><b>BLUF:</b> click the Af–Pak card: 3 points (intensity + hotspots), so AMBER.</li>
 <li><b>Front:</b> toggle "show all deaths": the 92% with no location. <b>Af–Pak:</b> switch RAW / HARMONISED to show the FATA fix.</li>
 <li><b>Prediction:</b> press play; coverage ticks to 83%. Show Track B honestly (SARIMA won there).</li>
 <li><b>Early warning:</b> Replay Mar 2026 (3 of the top 10 escalated), then move the threshold.</li>
-<li><b>GDELT:</b> toggle US–Iran; the line runs past UCDP's end and the table flags early Nov RISING.</li>
-<li><b>What-if:</b> Af–Pak, +30% for 3 months: 318 → 359. Then the scorecard lab: reset to doctrine.</li>
+<li><b>GDELT</b> (skip if short of time): toggle US–Iran; the line runs past UCDP's end.</li>
+<li><b>What-if</b> (Q&amp;A only, cut from the talk): Af–Pak, +30% for 3 months: 318 → 359.</li>
 <li><b>Ops console:</b> Ctrl+K → Kandahar: deaths, forecast, warning history; print bulletin.</li>
+<li><b>Theatre</b> (if asked, or in Q&amp;A): console THEATRE tab or Streamlit page 14; switch WTC → MTC → NTC to show the same data giving different briefs; page 15 for the 7-day history, side by side and the OODA loop.</li>
 </ol>
 
 <h2>LIKELY QUESTIONS AND ANSWERS</h2>

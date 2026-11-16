@@ -1,0 +1,20 @@
+series,label,file,raw_rows,kept,first,last
+MOEX,MOEX Russia index,moex_IMOEX.csv,3484,3484,2013-01-08,2026-11-13
+RUB,Rouble (value vs USD),yahoo_RUB.csv,3621,3608,2012-12-31,2026-11-16
+UAH,Hryvnia (value vs USD),yahoo_UAH.csv,3621,3612,2012-12-31,2026-11-16
+TA35,Tel Aviv 35 index,yahoo_TA35.csv,3452,2767,2012-12-31,2026-11-16
+ILS,Shekel (value vs USD),yahoo_ILS.csv,3621,3611,2012-12-31,2026-11-16
+PKR,Pakistan rupee (value vs USD),yahoo_PKR.csv,3621,3610,2012-12-31,2026-11-16
+AFN,Afghani (value vs USD),yahoo_AFN.csv,3621,3222,2012-12-31,2026-11-16
+IRR,"Iran rial (value vs USD, 2026 market rate)",yahoo_IRR.csv,3621,222,2026-01-09,2026-11-16
+NIFTY,Nifty 50,yahoo_NSEI.csv,3424,3409,2013-01-02,2026-11-16
+INR,Indian rupee (value vs USD),yahoo_INR.csv,3621,3612,2012-12-31,2026-11-16
+BRENT,Brent crude (USD/bbl),yahoo_BRENT.csv,3497,3480,2012-12-31,2026-11-16
+TTF,European gas (TTF),yahoo_TTF.csv,2284,2280,2017-10-22,2026-11-16
+WHEAT,Wheat (CBOT),yahoo_WHEAT.csv,3497,3490,2012-12-31,2026-11-16
+GOLD,Gold,yahoo_GOLD.csv,3497,3490,2012-12-31,2026-11-16
+FRO,Frontline (crude tankers),yahoo_FRO.csv,3490,3490,2012-12-31,2026-11-13
+ZIM,ZIM (container shipping),yahoo_ZIM.csv,1457,1457,2021-01-28,2026-11-13
+VIX,VIX fear gauge,yahoo_VIX.csv,3621,3493,2012-12-31,2026-11-16
+SPX,S&P 500,yahoo_SPX.csv,3490,3490,2012-12-31,2026-11-13
+EEM,Emerging markets (EEM),yahoo_MSCIEM.csv,3490,3490,2012-12-31,2026-11-13

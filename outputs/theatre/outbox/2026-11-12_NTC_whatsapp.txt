@@ -1,0 +1,17 @@
+*CONFLICT WATCH · NTC DAILY BRIEF* (130600 IST NOV 26)
+🔴 *RED* ▲ rising · confidence LOW
+_BLUF:_ Northern theatre RED ▲ (rising): [SYNTHETIC] Yangtse (Tawang) (Arunachal Pradesh): 8 incidents in 7 days vs 0.2/week (8 face-off). Recommend: verify the surge with patrol and satellite reports within 24h.
+
+*OBSERVE*
+• [SYNTHETIC] Yangtse (Tawang) (Arunachal Pradesh): 8 incidents in 7 days vs 0.2/week (8 face-off) _(24h, SYNTHETIC)_
+• [SYNTHETIC] Depsang Plains (Eastern Ladakh): 3 incidents in 7 days vs 0.0/week (3 infrastructure activity) _(24h, SYNTHETIC)_
+• Nifty 50 +6.8% over 5 sessions (median basis, z +3.8; close 25,299.35 on 2026-11-12) _(7d, DATA)_
+• Rupee vs USD -0.9% over 5 sessions (median basis, z -1.6; close 93.70 on 2026-11-12) _(7d, DATA)_
+• GDELT material-conflict events in India down: 9/day over 7 days vs 13/day the 4 weeks before (×0.74); yesterday 11 (z -0.2) _(7d, DATA)_
+
+*DECIDE / ACT*
+1. verify the surge with patrol and satellite reports: Theatre J2 (Int), 24h. Trigger: Confirmed by two independent sources -> FLASH to CDS
+2. task ISR on Yangtse (Tawang), Depsang Plains, Galwan: Theatre J2 (Int) / ISR cell, 24h. Trigger: Any area nowcast P >= 0.30, or GDELT material-conflict events in India above 18/day for 2 days -> FLASH to CDS
+3. raise readiness of LAC forward formations (winter posture): Theatre J3 (Ops), 24h. Trigger: RAG turns RED, or two days of rising trend with >= 2 areas over 0.20 -> move to the next state
+
+_NOTIONAL theatre. UNCLASSIFIED - competition data._

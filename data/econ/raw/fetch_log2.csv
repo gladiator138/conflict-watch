@@ -1,0 +1,6 @@
+source,key,n,first,last,status
+moex,IMOEX,3484,2013-01-08,2026-11-13,ok
+moex,RTSI,3483,2013-01-08,2026-11-13,ok
+psx,KSE100,0,,,<HTTPError 462: ''>
+tsetmc,TEDPIX,0,,,"URLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c"
+tsetmc,TEDPIX,0,,,"URLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c"

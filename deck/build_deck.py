@@ -49,9 +49,9 @@ FOOTER = f"CONFLICT WATCH   |   DATA ANALYTICS COMPETITION 2026   |   UNCLASSIFI
 prs = Presentation()
 BGS = hud.backgrounds()
 META: dict = {}
-ICON_FOR = [("BOTTOM LINE", "target"), ("WHY IT MATTERS", "globe"), ("OUR APPROACH", "compass"),
+ICON_FOR = [("THEATRE COMMANDER", "users"), ("RECOMMENDATIONS   |   DECISION CYCLE", "timer"), ("BOTTOM LINE", "target"), ("WHY IT MATTERS", "globe"), ("OUR APPROACH", "compass"),
             ("DATA AND PIPELINE", "workflow"), ("FINDING 1", "activity"), ("FINDING 2", "crosshair"),
-            ("FINDING 3", "shield-alert"), ("FINDING 4", "newspaper"), ("FINDING 5", "tent"),
+            ("FINDING 3", "shield-alert"), ("FINDING 4", "trending-up"), ("ECONOMIC FRONT", "trending-up"), ("FINDING 5", "tent"),
             ("FINDING 6", "trending-up"), ("FINDING 7", "radar"), ("FINDING 8", "satellite"),
             ("LIVE", "monitor-play"), ("RECOMMENDATIONS   |   OPERATIONAL", "swords"),
             ("RECOMMENDATIONS   |   EXECUTION", "list-checks"), ("LIMITS", "scale"), ("THREAT SCORECARD", "siren"),
@@ -427,8 +427,10 @@ for i, (n, cc, k, num, lab, sub, ncol) in enumerate(cards):
     text(s, x + 0.28, 2.45, 3.5, 1.0, num, size=60, bold=True, color=ncol)
     text(s, x + 0.28, 3.65, 3.45, 1.4, lab, size=17, bold=True)
     text(s, x + 0.28, 5.05, 3.45, 0.8, sub, size=13, color=TEXT3)
-sowhat(s, "Warn on spread and hotspots, not on headlines. The data can tell India where to look next month.")
-notes(s, "Three messages. One: the threat picture. Two: India is already inside the blast radius. Three: we can "
+_esu = json.loads((TB / "econ_summary.json").read_text())["headline"]
+sowhat(s, f"Two fronts: the guns stay far away, but the Gulf war cost India Brent +{_esu['brent_d20_2026']:.0f}% and Nifty "
+       f"{_esu['nifty_d20_2026']:.0f}% in 20 trading days.", label="SECOND FRONT")
+notes(s, "Fighting is one front; sanctions, oil and shipping reach India first. Three messages. One: the threat picture. Two: India is already inside the blast radius. Three: we can "
          "forecast and warn better than simple rules, and we proved it on 2026 data the model never saw.")
 
 # =========================================================================== 3 WHY IT MATTERS
@@ -789,6 +791,74 @@ sowhat(s, "Live at conflictmonitor2026.streamlit.app  ·  offline single-file ba
 notes(s, "Switch to the browser. Story: globe, Af-Pak card flip, fog-of-war toggle, FATA switch, forecast PLAY, "
          "warning replay Mar 2026, what-if Af-Pak +30% x 3 = 359, scorecard lab reset. Then OPS CONSOLE, Ctrl+K Kandahar.")
 
+
+# =========================================================================== THEATRE COMMANDER VIEW (notional)
+import json as _tj  # noqa: E402
+from src import theatre as _TH  # noqa: E402
+_TB = _tj.loads((_TH.OUT / "briefs.json").read_text(encoding="utf-8"))
+_TM = _TB["meta"]
+_RC = {"RED": RED, "AMBER": AMBER, "GREEN": TEAL}
+s = new_slide("THEATRE COMMANDER VIEW   |   NOTIONAL THEATRES", "One dataset, four commanders: a daily 0600 brief per theatre")
+picture(s, SHOT / "page14.png", 0.62, 1.48, 6.6, 3.71, frame=True,
+        caption="DASHBOARD PAGE 14   |   WTC SIGNED IN   |   BLUF, RAG, OBSERVE, AOR MAP")
+_lines = {"WTC": "Af–Pak: Kandahar, Balochistan, Kunar over threshold; GDELT easing",
+          "NTC": "[SYNTHETIC] Tawang and Depsang surge drives the drill",
+          "MTC": "US–Iran AMBER; Gulf reporting down; tanker and oil prices easing",
+          "CDS": "All theatres; main effort chosen on real data only"}
+for i, k in enumerate(_TH.ROLES):
+    b = _TB["briefs"][k][-1]
+    y = 1.4 + i * 1.2
+    box(s, 7.55, y, 5.23, 1.08, line=_RC[b["rating"]], lw=1.5)
+    text(s, 7.72, y + 0.08, 1.0, 0.5, k, size=22, bold=True, color=WHITE)
+    text(s, 8.75, y + 0.08, 1.9, 0.5, f"{b['rating']} {b['arrow']}", size=22, bold=True, color=_RC[b["rating"]])
+    text(s, 10.6, y + 0.12, 2.1, 0.4, ("SYNTHETIC" if k == "NTC" else f"CONF {b['confidence']}"), size=11, bold=True,
+         color=RED if k == "NTC" else TEXT3, align=PP_ALIGN.RIGHT)
+    text(s, 7.72, y + 0.56, 4.95, 0.5, _lines[k], size=12.5, color=TEXT2)
+for i, (h, d, col) in enumerate([
+        ("OBSERVE", "Top 5 changes, 24 h / 7 d: GDELT spikes, district alerts, markets", CYAN),
+        ("ORIENT", "RAG, trend arrow, confidence and the drivers behind them", AMBER),
+        ("DECIDE", "3 ranked actions: ISR, posture, evacuation, logistics", TEAL),
+        ("ACT", "Owner, 24 h / 72 h / 7 d, trigger to escalate; FLASH on ingest", RED)]):
+    x = 0.55 + i * 1.72
+    box(s, x, 5.55, 1.62, 0.72, line=col)
+    text(s, x + 0.1, 5.57, 1.45, 0.3, h, size=12, bold=True, color=col)
+    text(s, x + 0.1, 5.82, 1.45, 0.45, d, size=8.5, color=TEXT2)
+sowhat(s, "Same data, same rules: each commander gets only their AOR, with ranked actions, owners and triggers.",
+       label="NOTIONAL")
+notes(s, f"The theatre commands are not notified: these AORs are illustrative, drawn from public reporting. Log in as WTC, "
+         f"NTC, MTC or CDS and the whole dashboard filters to that AOR. The brief is built automatically at 0600 IST from "
+         f"the model outputs, GDELT (to {_TM['data_end']}) and market closes. There is no LAC data in the competition "
+         "files, so NTC runs on a seeded synthetic generator, labelled SYNTHETIC wherever it appears, with a scripted "
+         "surge to show the FLASH path. CDS never picks its main effort from synthetic data.")
+
+s = new_slide("RECOMMENDATIONS   |   DECISION CYCLE", "Shortening the OODA loop: from days to hours")
+_short = {"OBSERVE": ("Monthly datasets (UCDP ~6 weeks late); reports collated by hand", "GDELT and markets ingested daily; top 5 changes ranked for the AOR"),
+          "ORIENT": ("Threat argued at the weekly int conference", "RAG, trend, confidence and drivers scored in seconds; J2 checks"),
+          "DECIDE": ("Options built at the weekly ops / int conference", "3 ranked actions ready for the 0700 update"),
+          "ACT": ("Orders drafted after the decision", "Owner, timeline and trigger pre-set; FLASH goes to the owner")}
+rows = [["Stage", "Today", "With Conflict Watch", "Hours"]]
+for o in _TH.OODA:
+    a, b2 = _short[o["stage"]]
+    rows.append([o["stage"], a, b2, f"{o['today_h'][0]}–{o['today_h'][1]} h → {o['cw_h'][0]:g}–{o['cw_h'][1]:g} h"])
+table(s, 0.55, 1.42, 8.4, rows, [1.12, 2.78, 2.9, 1.6], size=13, row_h=0.86, first_col_color=CYAN)
+_t = _TH.ooda_totals()
+kpi_side(s, 9.2, 1.42, 3.58, 1.12, f"{_t['today_days'][0]:.0f}–{_t['today_days'][1]:.0f} d → {_t['cw_hours'][0]:.0f}–{_t['cw_hours'][1]:.0f} h",
+         "event to decision [DOMAIN estimate of staff timings]", color=AMBER, numsize=24)
+kpi_side(s, 9.2, 2.64, 3.58, 1.12, f"{_TM['ucdp_lag_days']} d → <1 d", "data latency: UCDP's last record vs GDELT "
+         "and market closes [DATA, measured]", color=CYAN, numsize=24)
+kpi_side(s, 9.2, 3.86, 3.58, 1.12, f"{_TM['build_seconds']:.0f} s", f"to build 4 theatres × {_TM['days']} days of briefs "
+         "[DATA, measured]", color=TEAL, numsize=24)
+kpi_side(s, 9.2, 5.08, 3.58, 1.12, "FLASH", f"district over P {_TM['flash_threshold']:.2f} or a RAG change, pushed on "
+         "ingest: no new conference", color=RED, numsize=24)
+sowhat(s, "The model does not decide. It takes collation, scoring and option-building off the critical path.",
+       label="OODA")
+notes(s, "Stage by stage. Observe: the official dataset is six weeks behind; news-coded events and markets are a day "
+         "behind, so the brief starts from what changed yesterday. Orient: the same scoring rules every morning, with the "
+         "drivers shown, so the J2 review is judgement, not arithmetic. Decide: three ranked options are on the table at "
+         "0600 for the 0700 update. Act: each action already has an owner, a timeline and a trigger, so the next "
+         "escalation is a drill. The staff-cycle hours are our estimate, not a measurement; the latency and build time "
+         "are measured.")
+
 # =========================================================================== 18–19 RECOMMENDATIONS (two slides)
 loe = [("SENSE", "ISR", CYAN, "4FD6E8", "eye", "Task ISR and analysts on the monthly sub-national watch-list. Build Indian "
         "OSINT on the Gulf, Iran and the Red Sea.", "LEAD: DIA / Service intelligence", "1 month", "warning lead time"),
@@ -958,9 +1028,133 @@ table(s, 0.55, 1.45, 12.23, rows, [3.2, 3.01, 3.01, 3.01], size=17, row_h=0.8, f
 text(s, 0.55, 5.6, 12.2, 0.6, "Refitted on all data to Sep 2026. Horizon 1 uses the operational track; 2–3 use the "
      "strategic track, so bands widen.", size=13, color=TEXT3)
 
+
+# =========================================================================== FINDING 4: THE ECONOMIC FRONT (new)
+ES = pd.read_csv(TB / "econ_event_study.csv")
+EFR = pd.read_csv(TB / "econ_fronts.csv").set_index("conflict_case")
+EPH = pd.read_csv(TB / "econ_paths.csv")
+ECK = pd.read_csv(TB / "econ_claims_check.csv")
+EPO = pd.read_csv(TB / "econ_political_timeline.csv")
+ESU = json.loads((TB / "econ_summary.json").read_text())
+EH = ESU["headline"]
+OIL = ESU["india_oil_bill"]
+RSV = ESU["reserves"]
+REM = ESU["india_remittances"]
+
+
+def _pc(v, d=0):
+    return "n/a" if v is None or pd.isna(v) else f"{v:+.{d}f}%"
+
+
+s = new_slide("FINDING 4   |   THE ECONOMIC FRONT", "The second front: the battlefield kills locally, markets hit everyone")
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+_cs = ["Russia–Ukraine", "Israel–Hamas", "Afghanistan–Pakistan", "US–Iran"]
+_cat = [f"{SHORT[c]}  ({EFR.loc[c, 'episode'][:4]})" for c in _cs]
+
+
+def _v(c, col):
+    v = EFR.loc[c, col]
+    return None if pd.isna(v) else round(float(v), 1)
+
+
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, _cat,
+               [dict(name="Local stock index", values=[_v(c, "local_equity_worst60_pct") for c in _cs], color="4FD6E8"),
+                dict(name="Local currency", values=[_v(c, "local_fx_worst60_pct") for c in _cs], color="7FA7D9"),
+                dict(name="Brent (peak)", values=[_v(c, "brent_best60_pct") for c in _cs], color="F0B03A"),
+                dict(name="Nifty 50", values=[_v(c, "nifty_worst60_pct") for c in _cs], color="FF4D5E"),
+                dict(name="Rupee", values=[_v(c, "inr_worst60_pct") for c in _cs], color="FF9AA5")],
+               title="Largest war shock per theatre: worst move within 60 trading days (%)", num_fmt="0",
+               gap=40, size=12, cat_size=13)
+text(s, 4.55, 3.0, 1.9, 0.5, "Af–Pak: rupee and afghani barely moved", size=10.5, color=TEXT3, align=PP_ALIGN.CENTER)
+kpi_side(s, 9.1, 1.4, 3.68, 1.12, f"{EH['moex_day1']:.0f}% in a day", "MOEX, 24 Feb 2022; rouble down "
+         f"{-EH['rub_worst']:.0f}% at worst [DATA]", color=RED, numsize=24)
+kpi_side(s, 9.1, 2.62, 3.68, 1.12, f"+{EH['brent_d20_2026']:.0f}% oil", "Brent in 20 trading days of the 2026 Gulf war "
+         f"(peak +{EH['brent_best_2026']:.0f}%) [DATA]", color=AMBER, numsize=24)
+_e = EFR.loc["US–Iran"]
+kpi_side(s, 9.1, 3.84, 3.68, 1.12, f"{int(_e.countries_with_deaths)} vs all", "countries with Gulf-war deaths vs every "
+         "oil importer that paid the price rise", color=CYAN, numsize=24)
+kpi_side(s, 9.1, 5.06, 3.68, 1.12, f"{ESU['median_abs_move20_main']:.0f}% vs {ESU['median_abs_move20_other']:.1f}%",
+         f"median 20-day move: 3 war onsets vs {ESU['n_episodes'] - 3} routine spikes. Markets price shocks, not attrition",
+         color=TEAL, numsize=24)
+sowhat(s, "Fighting is one front. Sanctions, oil, gas, grain and shipping reach far more people than the guns.",
+       label="SO WHAT")
+notes(s, f"New analysis on public market data. Shock dates come from the UCDP deaths in our data, not from hindsight: "
+         f"{ESU['n_episodes']} spike episodes, {ESU['n_moves']} market moves, each tested against every other 20-day "
+         "window of the same series. Only the three regime-changing onsets move markets; routine escalations do not. "
+         "Af–Pak shows almost nothing: the Pakistani rupee barely moved. Pakistan's 2022–23 crisis was economic.")
+
+s = new_slide("FINDING 4   |   THE ECONOMIC FRONT", "India took no fire, but paid in oil, the rupee and markets")
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+_p = EPH[(EPH.conflict_case == "US–Iran") & EPH.series.isin(["BRENT", "NIFTY", "INR"])]
+_off = sorted(_p.offset.unique())
+_ser = []
+for k, nm, col, w in [("BRENT", "Brent crude", "F0B03A", 3.0), ("NIFTY", "Nifty 50", "FF4D5E", 3.0),
+                      ("INR", "Rupee value vs USD", "FF9AA5", 2.5)]:
+    g = _p[_p.series == k].set_index("offset")["index"]
+    _ser.append(dict(name=nm, values=[round(float(g.get(o)), 1) if o in g.index else None for o in _off], color=col, width=w))
+charts.line(s, 0.65, 1.48, 8.1, 4.65, [("DAY 0" if o == 0 else f"{o:+d}") if o % 10 == 0 else " " for o in _off], _ser,
+            title="2026 Gulf war: index = 100 at the last close before 28 Feb 2026 (trading days)", num_fmt="0",
+            cat_skip=1, size=12, y_min=80, y_max=170)
+kpi_side(s, 9.1, 1.4, 3.68, 1.12, f"≈ ${OIL['extra_usd_bn_per_year_2026']:.0f}B / yr",
+         f"extra crude bill: Brent +${OIL['brent_up_usd_2026']:.0f}/bbl for 8 months × {OIL['crude_mbd_domain']} mb/d "
+         "[DATA × DOMAIN]", color=AMBER, numsize=24)
+kpi_side(s, 9.1, 2.62, 3.68, 1.12, f"{EH['nifty_d20_2026']:.1f}%  ·  {EH['inr_worst_2026']:.1f}%",
+         "Nifty in 20 trading days · rupee at its worst in 60 days [DATA]", color=RED, numsize=24)
+kpi_side(s, 9.1, 3.84, 3.68, 1.12, f"−${RSV['ind_2021_bn'] - RSV['ind_2022_bn']:.0f}B",
+         "India's reserves in 2022, defending the rupee after Ukraine (World Bank) [DATA]", color=CYAN, numsize=24)
+kpi_side(s, 9.1, 5.06, 3.68, 1.12, f"≈ ${REM['gulf_usd_bn']:.0f}B / yr", f"Gulf remittances at risk: "
+         f"{REM['gulf_share_domain']:.0%} of ${REM['usd_bn']:.0f}B ({REM['year']}) [DATA × DOMAIN]", color=TEAL,
+         numsize=24)
+sowhat(s, "Economic defence is defence: oil stocks, rupee buffers, sea-lane escort and Gulf evacuation plans.",
+       label="FOR INDIA")
+notes(s, f"Each $10 a barrel costs India about ${OIL['per_10usd_bn_per_year']:.1f}B a year at {OIL['crude_mbd_domain']} "
+         "million barrels a day of crude imports (PPAC volume, domain input). Brent averaged "
+         f"${ESU['persistent']['US–Iran']['BRENT']['pre']:.0f} before the war and "
+         f"${ESU['persistent']['US–Iran']['BRENT']['post']:.0f} in the eight months after. "
+         "When oil did not move (Oct 2023), neither did India's markets.")
+
+# ---- support: every shock, every market
+s = new_slide("SUPPORT   |   ECONOMIC FRONT", "Every war shock, every market: only regime shocks move prices")
+_m = ES[ES.day0.isin(["2022-02-24", "2023-10-07", "2026-02-28"])].copy()
+_m["lab"] = _m.conflict_case.map(SHORT) + " · " + _m.series
+_mall = _m
+_m = _m.reindex(_m.d20_pct.abs().sort_values(ascending=False).index[:12]).sort_values("d20_pct")
+chart_panel(s, 0.55, 1.4, 8.3, 4.8)
+charts.columns(s, 0.65, 1.48, 8.1, 4.65, list(_m.lab), [dict(name="20-day move", values=[round(v, 1) for v in _m.d20_pct],
+               color="4FD6E8")], title="12 largest 20-day moves after the three war onsets (%; red = placebo p < 0.10)",
+               horizontal=True, legend=False, num_fmt="0", gap=35, size=12, cat_size=12,
+               point_colors=["FF4D5E" if p < 0.10 else "5E7B99" for p in _m.p20])
+rows = [["Episodes", "Moves", "Significant (p<0.10)"],
+        ["3 war onsets", f"{len(_mall)}", f"{ESU['sig_share_main_onsets']:.0%}"],
+        [f"{ESU['n_episodes'] - 3} routine spikes", f"{ESU['n_moves'] - len(_mall)}", f"{ESU['sig_share_other_episodes']:.0%}"]]
+table(s, 9.1, 1.4, 3.68, rows, [1.5, 0.8, 1.38], size=12, row_h=0.5, first_col_color=WHITE)
+text(s, 9.1, 3.1, 3.68, 3.1, ["Day 0 = first day of a UCDP spike month with ≥30 deaths and ≥5× the 90-day mean.",
+     "Placebo: the same 20-day window on every other trading day since 2014.",
+     "Currencies are shown as value vs USD. Sources: Yahoo Finance, MOEX ISS, World Bank (public)."],
+     size=12, color=TEXT3, spacing=6)
+sowhat(s, "Attrition is priced in; surprise onsets and chokepoints are not. Watch onsets, not totals.")
+
+# ---- support: political crises
+s = new_slide("SUPPORT   |   ECONOMIC FRONT", "Political crises: onsets and sanctions align, domestic crises do not")
+rows = [["Date", "Theatre", "Crisis [DOMAIN]", "Nearest UCDP spike"]]
+for r in EPO.itertuples():
+    rows.append([r.date, SHORT[r.conflict_case], r.event, ("✔ " if r.within_45d else "") + f"{r.days_from_episode:+d} days"])
+fills = [None] + [[None, None, None, rgb("2A2008") if r.within_45d else None] for r in EPO.itertuples()]
+table(s, 0.55, 1.35, 12.23, rows, [1.3, 1.3, 7.33, 2.3], size=10.5, row_h=0.27, first_col_color=WHITE, fills=fills)
+_k = int(EPO.within_45d.sum())
+sowhat(s, f"{_k} of {len(EPO)} crises sit within 45 days of a war spike. Wars trigger sanctions; most unrest is home-grown.",
+       y=6.45)
+
+# ---- support: figures check
+s = new_slide("SUPPORT   |   ECONOMIC FRONT", "Checking the figures we quote against the data")
+rows = [["Claim", "What the data say", "Verdict"]]
+for r in ECK.itertuples():
+    rows.append([r.claim, r.measured, r.verdict])
+table(s, 0.55, 1.35, 12.23, rows, [3.2, 6.1, 2.93], size=10, row_h=0.47, first_col_color=WHITE)
+
 # =========================================================================== ANNEX: VERIFICATION + METRICS
 s = new_slide("ANNEX   |   VERIFICATION", "Results as obtained at submission")
-text(s, 0.55, 1.5, 12.2, 1.6, [f"The slides that follow record every evaluation metric and all twelve dashboard pages exactly as "
+text(s, 0.55, 1.5, 12.2, 1.6, [f"The slides that follow record every evaluation metric and all thirteen dashboard pages exactly as "
      f"produced by pipeline run {RUN_ID}.", "The run ID is a hash of the result tables. It is printed on the report "
      "footer, on every slide, in the dashboard sidebar and on the live Ops site, so the live demonstration can be checked "
      "against this submission."], size=17, color=TEXT2)
@@ -1017,9 +1211,9 @@ text(s, 0.55, 4.9, 7.4, 1.4, [f"90% intervals (areas resampled): AUC {E_['auc'][
 
 PAGES = ["Commander's brief", "Conflict explorer", "Area drill-down", "Military lens", "India impact", "Displacement",
          "Media attention", "Forecast (2026 test)", "Early warning", "What-if simulator", "Scorecard lab",
-         "Data quality & method"]
+         "Data quality & method", "Economic front", "Theatre daily brief", "Brief history & OODA"]
 for i, name in enumerate(PAGES, 1):
-    s = new_slide(f"ANNEX   |   DASHBOARD PAGE {i} OF 12", name)
+    s = new_slide(f"ANNEX   |   DASHBOARD PAGE {i} OF {len(PAGES)}", name)
     picture(s, SHOT / f"page{i:02d}.png", 1.6, 1.3, 10.13, 5.7, frame=True)
 
 # =========================================================================== RUNNING ORDER (team v4 flow)
@@ -1028,13 +1222,16 @@ for i, name in enumerate(PAGES, 1):
 RUNNING = [None,  # cover
            "Four wars, three warning signals", "One operational question", "From raw files to a monthly warning",
            "Why each method was chosen", "Forecasts beat simple rules", "The same method, on India",
-           "A district-level watch-list", "A briefing site and an ops console",
+           "A district-level watch-list", "A briefing site and an ops console", "One dataset, four commanders",
            "Pakistan now fights Afghanistan directly", "Pakistan now fights on two fronts",
            "The 2026 war reached the Gulf", "Ukraine: the front is widening",
-           "Sense and warn", "Shield and sustain", "Who does what, by when", "Where to look next month",
+           "The second front", "India took no fire, but paid",
+           "Sense and warn", "Shield and sustain", "Shortening the OODA loop", "Who does what, by when",
+           "Where to look next month",
            "Four different threat signatures", "Media attention follows incidents", "Displacement follows onset",
            "What the sources say together", "News-coded events track UCDP", "News sees past UCDP",
-           "Media volume reacts to war", "What the analysis cannot claim", "Why the headline numbers still hold"]
+           "Media volume reacts to war", "Every war shock, every market", "Political crises",
+           "Checking the figures we quote", "What the analysis cannot claim", "Why the headline numbers still hold"]
 
 
 def _title_of(sl):

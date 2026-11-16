@@ -13,7 +13,7 @@ const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const CHAPTERS = [
   ["hero", "Four wars"], ["bluf", "BLUF"], ["india", "India"], ["signatures", "Signatures"], ["front", "The front"],
   ["afpak", "Two fronts"], ["media", "Headlines"], ["gdelt", "GDELT"], ["displacement", "Displacement"], ["prediction", "Prediction"],
-  ["warning", "Early warning"], ["decision", "Decision room"], ["recs", "Recommendations"], ["method", "Limits & method"], ["closing", "Close"],
+  ["warning", "Early warning"], ["econ", "Second front"], ["decision", "Decision room"], ["recs", "Recommendations"], ["method", "Limits & method"], ["closing", "Close"],
 ] as const;
 
 function countUp(root: ParentNode = document) {
@@ -32,7 +32,7 @@ export function renderStory(D: Data) {
   const F = D.facts;
   const S: Record<string, Score> = Object.fromEntries(F.scorecard.map((s: Score) => [s.id, s]));
   const O: Record<string, any> = Object.fromEntries(F.overview.map((o: any) => [o.id, o]));
-  const gd = F.gdelt, mil = F.military, ind = F.india, med = F.media, dsp = F.displacement, fc = F.forecasting, ew = F.warning;
+  const ec = F.econ, gd = F.gdelt, mil = F.military, ind = F.india, med = F.media, dsp = F.displacement, fc = F.forecasting, ew = F.warning;
   const bad = verify(F.scorecard, DOCTRINE(F));
   if (bad.length) console.error("Scorecard parity FAILED", bad);
 
@@ -207,6 +207,42 @@ export function renderStory(D: Data) {
     <div id="ew-box"></div>
   </div></section>
 
+  <section class="ch" id="econ"><div class="wrap">
+    <div class="eyebrow">FINDING 4 · THE SECOND FRONT · PUBLIC MARKET DATA</div>
+    <h2 class="title reveal">The battlefield kills locally.<br><span style="color:var(--amber)">Markets hit everyone, India included.</span></h2>
+    <p class="lede reveal">India took no fire in the 2026 Gulf war and still paid in oil, the rupee and its stock market. ${tag("data")} Yahoo Finance, MOEX ISS, World Bank, GPR index; day 0 of each shock is set from UCDP daily deaths.</p>
+    <div class="grid g4 reveal" style="margin:10px 0 18px;gap:22px">
+      ${K(ec.headline.brent_d20_2026, "Brent, 20 trading days after 28 Feb 2026", `peak +${ec.headline.brent_best_2026}%`, { dec: 0, pre: "+", suf: "%", color: "var(--amber)" })}
+      ${K(ec.headline.nifty_d20_2026, "Nifty 50, same 20 days", `rupee worst ${ec.headline.inr_worst_2026}%`, { dec: 1, suf: "%", color: "var(--red)" })}
+      ${K(Math.round(ec.oil.bill26), "extra crude bill per year", `Brent +$${Math.round(ec.oil.up26)}/bbl × ${ec.oil.mbd} mb/d (DOMAIN)`, { pre: "≈$", suf: "B", color: "var(--amber)" })}
+      ${K(Math.round(ec.reserves.ind21 - ec.reserves.ind22), "India reserves drawn in 2022", `$${Math.round(ec.reserves.ind21)}B → $${Math.round(ec.reserves.ind22)}B defending the rupee`, { pre: "−$", suf: "B", color: "var(--teal)" })}
+      ${K(ec.headline.moex_day1, "MOEX on 24 Feb 2022", "then no trading for a month", { dec: 0, suf: "%" })}
+      ${K(ec.headline.ta35_worst, "TA-35 after 7 Oct 2023", `shekel ${ec.headline.ils_worst}%`, { dec: 1, suf: "%" })}
+      ${K(ec.irr.chg, "Iranian rial since the war", `${fmt(ec.irr.pre)} → ${fmt(ec.irr.last)} per USD`, { dec: 0, suf: "%", color: "var(--red)" })}
+      ${K(Math.round(ec.remit.gulf), "Gulf remittances to India at risk", `of $${Math.round(ec.remit.total)}B total, ${ec.remit.year}`, { pre: "≈$", suf: "B/yr", color: "var(--violet)" })}
+    </div>
+    <div class="split" style="align-items:start">
+      <div class="panel"><div class="ph"><span class="t">Markets around each shock · 100 = close before day 0</span>${info("Each line is a market rebased to 100 at the last close before the war shock. Currencies are shown as value against the US dollar, so a fall means depreciation. Day 0 is the first day of the death spike in UCDP data, not a news date.")}<div class="seg" id="ec-seg"><button data-c="ruua">RU–UA 2022</button><button data-c="ilh">7 OCT 2023</button><button data-c="usir" class="on">GULF 2026</button></div></div><div class="chart" id="ec-ch" style="height:420px"></div></div>
+      <div class="panel"><div class="ph"><span class="t">Two fronts · largest episode per theatre</span>${info("Left bars: deaths in the episode and the number of countries with deaths. Right: the worst move within 60 trading days for the local stock index, the local currency, Brent (peak rise), the Nifty and the rupee. Af–Pak has no reachable stock index.")}</div><div class="chart" id="ec-fr" style="height:420px"></div></div>
+    </div>
+    <div class="split" style="align-items:start;margin-top:20px">
+      <div class="panel"><div class="ph"><span class="t">What-if · India's crude bill</span></div>
+        <div class="ctl"><label>Crude imports, million bbl/day <output id="ec-mo"></output></label><input type="range" id="ec-m" min="3" max="6" step="0.1" value="${ec.oil.mbd}" aria-label="Crude imports"></div>
+        <div class="ctl"><label>Brent rise vs pre-war, USD/bbl <output id="ec-po"></output></label><input type="range" id="ec-p" min="0" max="80" step="0.5" value="${Math.round(ec.oil.up26 * 2) / 2}" aria-label="Brent rise"></div>
+        <div class="kpi"><span class="v" id="ec-bill" style="color:var(--amber)"></span><span class="l">extra import bill per year</span><span class="s" id="ec-bs"></span></div>
+        <p class="small muted" style="margin-top:10px">${tag("domain")} estimate: ignores discounted Russian crude and any fall in demand. Each $10/bbl ≈ $${ec.oil.per10}B a year.</p></div>
+      <div class="panel"><div class="ph"><span class="t">Is it the war, or just a normal month?</span></div>
+        <p>${ec.study.episodes} death-spike episodes and ${ec.study.moves} market moves were tested against every non-war 20-day window since 2014.</p>
+        <div class="grid g2" style="gap:18px;margin:10px 0">
+          ${K(Math.round(ec.study.sig_main * 100), "of moves significant after a NEW war", `median |move| ${ec.study.med_main}%`, { suf: "%", color: "var(--red)" })}
+          ${K(Math.round(ec.study.sig_other * 100), "after routine spikes in an old war", `median |move| ${ec.study.med_other}%`, { suf: "%" })}
+        </div>
+        <div class="sowhat"><b>SO WHAT</b>Markets price new wars, not more of the same war. Treat a new belligerent or a Hormuz threat as an economic-front trigger: strategic crude stocks, rupee buffers and escorts (MoPNG, RBI, Navy).</div></div>
+    </div>
+    <div class="panel" style="margin-top:20px"><div class="ph"><span class="t">Checking the figures we quote</span><button class="btn" id="ec-dl">⬇ CSV</button></div>
+      <table class="t"><tr><th>Claim</th><th>Measured</th><th>Verdict</th></tr>${ec.claims.map((x: any) => `<tr><td>${x.claim}</td><td class="small">${x.measured}</td><td class="mono small" style="color:${x.verdict.startsWith("CORRECT") ? "var(--green)" : "var(--amber)"}">${x.verdict.split(/[;(]/)[0]}</td></tr>`).join("")}</table></div>
+  </div></section>
+
   <section class="ch" id="decision"><div class="wrap">
     <div class="eyebrow">DECISION ROOM · LIVE MODELS IN YOUR BROWSER</div>
     <h2 class="title reveal" id="whatif">What if violence had been different?</h2>
@@ -292,6 +328,40 @@ export function renderStory(D: Data) {
   const sigSet = (c: string | null) => { update($("#sig-ch"), sigOpt(c), true); $$(".sig-step").forEach((s) => (s.style.background = s.dataset.c === c ? "rgba(79,209,224,.06)" : "")); };
   $$(".sig-step").forEach((s) => { s.addEventListener("mouseenter", () => sigSet(s.dataset.c!)); s.addEventListener("focus", () => sigSet(s.dataset.c!)); s.addEventListener("click", () => sigSet(s.dataset.c!)); });
   if (!REDUCE && innerWidth > 980) $$(".sig-step").forEach((s) => ScrollTrigger.create({ trigger: s, start: "top 60%", end: "bottom 40%", onEnter: () => sigSet(s.dataset.c!), onEnterBack: () => sigSet(s.dataset.c!) }));
+
+  // ---- Economic front
+  const ECOL: Record<string, string> = { MOEX: "#4FD1E0", RUB: "#7FA7D9", BRENT: "#F2B33D", WHEAT: "#2BB673", NIFTY: "#FF4D5E", INR: "#FF9AA5",
+    TA35: "#4FD1E0", ILS: "#7FA7D9", ZIM: "#A78BFA", VIX: "#A78BFA", FRO: "#2BB673", GOLD: "#E8D27A" };
+  const ecOpt = (c: string) => { const P = ec.paths[c]; return {
+    legend: { data: P.series.map((x: any) => x.name), top: 4 }, tooltip: { trigger: "axis", valueFormatter: (v: number) => fmt(v, 1) },
+    grid: { left: 52, right: 20, top: 66, bottom: 44 },
+    xAxis: { type: "category", data: P.offsets, name: "trading days from day 0", nameLocation: "middle", nameGap: 28, ...axis() },
+    yAxis: { type: "value", scale: true, ...axis() },
+    series: P.series.map((x: any, i: number) => ({ name: x.name, type: "line", data: x.v, symbol: "none", smooth: 0.15,
+      lineStyle: { width: ["NIFTY", "INR", "BRENT"].includes(x.k) ? 3.4 : 1.8, color: ECOL[x.k] ?? "#9AA6B6" }, itemStyle: { color: ECOL[x.k] ?? "#9AA6B6" },
+      markLine: i === 0 ? { silent: true, symbol: "none", lineStyle: { color: "#FF4D5E", type: "dashed" }, label: { color: "#FF4D5E", fontFamily: "JetBrains Mono", formatter: `DAY 0 · ${P.day0}` },
+        data: [{ xAxis: P.offsets.indexOf(0) }] } : undefined })),
+    animationDurationUpdate: 800 }; };
+  mount($("#ec-ch"), ecOpt("usir"));
+  $$("#ec-seg button").forEach((b) => b.addEventListener("click", () => { $$("#ec-seg button").forEach((x) => x.classList.toggle("on", x === b)); update($("#ec-ch"), ecOpt(b.dataset.c!), true); }));
+  const FR = ec.fronts;
+  mount($("#ec-fr"), {
+    legend: { top: 4, data: ["Local stocks", "Local currency", "Brent (peak)", "Nifty 50", "Rupee"] }, tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+    grid: [{ left: 76, width: "22%", top: 60, bottom: 30 }, { left: "52%", right: 16, top: 60, bottom: 30 }],
+    xAxis: [{ type: "log", gridIndex: 0, min: 300, ...axis({ axisLabel: { show: false } }) }, { type: "value", gridIndex: 1, ...axis(), name: "%" }],
+    yAxis: [{ type: "category", gridIndex: 0, data: FR.map((f: any) => CASE_SHORT[f.c]), ...axis() }, { type: "category", gridIndex: 1, data: FR.map((f: any) => CASE_SHORT[f.c]), ...axis({ axisLabel: { show: false } }) }],
+    series: [
+      { name: "Deaths", type: "bar", xAxisIndex: 0, yAxisIndex: 0, data: FR.map((f: any) => ({ value: f.deaths, itemStyle: { color: CASE_COLOR[f.c] } })),
+        label: { show: true, position: "right", color: "#9AA6B6", fontFamily: "JetBrains Mono", fontSize: 11, formatter: (p: any) => `${fmtM(p.value)} dead · ${FR[p.dataIndex].countries} ctry` } },
+      ...([["eq_w", "Local stocks", "#4FD1E0"], ["fx_w", "Local currency", "#7FA7D9"], ["brent", "Brent (peak)", "#F2B33D"], ["nifty", "Nifty 50", "#FF4D5E"], ["inr", "Rupee", "#FF9AA5"]] as const)
+        .map(([k, n, col]) => ({ name: n, type: "bar", xAxisIndex: 1, yAxisIndex: 1, data: FR.map((f: any) => f[k]), itemStyle: { color: col }, barGap: "10%" })),
+    ],
+  });
+  const ecBill = () => { const m = +($("#ec-m") as HTMLInputElement).value, p = +($("#ec-p") as HTMLInputElement).value, b = m * 365 * p / 1000;
+    $("#ec-mo").textContent = m.toFixed(1); $("#ec-po").textContent = "$" + p; $("#ec-bill").textContent = `≈$${Math.round(b)}B / year`;
+    $("#ec-bs").textContent = `about ${Math.round(b / ec.reserves.ind25 * 100)}% of India's 2025 reserves ($${Math.round(ec.reserves.ind25)}B)`; };
+  ["#ec-m", "#ec-p"].forEach((q) => $(q).addEventListener("input", ecBill)); ecBill();
+  $("#ec-dl").addEventListener("click", () => csv("econ_claims_check.csv", ec.claims));
 
   // ---- Front
   const fm = regionMap($("#front-map"), D.world, [[22, 44], [41, 53]], { india: false });

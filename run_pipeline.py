@@ -17,7 +17,7 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from src import cleaning, config as C, extra_sources, features, gdelt, insights, models as M, robustness, viz
+from src import cleaning, config as C, econ, extra_sources, features, gdelt, insights, models as M, robustness, viz
 
 MODEL_DIR = C.ROOT / "models"
 MODEL_DIR.mkdir(exist_ok=True)
@@ -55,6 +55,8 @@ def main(figs: bool = True):
     print("      GDELT vs UCDP (new, labelled; does not change the models) ...")
     gdelt.run(cm)
     extra_sources.run(cm)
+    print("      economic front: markets, currencies, reserves around war shocks (new, labelled) ...")
+    eco = econ.run(cm)
     print("      evidence strength (bootstrap, Diebold-Mariano, late data, calibration) ...")
     rob = robustness.run(cm)
     joblib.dump(dict(m_case_full=fc["m_case_full"], members=fc["members"], conformal=fc["conformal"],
@@ -71,9 +73,15 @@ def main(figs: bool = True):
     )
     (C.TAB_DIR / "run_summary.json").write_text(json.dumps(summary, indent=2, default=str))
 
+    print("      theatre commander briefs (new, notional; writes outputs/theatre/, not outputs/tables/) ...")
+    from src import theatre
+    tb = theatre.run()
     if figs:
         print("[6/6] Figures ...")
         export_figures(cl, cm, ins, fc, ew, rag, shap_case, shap_ew)
+        export_econ_figures(eco)
+        from src import theatre_viz
+        theatre_viz.export_figures(tb)
     print(f"Done in {time.time() - t0:.0f}s")
     return summary
 
@@ -111,6 +119,15 @@ def export_figures(cl, cm, ins, fc, ew, rag, shap_case, shap_ew):
     viz.save(viz.fig_gdelt_lags(pd.read_csv(C.TAB_DIR / "gdelt_weekly_lags.csv")), "28_gdelt_lags", width=900)
     viz.save(viz.fig_ew_calibration(pd.read_csv(C.TAB_DIR / "ew_calibration.csv")), "26_ew_calibration", width=900)
     viz.save(viz.fig_rag(rag), "25_rag_scorecard", height=260)
+
+
+def export_econ_figures(eco):
+    for case in econ.MAIN_SHOCKS:
+        viz.save(viz.fig_econ_paths(eco["paths"], case), f"29_econ_paths_{C.CASE_SHORT[case]}")
+    viz.save(viz.fig_econ_event_bars(eco["event_study"]), "30_econ_event_bars", height=1700)
+    viz.save(viz.fig_econ_fronts(eco["fronts"]), "31_econ_fronts")
+    viz.save(viz.fig_econ_india(eco["india"]), "32_econ_india", height=760)
+    viz.save(viz.fig_econ_reserves(eco["reserves"]), "33_econ_reserves", width=1100)
 
 
 if __name__ == "__main__":
