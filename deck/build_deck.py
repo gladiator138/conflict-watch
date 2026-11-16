@@ -29,7 +29,7 @@ SHOT = ROOT / "deck" / "shots"
 DF = ROOT / "deck" / "figs"
 TB = C.TAB_DIR
 OUT = ROOT / "deck" / "Conflict_Watch_Jury_Deck.pptx"
-QR_URL = "https://github.com/gladiator138/conflict-watch"   # set to the hosted dashboard or repository URL to print a QR code on the closing slide
+QR_URL = "https://conflictmonitor2026.streamlit.app"   # set to the hosted dashboard or repository URL to print a QR code on the closing slide
 
 
 def rgb(h):

@@ -5,6 +5,8 @@ Russia–Ukraine · Israel–Hamas · Afghanistan–Pakistan · US–Iran
 
 Team: Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh · UNCLASSIFIED: open-source data only
 
+**Live dashboard:** https://conflictmonitor2026.streamlit.app
+
 ---
 
 ## What is in this folder

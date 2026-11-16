@@ -14,7 +14,7 @@ The repository contains everything: the raw competition CSVs (`data/raw/for part
 2. **Create app** → pick the repository, branch `main`, main file `app/app.py`.
 3. **Advanced settings** → Python version **3.13**. No secrets are needed.
 4. Deploy. The first build takes about 3–5 minutes; the app then has a URL such as
-   `https://conflict-watch.streamlit.app`.
+   `https://conflictmonitor2026.streamlit.app`.
 5. Put that URL (or the repository URL) into `QR_URL` at the top of `deck/build_deck.py` and run
    `python deck/build_deck.py` to print the QR code on the closing slide.
 
