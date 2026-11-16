@@ -192,7 +192,7 @@ cal_md = mdtable(cal_t.rename(columns={"band": "Predicted band", "areas": "Area-
 author = "Maj Shivam Mehta · Capt Siddharth Sangwan · Capt Sahil Singh"
 md = f"""
 <div class="head">
-<div class="kick">LT GEN M S SODHI MEDAL · DATA ANALYTICS COMPETITION 2026</div>
+<div class="kick">DATA ANALYTICS COMPETITION 2026</div>
 <h1 class="title">CONFLICT WATCH</h1>
 <div class="subtitle">When and where will conflict deaths rise next, and what does it mean for India?</div>
 <div class="meta">{author} | Analysis report · data to 30 Sep 2026 · run {RUN_ID} · UNCLASSIFIED – open-source data only</div>
