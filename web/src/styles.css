@@ -121,6 +121,10 @@ h3 { font-size: 22px; font-weight: 600; }
 .rag .name { font: 700 14px var(--mono); letter-spacing: .12em; color: var(--tx2); text-transform: uppercase; display: flex; align-items: center; gap: 8px; }
 .rag .status { width: 9px; height: 9px; border-radius: 50%; animation: blink 1.4s infinite; }
 .rag .rating { font: 700 clamp(44px, 4.6vw, 72px)/1 var(--sans); letter-spacing: -.01em; }
+/* scale the RAG word to its card so AMBER/GREEN never clip in narrow cards (Scorecard lab) */
+.rag .face { container-type: inline-size; }
+.rag .rating { font-size: clamp(30px, min(4.6vw, 22cqi), 72px); white-space: nowrap; }
+#lab-cards .rag { height: 320px; }
 .rag .fc { font: 700 30px var(--sans); font-variant-numeric: tabular-nums; }
 .rag .meta { font-size: 14px; color: var(--tx2); }
 .rag .hint { margin-top: auto; font: 600 11px var(--mono); letter-spacing: .14em; color: var(--tx3); }
