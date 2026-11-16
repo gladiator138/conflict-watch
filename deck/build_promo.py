@@ -118,14 +118,14 @@ def build():
     for k, d in (("intro", INTRO_S), ("outro", OUTRO_S)):
         n = int(d * FPS)
         ff("-loop", "1", "-i", str(WORK / f"{k}.png"), "-t", str(d), "-vf",
-           f"scale=2112:1188,zoompan=z='1.0+0.06*on/{n}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=1920x1080:fps={FPS}",
+           f"scale=7680:4320:flags=lanczos,zoompan=z='1.0+0.04*on/{n}':x='iw/2-iw/zoom/2':y='ih/2-ih/zoom/2':d=1:s=1920x1080:fps={FPS}",
            *enc, str(WORK / f"{k}.mp4"))
     parts.append(("intro", INTRO_S))
     for c, d, (fx, fy), z1, *_ in CLIPS:
         n = int(d * FPS)
         z = f"1+{z1 - 1:.3f}*(0.5-0.5*cos(PI*on/{n}))"
         vf = (f"[0]fps={FPS},scale=1920:1080:flags=lanczos,setsar=1,trim=duration={d},"
-              f"zoompan=z='{z}':x='max(0,min(iw-iw/zoom,{fx}*iw-iw/zoom/2))':y='max(0,min(ih-ih/zoom,{fy}*ih-ih/zoom/2))':d=1:s=1920x1080:fps={FPS}[v];"
+              f"null[v];"  # no zoom on screen clips: zoompan rounds to whole pixels and makes text shake
               f"[1]format=rgba,fade=in:st=0.5:d=0.45:alpha=1,fade=out:st={d - 0.9:.2f}:d=0.45:alpha=1[c];"
               f"[v][c]overlay=0:0:shortest=1[o]")
         ff("-f", "concat", "-safe", "0", "-i", str(RAW / c / "frames.txt"), "-loop", "1", "-t", str(d),
