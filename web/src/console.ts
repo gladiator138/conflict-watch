@@ -7,14 +7,17 @@ import { strip, navBar, footer, qaDrawer } from "./chrome";
 import { renderTheatre } from "./theatre";
 
 const CSS = `
-.con { display:grid; grid-template-columns: 220px minmax(0,1fr); min-height:100vh; padding-top: calc(var(--strip) + var(--nav)); position:relative; z-index:1; }
-.rail { position: sticky; top: calc(var(--strip) + var(--nav)); height: calc(100vh - var(--strip) - var(--nav)); border-right:1px solid var(--line); padding:18px 10px; display:flex; flex-direction:column; gap:4px; background: rgba(5,7,10,.5); }
-.rail a { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:8px; color:var(--tx2); text-decoration:none; font:600 13px var(--mono); letter-spacing:.1em; }
-.rail a:hover { color: var(--tx); background: rgba(79,209,224,.06); }
-.rail a.on { color: var(--teal); background: rgba(79,209,224,.12); box-shadow: inset 2px 0 0 var(--teal); }
-.rail-g { font: 700 10.5px var(--mono); letter-spacing:.22em; color: var(--tx3); padding: 14px 12px 4px; }
-.rail-g:first-child { padding-top: 2px; }
-.rail .k { margin-top:auto; font: 500 11px var(--mono); color: var(--tx3); padding: 8px 12px; line-height:1.7; }
+.con { display:grid; grid-template-columns: 236px minmax(0,1fr); min-height:100vh; padding-top: calc(var(--strip) + var(--nav)); position:relative; z-index:1; }
+.rail { position: sticky; top: calc(var(--strip) + var(--nav)); height: calc(100vh - var(--strip) - var(--nav)); padding:20px 14px; display:flex; flex-direction:column; gap:3px; background: linear-gradient(180deg, rgba(13,20,33,.9), rgba(5,7,10,.6)); border-right:1px solid var(--line); }
+.rail a { display:flex; gap:12px; align-items:center; padding:8px 10px; border-radius:10px; color:var(--tx2); text-decoration:none; font:600 14.5px var(--sans); transition: background .2s, color .2s; }
+.rail a span { width:30px; height:30px; flex:none; display:grid; place-items:center; border-radius:8px; background: rgba(255,255,255,.04); border:1px solid var(--line); font-size:14px; transition: all .2s; }
+.rail a:hover, .rail a:focus-visible { color: var(--tx); background: rgba(255,255,255,.04); outline:none; }
+.rail a.on { color: var(--tx); background: rgba(79,209,224,.10); }
+.rail a.on span { background: var(--teal); border-color: var(--teal); color:#05070A; box-shadow: 0 0 16px rgba(79,209,224,.35); }
+.rail-g { font: 700 10.5px var(--mono); letter-spacing:.24em; color: var(--tx3); padding: 16px 10px 6px; }
+.rail-g:first-child { padding-top: 0; }
+.rail .k { margin-top:auto; font: 500 11px var(--mono); color: var(--tx3); padding: 12px; line-height:1.8; border:1px solid var(--line); border-radius:10px; background: rgba(255,255,255,.02); }
+:root[data-theme="light"] .rail { background:#fff; } :root[data-theme="light"] .rail a span { background:#F4F6F9; }
 .page { padding: 26px 30px 40px; }
 .page h2 { font-size: 34px; margin: 0 0 4px; }
 .page .sub { color: var(--tx2); margin-bottom: 18px; }
@@ -26,9 +29,9 @@ const CSS = `
 .print-only { display:none; }
 `;
 
-const PAGES = [["brief", "◉", "BRIEF", "DECIDE"], ["theatre", "✪", "THEATRE", "DECIDE"], ["warning", "⚠", "WARNING", "DECIDE"],
-  ["map", "◎", "MAP", "EXPLORE"], ["area", "⌖", "AREA", "EXPLORE"], ["forecast", "↗", "FORECAST", "EXPLORE"], ["whatif", "⚗", "WHAT-IF", "EXPLORE"],
-  ["scorecard", "▦", "SCORECARD", "VERIFY"], ["dq", "✓", "DATA QUALITY", "VERIFY"], ["about", "ⓘ", "ABOUT", "VERIFY"]] as const;
+const PAGES = [["brief", "◉", "Brief", "DECIDE"], ["theatre", "✪", "Theatre", "DECIDE"], ["warning", "⚠", "Warning", "DECIDE"],
+  ["map", "◎", "Map", "EXPLORE"], ["area", "⌖", "Area", "EXPLORE"], ["forecast", "↗", "Forecast", "EXPLORE"], ["whatif", "⚗", "What-if", "EXPLORE"],
+  ["scorecard", "▦", "Scorecard", "VERIFY"], ["dq", "✓", "Data quality", "VERIFY"], ["about", "ⓘ", "About", "VERIFY"]] as const;
 
 export function renderConsole(D: Data) {
   const F = D.facts;

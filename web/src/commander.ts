@@ -6,12 +6,14 @@ import { type Data, type Score, CASE_COLOR, CASE_NAME, CASE_SHORT, RAG_COLOR, fm
 import { rate, verify, DOCTRINE } from "./rules";
 import { mount, axis, csv, C } from "./charts";
 import { regionMap, el, tip } from "./maps";
-import { strip, navBar, footer, qaDrawer } from "./chrome";
+import { strip, navBar, footer } from "./chrome";
 
 const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fast = () => document.documentElement.classList.contains("pres");
 const RAG_ICON: Record<string, string> = { RED: "▲", AMBER: "◆", GREEN: "●" };
 const LINE_COLOR: Record<string, string> = { SENSE: "#4FD1E0", WARN: "#F2B33D", SHIELD: "#FF4D5E", SUSTAIN: "#A78BFA" };
+/** Short glance wording for each order; the full text, lead and timeline are in the evidence sheet. */
+const GLANCE: Record<string, string> = { SENSE: "Task ISR on the watch-list", WARN: "Treat the Af–Pak front as an LoC indicator", SHIELD: "Keep Gulf evacuation plans current", SUSTAIN: "Buffer critical spares" };
 const CASE_LINE: Record<string, string | null> = { ruua: "SUSTAIN", afpak: "WARN", usir: "SHIELD", ilh: null };
 const $ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector(s) as T;
 const $$ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => Array.from(r.querySelectorAll(s)) as T[];
@@ -59,23 +61,18 @@ export function renderCommander(D: Data) {
     <header class="cmd-h">
       <div>
         <div class="eyebrow">COMMANDER'S VIEW · ${S[0].month.toUpperCase()}</div>
-        <h1 class="cmd-t">${head}. <span class="muted">The Gulf war reached India's neighbourhood.</span></h1>
+        <h1 class="cmd-t">${head}.</h1>
       </div>
-      <div class="cmd-trust" role="group" aria-label="How far to trust this">
-        <button class="trust" data-ev="trust"><b>−${fc.mae_pooled}%</b><span>forecast error vs "no change", on unseen 2026 data</span></button>
-        <button class="trust" data-ev="trust"><b>${ew.lift}×</b><span>watch-list better than chance</span></button>
-      </div>
+      <button class="btn" id="cmd-detail" aria-pressed="false" title="Show or hide trends, reasons, leads and the full watch-list (D)">MORE DETAIL · OFF</button>
     </header>
 
     <section class="cmd-tiles" aria-label="Threat status by conflict">
       ${S.map((s) => { const col = RAG_COLOR[s.rating]; const m = D.monthly[s.id];
         return `<button class="tile" data-ev="c:${s.id}" style="--rag:${col}" aria-label="${s.name}: ${s.rating}. Forecast ${fmt(s.forecast)} deaths in ${s.month}. Open evidence.">
-          <div class="tile-top"><span class="tile-n">${s.name}</span><span class="pill"><i>${RAG_ICON[s.rating]}</i>${s.rating}</span></div>
-          <div class="tile-mid"><span class="tile-v" data-count="${s.forecast}">${fmt(s.forecast)}</span><span class="tile-u">deaths forecast<br>${s.month}</span></div>
-          ${spark(m.deaths.slice(-36), col)}
-          <div class="tile-tr">${trend(s)}</div>
-          <div class="tile-r">${reason(s)}</div>
-          <div class="tile-w">WHY? ▸</div>
+          <div class="tile-n">${s.name}</div>
+          <div class="pill"><i>${RAG_ICON[s.rating]}</i>${s.rating}</div>
+          <div class="tile-mid"><span class="tile-v" data-count="${s.forecast}">${fmt(s.forecast)}</span><span class="tile-u">deaths forecast, ${s.month}</span></div>
+          <div class="tile-more">${spark(m.deaths.slice(-36), col)}<div class="tile-tr">${trend(s)}</div><div class="tile-r">${reason(s)}</div></div>
         </button>`; }).join("")}
     </section>
 
@@ -83,31 +80,25 @@ export function renderCommander(D: Data) {
       <div class="cmd-map panel">
         <div class="ph"><span class="t">Where it touches India</span><span class="tag data">DATA</span></div>
         <div class="mapbox" id="cmd-map" aria-label="Map of India's exposure: Line of Control, Gulf states, Hormuz and Chabahar coast, Sri Lankan waters, Red Sea"></div>
-        <div class="cmd-leg"><span><i style="background:${CASE_COLOR.usir}"></i>US–Iran deaths, 2026</span><span><i style="background:${CASE_COLOR.afpak}"></i>Af–Pak deaths, 2025–26</span><span><i class="ring"></i>Select a marker for evidence</span></div>
       </div>
-      <div class="cmd-side">
-        <div class="panel cmd-orders">
-          <div class="ph"><span class="t">Orders for this month</span><a class="lnk" href="#recs">ALL RECOMMENDATIONS ▸</a></div>
-          ${recs.map((r) => `<button class="order" data-ev="o:${r.line}" style="--lc:${LINE_COLOR[r.line] ?? "#4FD1E0"}">
-            <span class="o-l">${r.line}</span>
-            <span class="o-a">${r.action.split(". ")[0]}.</span>
-            <span class="o-m">${r.lead} · ${r.when}</span></button>`).join("")}
-        </div>
-        <div class="panel cmd-watch">
-          <div class="ph"><span class="t">Watch-list · top 10 areas for ${S[0].month}</span><a class="lnk" href="${con("warning?mode=live")}">FULL LIST ▸</a></div>
-          <div class="wl">${watch.map((a, i) => `<a class="wl-r" href="${con("area?id=" + encodeURIComponent(a.id))}" title="${a.name}, ${a.iso}: open area drill-down">
-            <span class="wl-i">${i + 1}</span><span class="wl-n">${a.name}<em>${CASE_SHORT[a.c]}</em></span>
-            <span class="wl-b"><i style="width:${(a.p / maxP * 100).toFixed(0)}%;background:${CASE_COLOR[a.c]}"></i></span><span class="wl-p">${pct(a.p)}</span></a>`).join("")}</div>
-        </div>
-      </div>
+      <aside class="cmd-side" aria-label="Orders and watch-list">
+        <div class="side-h">ORDERS THIS MONTH</div>
+        ${recs.map((r) => `<button class="order" data-ev="o:${r.line}" style="--lc:${LINE_COLOR[r.line] ?? "#4FD1E0"}">
+          <span class="o-l">${r.line}</span><span class="o-w">${r.when.split(" / ")[0]}</span>
+          <span class="o-a">${GLANCE[r.line] ?? r.action.split(". ")[0]}</span>
+          <span class="o-m">${r.lead}</span></button>`).join("")}
+        <div class="side-h" style="margin-top:6px">WATCH NEXT MONTH <button class="lnk" data-ev="w:all">ALL 10 ▸</button></div>
+        <div class="wl">${watch.map((a, i) => `<a class="wl-r" href="${con("area?id=" + encodeURIComponent(a.id))}" title="${a.name}, ${a.iso}: open area drill-down">
+          <span class="wl-i">${i + 1}</span><span class="wl-n">${a.name}<em>${CASE_SHORT[a.c]}</em></span>
+          <span class="wl-b"><i style="width:${(a.p / maxP * 100).toFixed(0)}%;background:${CASE_COLOR[a.c]}"></i></span><span class="wl-p">${pct(a.p)}</span></a>`).join("")}</div>
+      </aside>
     </section>
 
     <nav class="cmd-go" aria-label="Go deeper">
       <a class="btn primary" href="#bluf">FULL BRIEFING ▸</a>
       <a class="btn" href="${con("brief")}">OPS CONSOLE ▸</a>
-      <button class="btn" id="cmd-qa">JURY Q&amp;A</button>
       <span class="grow"></span>
-      <span class="mono small muted">${bad.length ? "⚠ scorecard parity failed" : "✓ ratings recomputed in the browser match the pipeline"} · RUN ${F.run_id}</span>
+      <button class="trustline" data-ev="trust">Tested on unseen 2026 data: forecast error <b>−${fc.mae_pooled}%</b> against "no change" · watch-list <b>${ew.lift}×</b> better than chance <span>HOW FAR TO TRUST THIS ▸</span></button>
     </nav>
   </main>
   <aside class="sheet" id="sheet" role="dialog" aria-modal="false" aria-label="Evidence"><div class="sheet-in" id="sheet-in"></div></aside>
@@ -213,6 +204,12 @@ export function renderCommander(D: Data) {
           nums([[fmt(ind.yemen_2025), "deaths in Yemen, 2025"], [String(ind.usir_countries[1]), "countries the US–Iran war reached in 2026"]]) +
           `<p class="ev-p"><span class="tag domain">DOMAIN</span> The Red Sea shipping lane runs past this coast.</p>` + action(shield) + links([["THE FINDING ▸", "#india"]]));
       }
+    } else if (kind === "w") {
+      rows = watch.map((a, i) => ({ rank: i + 1, area: a.name, country: a.iso, conflict: CASE_NAME[a.c], chance_of_escalation: a.p })); file = "watchlist.csv";
+      sin.innerHTML = shell(`WATCH-LIST · ${S[0].month.toUpperCase()}`, "Ten areas most likely to escalate next month.",
+        `<p class="ev-p">Use the list as a ranking, not as exact odds. Select an area for its history.</p>
+         <div class="ev-wl">${watch.map((a, i) => `<a class="wl-r" href="${con("area?id=" + encodeURIComponent(a.id))}"><span class="wl-i">${i + 1}</span><span class="wl-n">${a.name}<em>${a.iso} · ${CASE_SHORT[a.c]}</em></span><span class="wl-b"><i style="width:${(a.p / maxP * 100).toFixed(0)}%;background:${CASE_COLOR[a.c]}"></i></span><span class="wl-p">${pct(a.p)}</span></a>`).join("")}</div>` +
+        action(rec("SENSE")) + links([["REPLAY 2026 ▸", con("warning")], ["AREA MAP ▸", con("map")]], true));
     } else if (kind === "o") {
       const r = rec(id);
       sin.innerHTML = shell(`ORDER · ${r.line}`, r.action,
@@ -227,6 +224,7 @@ export function renderCommander(D: Data) {
         nums([[`−${fc.mae_pooled}%`, "forecast error against \"no change\""], [`${fc.coverage.all}%`, "of 2026 outcomes fell inside the stated range"], [`${ew.lift}×`, "watch-list better than chance"]]) +
         `<div class="ev-ch" id="ev-ch"></div><p class="ev-p">Error cut by conflict, in per cent. ${(ew.p10 * 10).toFixed(1)} of each month's top 10 areas escalated, against ${(ew.base * 10).toFixed(1)} by chance.</p>
          <p class="ev-p"><span class="tag caveat">LIMIT</span> ${F.limits[F.limits.length - 1]}</p>
+         <p class="ev-p small muted">${bad.length ? "⚠ Scorecard parity failed: " + bad.join("; ") : "✓ Ratings recomputed in the browser match the pipeline."} Run ${F.run_id}.</p>
          <details class="ev-d"><summary>For the analyst</summary><p class="small muted">Ensemble RMSLE ${lb.A_hold} against ${nv.A_hold} for "no change" (1 month ahead, 2026). Early-warning ROC-AUC ${ew.auc}; top-10 precision ${pct(ew.p10, 1)} against a base rate of ${pct(ew.base, 1)}. Every design choice was made on the 2022–25 back-test.</p></details>` +
         links([["FORECAST TEST ▸", con("forecast")], ["WARNING REPLAY ▸", con("warning")], ["LIMITS AND METHOD ▸", "#method"]], true));
     }
@@ -246,16 +244,21 @@ export function renderCommander(D: Data) {
   });
   sbg.addEventListener("click", close);
   $$(".mk").forEach((g) => { g.addEventListener("mousemove", (e) => tip("Open evidence", e as MouseEvent)); g.addEventListener("mouseleave", () => tip(null)); });
-  const QA = qaDrawer(F);
-  $("#cmd-qa").addEventListener("click", () => QA.open());
+  // ---- Glance by default; "More detail" adds trends, reasons, leads and the full watch-list
+  const root = document.documentElement, db = $("#cmd-detail");
+  const setDetail = (on: boolean) => { root.classList.toggle("cmd-detail", on); db.textContent = `MORE DETAIL · ${on ? "ON" : "OFF"}`; db.classList.toggle("on", on); db.setAttribute("aria-pressed", String(on)); try { sessionStorage.setItem("cw-detail", on ? "1" : "0"); } catch {} };
+  let d0 = false; try { d0 = sessionStorage.getItem("cw-detail") === "1"; } catch {}
+  setDetail(d0);
+  db.addEventListener("click", () => setDetail(!root.classList.contains("cmd-detail")));
+  addEventListener("keydown", (e) => { const tg = (e.target as HTMLElement).tagName; if (tg === "INPUT" || tg === "SELECT" || tg === "TEXTAREA" || e.metaKey || e.ctrlKey) return; if (e.key === "d" || e.key === "D") setDetail(!root.classList.contains("cmd-detail")); });
 
   // ---- Entrance: tiles, then map, then orders. Numbers count up; trend lines draw in.
   if (REDUCE) { document.documentElement.classList.add("noanim"); return; }
   const k = fast() ? 0.45 : 1;
   gsap.from(".cmd-h > *", { opacity: 0, y: 12, duration: 0.4 * k, stagger: 0.08 * k, ease: "power2.out" });
   gsap.from(".tile", { opacity: 0, y: 18, duration: 0.45 * k, stagger: 0.09 * k, delay: 0.1 * k, ease: "power3.out", clearProps: "transform,opacity" });
-  gsap.from(".cmd-map, .cmd-orders, .cmd-watch, .cmd-go", { opacity: 0, y: 16, duration: 0.45 * k, stagger: 0.08 * k, delay: 0.4 * k, ease: "power3.out", clearProps: "transform,opacity" });
-  gsap.from(".order", { opacity: 0, x: 14, duration: 0.35 * k, stagger: 0.06 * k, delay: 0.65 * k, ease: "power2.out", clearProps: "transform,opacity" });
+  gsap.from(".cmd-map, .cmd-go", { opacity: 0, y: 16, duration: 0.45 * k, stagger: 0.08 * k, delay: 0.4 * k, ease: "power3.out", clearProps: "transform,opacity" });
+  gsap.from(".side-h, .order, .wl-r", { opacity: 0, x: 14, duration: 0.35 * k, stagger: 0.06 * k, delay: 0.65 * k, ease: "power2.out", clearProps: "transform,opacity" });
   gsap.from(".wl-b i", { scaleX: 0, transformOrigin: "left center", duration: 0.6 * k, stagger: 0.03 * k, delay: 0.75 * k, ease: "power2.out" });
   gsap.fromTo(".spark .sl", { strokeDasharray: 1, strokeDashoffset: 1 }, { strokeDashoffset: 0, duration: 1.0 * k, delay: 0.3 * k, ease: "power2.inOut", stagger: 0.09 * k });
   $$(".tile-v").forEach((e, i) => { const end = +e.dataset.count!, o = { v: 0 };
