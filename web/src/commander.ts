@@ -7,6 +7,7 @@ import { rate, verify, DOCTRINE } from "./rules";
 import { mount, axis, csv, C } from "./charts";
 import { regionMap, el, tip } from "./maps";
 import { strip, navBar, footer } from "./chrome";
+import { openDocsModal } from "./orders";
 
 const REDUCE = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const fast = () => document.documentElement.classList.contains("pres");
@@ -121,6 +122,9 @@ export function renderCommander(D: Data) {
       </div>
       <div class="cmd-hr">
         ${hasT ? `<button class="btn" id="cmd-role" title="Change the view (V)">VIEW · ${role} ▾</button>` : ""}
+        ${hasT ? `<button class="btn primary" data-doc="sitrep" title="Today's brief as a SITREP (S)">SITREP</button>
+        <button class="btn" data-doc="warno" title="Warning Order to forward troops">WARNING ORDER</button>
+        <button class="btn" data-doc="opo" title="Operation Order to CDS, Chiefs and commanders">OP ORDER</button>` : ""}
         <button class="btn" id="cmd-detail" aria-pressed="false" title="Show or hide trends, reasons, leads and the full watch-list (D)">MORE DETAIL · OFF</button>
       </div>
     </header>
@@ -337,6 +341,7 @@ export function renderCommander(D: Data) {
     const x = e.target as Element;
     if (x.closest("#cmd-detail")) return setDetail(!root.classList.contains("cmd-detail"));
     if (x.closest("#cmd-role")) return openGate();
+    const dk = x.closest("[data-doc]") as HTMLElement | null; if (dk && hasT) return openDocsModal(D, X, role, dk.dataset.doc as any);
     const t = x.closest("[data-ev]") as HTMLElement | null; if (t) open(t.dataset.ev!, t);
   });
   document.addEventListener("keydown", (e) => {
@@ -346,6 +351,7 @@ export function renderCommander(D: Data) {
     if (tg === "INPUT" || tg === "SELECT" || tg === "TEXTAREA" || e.metaKey || e.ctrlKey) return;
     if (e.key === "d" || e.key === "D") setDetail(!root.classList.contains("cmd-detail"));
     if ((e.key === "v" || e.key === "V") && hasT) openGate();
+    if ((e.key === "s" || e.key === "S") && hasT && !document.getElementById("docs-modal")) openDocsModal(D, X, role, "sitrep");
   });
   sbg.addEventListener("click", close);
 

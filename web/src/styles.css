@@ -274,7 +274,7 @@ body.cmd-mode footer { display: none; }
 .cmd-h { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
 .cmd-h .eyebrow { margin-bottom: 6px; font-size: 12px; }
 .cmd-t { font-size: clamp(26px, 2.5vw, 44px); line-height: 1.1; font-weight: 700; letter-spacing: -.02em; }
-#cmd-detail { font: 700 11px var(--mono); letter-spacing: .12em; flex: none; }
+#cmd-detail, .cmd-hr [data-doc] { font: 700 11px var(--mono); letter-spacing: .12em; flex: none; }
 
 .cmd-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
 .tile { --rag: var(--teal); text-align: left; cursor: pointer; border-radius: 16px; padding: 16px 20px; border: 1px solid var(--line);
