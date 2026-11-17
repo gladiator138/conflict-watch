@@ -25,8 +25,12 @@ from src import models as M  # noqa: E402
 from src import theatre as TH, theatre_viz as TV  # noqa: E402
 
 T = C.THEME
+# The Ops site (the default) is shown full screen with no Streamlit sidebar; the site has its own
+# navigation, and its Ops console has its own left rail. The 15-page analyst dashboard, with the
+# Streamlit sidebar, opens with ?mode=analyst.
+ANALYST = st.query_params.get("mode", "") == "analyst"
 st.set_page_config(page_title="Conflict Watch | Data Analytics Competition 2026", page_icon="🛰️", layout="wide",
-                   initial_sidebar_state="expanded")
+                   initial_sidebar_state="expanded" if ANALYST else "collapsed")
 
 # ---------------------------------------------------------------------------
 # Styling: the jury-deck theme, sized for a video call
@@ -224,13 +228,14 @@ with st.sidebar:
     st.markdown("<span class='chip chip-notional'>NOTIONAL THEATRES</span>"
                 + ("<span class='chip chip-syn'>SYNTHETIC LAC DATA</span>" if st.session_state.role == "NTC" else ""),
                 unsafe_allow_html=True)
-    mode = st.radio("Mode", MODES, horizontal=True, label_visibility="collapsed", key="mode")
+    mode = st.radio("Mode", MODES, horizontal=True, label_visibility="collapsed", key="mode", index=1 if ANALYST else 0)
     st.markdown("---")
     page = st.radio("Navigate", PAGES, label_visibility="collapsed", key="nav") if mode == MODES[1] else None
     if mode == MODES[0]:
         st.markdown("The **Ops site** is the story and the ops console in one: scroll the story, or press "
                     "**OPS CONSOLE** for the staff-officer view. Switch to *Analyst dashboard* for the 15-page tool.")
         st.link_button("⤢ Open full screen", "https://conflictmonitor2026.streamlit.app/~/+/app/static/conflictwatch.html", use_container_width=True)
+        st.link_button("Ops site (no sidebar)", "/", use_container_width=True)
     st.markdown("---")
     st.caption(f"Data: UCDP GED 26.1 (2014–25) + Candidate 26.01.26.09 (Jan–Sep 2026, provisional), UNHCR, IDMC, "
                f"UNRWA, World Bank. Latest month: {LAST:%b %Y}.")
@@ -242,13 +247,23 @@ with st.sidebar:
 
 
 SITE = ROOT / "app" / "static" / "conflictwatch.html"
-if page is None:
+if page is None or not ANALYST:
     import streamlit.components.v1 as components
-    st.markdown("<style>.block-container,[data-testid=stMainBlockContainer]{padding:0.6rem 1rem 0 1rem!important;max-width:100%!important}"
-                "header[data-testid='stHeader']{background:transparent}</style>", unsafe_allow_html=True)
+    # Full-screen Ops site: hide the Streamlit header (sidebar arrow, Fork, GitHub), the sidebar and padding.
+    if not ANALYST:
+      st.markdown("<style>"
+                "header[data-testid='stHeader'],[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl'],"
+                "[data-testid='collapsedControl'],[data-testid='stToolbar'],[data-testid='stDecoration'],footer{display:none!important}"
+                ".block-container,[data-testid=stMainBlockContainer]{padding:0!important;max-width:100%!important}"
+                "[data-testid='stAppViewContainer'] > section, .main{padding:0!important}"
+                "iframe{height:100vh!important;display:block;border:0}"
+                "html,body,[data-testid='stApp']{overflow:hidden!important}</style>", unsafe_allow_html=True)
+    else:
+      st.markdown("<style>.block-container,[data-testid=stMainBlockContainer]{padding:0.6rem 1rem 0 1rem!important;max-width:100%!important}"
+                  "header[data-testid='stHeader']{background:transparent}</style>", unsafe_allow_html=True)
     if SITE.exists():
-        components.html(SITE.read_text(encoding="utf-8").replace("<head>", f"<head><script>window.CW_ROLE='{ROLE}'</script>", 1),
-                        height=940, scrolling=True)
+        # No role is injected: the site opens on its own "Select your view" picker (CDS / WTC / NTC / MTC).
+        components.html(SITE.read_text(encoding="utf-8"), height=940, scrolling=True)
     else:
         st.warning("Ops site not built. Run `cd web && npm run build` then `python scripts/build_site.py`.")
     st.stop()

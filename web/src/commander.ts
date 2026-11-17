@@ -207,7 +207,7 @@ export function renderCommander(D: Data) {
         return `<button class="gate-c${r === "CDS" ? " cds" : ""}" data-role="${r}" style="--rc:${T.color}">
           <span class="g-code">${r}</span><span class="g-name">${T.name}</span><span class="g-front">${T.front}</span>
           <span class="g-sec">${r === "CDS" ? "All four conflicts · all theatres · strategic picture" : (T.sectors as string[]).slice(0, 4).join(" · ")}</span>
-          <span class="g-go">${r === "CDS" ? "FULL PICTURE" : b.synthetic ? "AOR ONLY · SYNTHETIC DRILL" : "AOR ONLY"} ▸</span></button>`; }).join("")}</div>
+          <span class="g-go">${r === "CDS" ? "FULL PICTURE" : b.synthetic ? "SYNTHETIC DRILL" : "AOR ONLY"} ▸</span></button>`; }).join("")}</div>
       <p class="gate-n">Role views only: there is no password and all data here is unclassified. ${X.meta.notional}</p></div>`;
     gate.classList.add("open"); setTimeout(() => (gate.querySelector(`[data-role="${role}"]`) as HTMLElement)?.focus(), 60);
   };
