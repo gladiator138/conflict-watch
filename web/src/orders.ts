@@ -1,7 +1,7 @@
 // Staff documents generated from the daily theatre brief (theatre.json), in Indian Armed Forces layouts:
 //   SITREP          - the brief itself, as a situation report for the commander (dashboard view)
-//   WARNING ORDER   - message form, JSSD 2025 Appendix BA (Ch 8 paras 15-19): to forward-deployed troops
-//   OPERATION ORDER - JSSD 2025 Appendix BB (Ch 8 paras 21-22): to the CDS, the Service Chiefs and the commanders
+//   WARNING ORDER   - service message form: to forward-deployed troops
+//   OPERATION ORDER - service operation order layout: to the CDS, the Service Chiefs and the commanders
 // Everything is drafted from the model outputs; the commander or staff officer approves and releases it.
 // Addressees, HQs and units are NOTIONAL. Nothing is transmitted by the site itself: SEND opens the user's own
 // WhatsApp or e-mail with the text filled in, so a person always chooses the recipient and presses send.
@@ -14,7 +14,7 @@ export type DocKind = "sitrep" | "warno" | "opo";
 const OPNAME: Record<string, string> = { WTC: "SENTINEL WEST", NTC: "SENTINEL NORTH", MTC: "SENTINEL SEA", CDS: "SENTINEL APEX" };
 const HQ: Record<string, string> = { WTC: "HQ Western Theatre Comd", NTC: "HQ Northern Theatre Comd", MTC: "HQ Maritime Theatre Comd", CDS: "HQ IDS (Office of CDS)" };
 const HQS: Record<string, string> = { WTC: "HQ WTC", NTC: "HQ NTC", MTC: "HQ MTC", CDS: "HQ IDS" };
-/** Forward-deployed addressees for the Warning Order (notional). Last entry = signals, "By Originator", as in Appx BA. */
+/** Forward-deployed addressees for the Warning Order (notional). Last entry = signals, "By Originator". */
 const FWD: Record<string, string[]> = {
   WTC: ["Fwd Holding Bdes, LoC (J&K)", "Holding Fmns, IB Punjab", "Holding Fmns, IB Rajasthan", "Sir Creek Sector Units", "Theatre ISR Cell", "Theatre Sig Regt (By Originator)"],
   NTC: ["Fwd Bdes, Eastern Ladakh", "Fwd Bdes, Central Sector", "Fwd Bdes, Sikkim", "Fwd Bdes, Arunachal Pradesh", "Theatre ISR Cell", "Theatre Sig Regt (By Originator)"],
@@ -30,7 +30,7 @@ const esc = (s: any) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&l
 /** Brief issue time = 0600 IST on the day after the data date (as in src/theatre.py). */
 const t0 = (b: B) => { const d = new Date(b.date + "T06:00:00"); d.setDate(d.getDate() + 1); return d; };
 const plusH = (d: Date, h: number) => new Date(d.getTime() + h * 3600e3);
-/** Date-time group, JSSD style: ddHHMM (six figures) + month + year, e.g. 130600 NOV 26. */
+/** Date-time group, service style: ddHHMM (six figures) + month + year, e.g. 130600 NOV 26. */
 const dtg = (d: Date) => `${String(d.getDate()).padStart(2, "0")}${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")} ${MON[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
 const dt6 = (d: Date) => dtg(d).slice(0, 6);
 const hr = (d: Date) => `${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")} Hr`;
@@ -112,7 +112,7 @@ export function warnoHTML(X: any, role: string, di: number) {
       <tr><td colspan="4" class="mf-txt">${lines.map(esc).join("<br>")}</td></tr>
       <tr class="mf-sm"><td><b>PAGE</b> 1 <b>OF</b> 1</td><td><b>REFERS TO MESSAGE</b> CW brief ${esc(c.b.dtg)}<br><b>CLASSIFIED</b> YES ☒ NO ☐</td><td><b>DRAFTER'S NAME</b> Conflict Watch (auto)<br><b>OFFICE</b> ${role} J3</td><td><b>RELEASING OFFICER'S SIGNATURE / RANK</b><br><br>________________</td></tr>
     </table>
-    <div class="doc-foot">Layout: JSSD 2025, Appendix BA (Ch 8 paras 15-19). Executive parts are marked EXECUTIVE; probable tasks are WARNING ONLY (para 19.1). Notice by threat level: RED 2 hr, AMBER 12 hr, GREEN 24 hr. Units are notional.</div></div>`;
+    <div class="doc-foot">Executive parts are marked EXECUTIVE; probable tasks are WARNING ONLY. Notice by threat level: RED 2 hr, AMBER 12 hr, GREEN 24 hr. Units are notional.</div></div>`;
 }
 
 // ----------------------------------------------------------------------------------- OPERATION ORDER
@@ -163,7 +163,7 @@ export function opoHTML(D: Data, X: any, role: string, di: number) {
     <p><b>All Times</b>: IST.</p>${body}
     <div class="sigblk">(Anonymous)<br>Rank<br>Appointment<br>For ${role === "CDS" ? "CDS" : `Cdr ${role}`}<br>Time: ${hr(now)}</div>
     <p><b>Distribution</b>:- ${OPO_TO.join(", ")}.</p>
-    <div class="doc-foot">Layout: JSSD 2025, Appendix BB (Ch 8 paras 21-22). Verbs in the future imperative ("will"). Drafted by Conflict Watch for the staff; HQs, owners and units are notional.</div></div>`;
+    <div class="doc-foot">Drafted by Conflict Watch for the staff; HQs, owners and units are notional.</div></div>`;
 }
 
 // ------------------------------------------------------------------------------- plain text (send)
@@ -199,8 +199,8 @@ export const DOC_CSS = `
 
 export const DOC_META: Record<DocKind, { title: string; who: (role: string) => string[]; label: string }> = {
   sitrep: { title: "SITREP", label: "Situation report · the commander's brief", who: (r) => [r === "CDS" ? "Chiefs of Staff Committee" : "HQ IDS (Office of CDS)", r === "CDS" ? "Cdrs WTC, NTC, MTC (info)" : "Other theatre HQs (info)"] },
-  warno: { title: "WARNING ORDER", label: "To forward-deployed troops (JSSD Appx BA)", who: (r) => FWD[r] },
-  opo: { title: "OPERATION ORDER", label: "To the CDS, Service Chiefs and commanders (JSSD Appx BB)", who: () => OPO_TO },
+  warno: { title: "WARNING ORDER", label: "To forward-deployed troops", who: (r) => FWD[r] },
+  opo: { title: "OPERATION ORDER", label: "To the CDS, Service Chiefs and commanders", who: () => OPO_TO },
 };
 
 export function docHTML(kind: DocKind, D: Data, X: any, role: string, di: number) {
@@ -232,11 +232,10 @@ export function mountDocs(host: HTMLElement, D: Data, X: any, role: string, di: 
           <label class="small muted">WhatsApp number (with country code) or e-mail</label><input id="dsp-to" placeholder="e.g. 9198xxxxxxxx or name@army.example">
           <div class="btns"><button class="btn primary" id="dsp-wa">SEND · WHATSAPP</button><button class="btn" id="dsp-mail">SEND · E-MAIL</button>
             <button class="btn" id="dsp-copy">COPY TEXT</button><button class="btn" id="dsp-print">⎙ PRINT</button></div>
-          <div class="small muted">The site never transmits on its own: SEND opens your WhatsApp or mail app with the text filled in, and you press send. Check and release before sending.</div>
-          <div class="log" id="dsp-log">${log.length ? log.map(esc).join("<br>") : "No dispatches yet."}</div></aside></div>`;
+          <div class="log" id="dsp-log"${log.length ? "" : " hidden"}>${log.map(esc).join("<br>")}</div></aside></div>`;
     $$(".docs-tabs button", host).forEach((b) => b.addEventListener("click", () => { kind = b.dataset.k as DocKind; draw(); }));
     const to = () => ($("#dsp-to", host) as HTMLInputElement).value.trim();
-    const note = (s: string) => { const d = new Date(); log.unshift(`${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")} ${M.title}: ${s}`); $("#dsp-log", host).innerHTML = log.map(esc).join("<br>"); };
+    const note = (s: string) => { const d = new Date(); log.unshift(`${String(d.getHours()).padStart(2, "0")}${String(d.getMinutes()).padStart(2, "0")} ${M.title}: ${s}`); const lg = $("#dsp-log", host); lg.hidden = false; lg.innerHTML = log.map(esc).join("<br>"); };
     $("#dsp-wa", host).addEventListener("click", () => {
       const num = to().replace(/[^\d]/g, "");
       const a = document.createElement("a"); a.target = "_blank"; a.rel = "noopener";
