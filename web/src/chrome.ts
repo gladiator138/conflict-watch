@@ -33,6 +33,7 @@ export function initTheme() {
       const n = document.documentElement.dataset.theme === "light" ? "dark" : "light";
       document.documentElement.dataset.theme = n;
       try { localStorage.setItem("cw-theme", n); } catch {}
+      try { window.name = "cw-hash:" + location.hash; } catch {}   // keep the view across the reload (see main.ts)
       location.reload();
     }
   });
