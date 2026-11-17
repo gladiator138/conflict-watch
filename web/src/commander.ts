@@ -201,7 +201,7 @@ export function renderCommander(D: Data) {
   const gate = $("#gate");
   const pick = (r: string) => { role = r; try { localStorage.setItem("cw-role", r); sessionStorage.setItem("cw-role-set", "1"); } catch {} gate.classList.remove("open"); close(); paint(); };
   const openGate = () => {
-    gate.innerHTML = `<div class="gate-in"><div class="eyebrow">CONFLICT WATCH</div><h2 class="gate-t">Select your view</h2>
+    gate.innerHTML = `<div class="gate-in"><div class="eyebrow">CONFLICT EW</div><h2 class="gate-t">Select your view</h2>
       <p class="gate-p">Each view shows only what that commander needs. You can switch at any time.</p>
       <div class="gate-g">${ROLES.map((r) => { const T = X.theatres[r], b = X.briefs[r][X.briefs[r].length - 1];
         return `<button class="gate-c${r === "CDS" ? " cds" : ""}" data-role="${r}" style="--rc:${T.color}">

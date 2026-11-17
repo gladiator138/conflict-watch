@@ -1,4 +1,4 @@
-"""CONFLICT WATCH - interactive dashboard for the Data Analytics Competition 2026.
+"""CONFLICT EW - interactive dashboard for the Data Analytics Competition 2026.
 
 Run from the submission folder:
     streamlit run app/app.py
@@ -29,7 +29,7 @@ T = C.THEME
 # navigation, and its Ops console has its own left rail. The 15-page analyst dashboard, with the
 # Streamlit sidebar, opens with ?mode=analyst.
 ANALYST = st.query_params.get("mode", "") == "analyst"
-st.set_page_config(page_title="Conflict Watch | Data Analytics Competition 2026", page_icon="🛰️", layout="wide",
+st.set_page_config(page_title="Conflict EW | Data Analytics Competition 2026", page_icon="🛰️", layout="wide",
                    initial_sidebar_state="expanded" if ANALYST else "collapsed")
 
 # ---------------------------------------------------------------------------
@@ -216,7 +216,7 @@ with st.sidebar:
                 f"<img src='{_LJ}' alt='Corps of Signals' style='height:78px'/>"
                 f"<img src='{_LM}' alt='MCTE formation sign' style='height:72px'/></div>", unsafe_allow_html=True)
     st.markdown(f"<div style='color:{T['amber']};font-weight:800;letter-spacing:3px;font-size:1.0rem'>DATA ANALYTICS COMPETITION 2026</div>"
-                f"<div style='color:{T['text']};font-weight:900;font-size:1.9rem;line-height:1.1'>CONFLICT WATCH</div>"
+                f"<div style='color:{T['text']};font-weight:900;font-size:1.9rem;line-height:1.1'>CONFLICT EW</div>"
                 f"<div style='color:{T['text3']};font-size:0.95rem;margin-bottom:12px'>When and where will deaths rise next, "
                 f"and what does it mean for India?</div>", unsafe_allow_html=True)
     MODES = ["🛰️ Ops site", "📊 Analyst dashboard"]
@@ -275,7 +275,7 @@ st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-
             f"<img src='{_LJ}' alt='Corps of Signals' style='height:64px'/>"
             f"<div style='text-align:center;flex:1'><div style='color:{T['amber']};font-weight:800;letter-spacing:4px;font-size:0.85rem'>"
             f"DATA ANALYTICS COMPETITION 2026</div><div style='color:{T['text']};font-weight:900;letter-spacing:3px;font-size:1.25rem'>"
-            f"CONFLICT WATCH</div><div style='margin-top:4px'><span class='chip chip-role'>SIGNED IN: {ROLE} · {TT['name'].upper()}</span>"
+            f"CONFLICT EW</div><div style='margin-top:4px'><span class='chip chip-role'>SIGNED IN: {ROLE} · {TT['name'].upper()}</span>"
             f"<span class='chip chip-notional'>NOTIONAL</span>"
             + ("<span class='chip chip-syn'>LAC DATA SYNTHETIC</span>" if ROLE == "NTC" else "")
             + (f"<span style='color:{T['text3']};font-size:0.8rem'>filtered to {', '.join(TCASES)}</span>" if ROLE != "CDS" else "")
@@ -286,7 +286,7 @@ st.markdown(f"<div style='display:flex;align-items:center;justify-content:space-
 def footer():
     _rid = C.TAB_DIR / "run_id.txt"
     run = f"  |  RUN {_rid.read_text().strip()}" if _rid.exists() else ""
-    st.markdown(f'<div class="footer">CONFLICT WATCH  |  DATA ANALYTICS COMPETITION 2026  |  UNCLASSIFIED - COMPETITION DATA ONLY{run}</div>',
+    st.markdown(f'<div class="footer">CONFLICT EW  |  DATA ANALYTICS COMPETITION 2026  |  UNCLASSIFIED - COMPETITION DATA ONLY{run}</div>',
                 unsafe_allow_html=True)
 
 
@@ -1319,7 +1319,7 @@ def inbox_panel(B: dict, b: dict):
             txt = TH.to_sms(b) if ch == "SMS" else TH.to_whatsapp(b)
             txt = txt.replace("*", "").replace("_", "") if ch == "WhatsApp" else txt
             st.markdown(f"<div class='phone'><div style='color:{T['text3']};font-size:0.75rem;text-align:center'>"
-                        f"{'Messages' if ch == 'SMS' else 'WhatsApp'} · Conflict Watch · {b['dtg']}</div>"
+                        f"{'Messages' if ch == 'SMS' else 'WhatsApp'} · Conflict EW · {b['dtg']}</div>"
                         f"<div class='bubble {'sms' if ch == 'SMS' else ''}'>{txt}</div></div>", unsafe_allow_html=True)
             st.caption(f"Mock preview ({len(TH.to_sms(b))} characters for SMS). A gateway would be wired in "
                        "`scripts/daily_briefs.py`; nothing is sent.")
@@ -1395,11 +1395,11 @@ def page_history():
                "pre-agreed triggers. Days to hours.", "OODA")
         show(TV.fig_ooda(), "ooda_bar")
         st.dataframe(pd.DataFrame([dict(Stage=o["stage"], Today=o["today"], **{"Today (h)": f"{o['today_h'][0]}–{o['today_h'][1]}"},
-                                        **{"With Conflict Watch": o["cw"]}, **{"CW (h)": f"{o['cw_h'][0]}–{o['cw_h'][1]}"},
+                                        **{"With Conflict EW": o["cw"]}, **{"CW (h)": f"{o['cw_h'][0]}–{o['cw_h'][1]}"},
                                         **{"What shortens it": o["how"]}) for o in TH.OODA]),
                      hide_index=True, use_container_width=True,
                      column_config={k: st.column_config.TextColumn(width="medium") for k in
-                                    ["Today", "With Conflict Watch", "What shortens it"]})
+                                    ["Today", "With Conflict EW", "What shortens it"]})
         c = st.columns(4)
         with c[0]:
             card("Observe: data latency", f"{meta['ucdp_lag_days']} d → <1 d", "UCDP's last record vs GDELT and market "

@@ -126,7 +126,7 @@ export function renderConsole(D: Data) {
       $("#dq-c").addEventListener("click", () => csv("data_quality_log.csv", D.dq));
     },
     about() {
-      P.innerHTML = `<div class="eyebrow">ABOUT</div><h2>Conflict Watch Console</h2><div class="sub">${F.competition} · ${F.team.join(" · ")}</div>
+      P.innerHTML = `<div class="eyebrow">ABOUT</div><h2>Conflict EW Console</h2><div class="sub">${F.competition} · ${F.team.join(" · ")}</div>
         <div class="grid g2"><div class="panel hud mono small">RUN ${F.run_id}<br>EXPORTED ${F.exported}<br>DATA AS OF ${F.data_as_of}<br>BUILD ${D.inline ? "single-file offline" : "web / PWA"}<br><br>${Object.entries(D.manifest.files).map(([k, v]: any) => `${k}<br><span class="muted" style="font-size:11px;word-break:break-all">${v.sha256}</span>`).join("<br>")}</div>
         <div class="panel"><p class="small muted">Sources: ${F.sources}. ${F.licence}.</p><p class="small muted">Limits: ${F.limits.join(" ")}</p>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="btn primary" id="ab-qa">Jury Q&amp;A ▸</button><button class="btn" id="ab-inst" style="display:none">⤓ Install app</button></div></div></div>`;

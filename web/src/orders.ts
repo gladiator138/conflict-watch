@@ -64,7 +64,7 @@ function sitrepText(D: Data, X: any, role: string, di: number) {
       ...b.orient.points.map((p: any) => `${p.pts > 0 ? "+" : ""}${p.pts}: ${p.why}`)]],
     ["AREAS OF CONCERN (escalation probability, nowcast)", hot(b).map((d: any) => `${d.synthetic ? "[SYNTHETIC] " : ""}${d.name} (${d.iso}): P ${d.p_now.toFixed(2)}${d.p_now >= X.meta.flash_threshold ? " - OVER FLASH THRESHOLD" : ""}`)],
     ["CASUALTIES (latest month on record)", cas.length ? cas : ["Nil held for this AOR in the issued data."]],
-    ["OWN TPS", ["Dispositions and states are not held in Conflict Watch; to be added by the duty officer before release."]],
+    ["OWN TPS", ["Dispositions and states are not held in Conflict EW; to be added by the duty officer before release."]],
     ["ACTIONS RECOMMENDED (for Cdr's approval)", b.decide.map((a: any) => `${a.rank}. ${a.kind} - ${a.text} Owner: ${owner(a)}. NLT ${dtg(plusH(now, hoursOf(a.timeline)))}.`)],
     ["ESCALATION TRIGGERS", b.decide.map((a: any) => `${a.rank}. ${a.trigger}`)],
     ["COMMANDER'S ASSESSMENT", [b.bluf]],
@@ -82,7 +82,7 @@ export function sitrepHTML(D: Data, X: any, role: string, di: number) {
       <tr><td><b>FROM</b> ${c.hqs} (Ops Room)</td><td colspan="2"><b>TO</b> ${to} &nbsp; <b>INFO</b> ${role === "CDS" ? "Cdrs WTC, NTC, MTC" : "Other theatre HQs"}</td></tr></table>
     <div class="doc-h">SITREP No ${serial(X, b)} · ${esc(c.T.name.toUpperCase())} · PERIOD 24 HR ENDING ${dtg(now)}</div>
     <ol class="sr">${paras.map(([h, ls]) => `<li><b>${h}.</b>${ls.length > 1 ? `<ol class="sr2">${ls.map((l) => `<li>${esc(l)}</li>`).join("")}</ol>` : ` ${esc(ls[0])}`}</li>`).join("")}</ol>
-    <div class="doc-foot">Drafted automatically by Conflict Watch from the ${esc(b.dtg)} brief · to be checked and released by the duty staff officer · ${esc(X.meta.notional)}</div></div>`;
+    <div class="doc-foot">Drafted automatically by Conflict EW from the ${esc(b.dtg)} brief · to be checked and released by the duty staff officer · ${esc(X.meta.notional)}</div></div>`;
 }
 
 // ------------------------------------------------------------------------------------- WARNING ORDER
@@ -110,7 +110,7 @@ export function warnoHTML(X: any, role: string, di: number) {
       <tr><td><b>TO</b></td><td colspan="2">${to.map(esc).join("<br>")}</td><td><b>SECURITY CLASSIFICATION</b><br>RESTRICTED (EXERCISE)<br><br><b>ORIGINATOR'S NUMBER</b><br>O/${role}/${String(serial(X, c.b)).padStart(3, "0")}</td></tr>
       <tr><td><b>INFO</b></td><td colspan="2">${role === "CDS" ? "COAS, CNS, CAS" : "HQ IDS (J3)"}</td><td><b>SPECIAL INSTRUCTIONS</b><br>Ack reqd</td></tr>
       <tr><td colspan="4" class="mf-txt">${lines.map(esc).join("<br>")}</td></tr>
-      <tr class="mf-sm"><td><b>PAGE</b> 1 <b>OF</b> 1</td><td><b>REFERS TO MESSAGE</b> CW brief ${esc(c.b.dtg)}<br><b>CLASSIFIED</b> YES ☒ NO ☐</td><td><b>DRAFTER'S NAME</b> Conflict Watch (auto)<br><b>OFFICE</b> ${role} J3</td><td><b>RELEASING OFFICER'S SIGNATURE / RANK</b><br><br>________________</td></tr>
+      <tr class="mf-sm"><td><b>PAGE</b> 1 <b>OF</b> 1</td><td><b>REFERS TO MESSAGE</b> CW brief ${esc(c.b.dtg)}<br><b>CLASSIFIED</b> YES ☒ NO ☐</td><td><b>DRAFTER'S NAME</b> Conflict EW (auto)<br><b>OFFICE</b> ${role} J3</td><td><b>RELEASING OFFICER'S SIGNATURE / RANK</b><br><br>________________</td></tr>
     </table>
     <div class="doc-foot">Executive parts are marked EXECUTIVE; probable tasks are WARNING ONLY. Notice by threat level: RED 2 hr, AMBER 12 hr, GREEN 24 hr. Units are notional.</div></div>`;
 }
@@ -125,9 +125,9 @@ function opoParts(D: Data, X: any, role: string, di: number) {
   const S: [string, string[]][] = [
     ["SITUATION", []],
     ["Background", [b.bluf]],
-    ["Higher Directives", [`Conflict Watch threat level for this AOR: ${b.rating} ${b.arrow} (${b.trend}), confidence ${b.confidence}.`, ...(cas.length ? cas : [])]],
+    ["Higher Directives", [`Conflict EW threat level for this AOR: ${b.rating} ${b.arrow} (${b.trend}), confidence ${b.confidence}.`, ...(cas.length ? cas : [])]],
     ["Adversary", obs(b).map((o: any) => `${o.text} [${o.tag}]`).concat([`Likely pattern: ${b.orient.drivers.join("; ")}. ${b.orient.model_why}`])],
-    ["Own Forces", ["As per theatre ORBAT (not held in Conflict Watch). Grouping: no change."]],
+    ["Own Forces", ["As per theatre ORBAT (not held in Conflict EW). Grouping: no change."]],
     ["Topography", [`AOR sectors: ${T.sectors.join("; ")}. Areas of concern: ${hot(b).map((d: any) => `${d.name} (P ${d.p_now.toFixed(2)})`).join(", ") || "nil over threshold"}.`]],
     ["Weather", ["Not covered by the issued data; as per Met forecast."]],
     ["MISSION", [mission]],
@@ -158,12 +158,12 @@ export function opoHTML(D: Data, X: any, role: string, di: number) {
     <div class="opo-top"><div>${c.hq}<br>(location as notified)</div><div></div></div>
     <div class="opo-top"><div>CW/${role}/Ops/${String(serial(X, b)).padStart(2, "0")}</div><div>${dshort(now)}</div></div>
     <div class="doc-h">OPERATION ORDER No ${String(serial(X, b)).padStart(2, "0")}/${now.getFullYear()} · OP ${c.op}</div>
-    <p><b>References</b>:- a. Conflict Watch daily brief ${esc(b.dtg)}. b. Monthly threat scorecard (Conflict Watch). c. Warning Order No ${serial(X, b)} dt ${dt6(now)}. d. Map: ${role} AOR (Ops console ▸ Theatre).</p>
+    <p><b>References</b>:- a. Conflict EW daily brief ${esc(b.dtg)}. b. Monthly threat scorecard (Conflict EW). c. Warning Order No ${serial(X, b)} dt ${dt6(now)}. d. Map: ${role} AOR (Ops console ▸ Theatre).</p>
     <p><b>Appendices</b>:- A. Areas of concern and escalation probability. B. Escalation triggers and reporting.</p>
     <p><b>All Times</b>: IST.</p>${body}
     <div class="sigblk">(Anonymous)<br>Rank<br>Appointment<br>For ${role === "CDS" ? "CDS" : `Cdr ${role}`}<br>Time: ${hr(now)}</div>
     <p><b>Distribution</b>:- ${OPO_TO.join(", ")}.</p>
-    <div class="doc-foot">Drafted by Conflict Watch for the staff; HQs, owners and units are notional.</div></div>`;
+    <div class="doc-foot">Drafted by Conflict EW for the staff; HQs, owners and units are notional.</div></div>`;
 }
 
 // ------------------------------------------------------------------------------- plain text (send)

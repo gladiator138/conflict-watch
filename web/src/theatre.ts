@@ -76,7 +76,7 @@ export function renderTheatre(P: HTMLElement, D: Data, q: URLSearchParams) {
           ${msgs.map((m: any) => `<div class="msg2 ${m.kind === "FLASH" ? "flash" : ""}"><div class="t">${m.dtg} · ${m.priority}</div><b>${m.kind === "FLASH" ? "⚡ " : ""}${m.subject}</b></div>`).join("")}</div>
       </div>
       <div class="panel" style="margin-top:16px"><div class="ph"><span class="t">How this shortens the OODA loop</span><span class="muted small mono">event → decision: ${M.ooda_totals.today_days[0]}–${M.ooda_totals.today_days[1]} days → ${M.ooda_totals.cw_hours[0]}–${M.ooda_totals.cw_hours[1]} hours ${tag("domain", "DOMAIN EST.")}</span></div>
-        <div class="ooda-row muted mono small"><span>STAGE</span><span>TODAY</span><span>WITH CONFLICT WATCH</span><span>HOURS</span></div>
+        <div class="ooda-row muted mono small"><span>STAGE</span><span>TODAY</span><span>WITH CONFLICT EW</span><span>HOURS</span></div>
         ${M.ooda.map((o: any) => `<div class="ooda-row"><b class="mono" style="color:var(--teal)">${o.stage}</b><span>${o.today}</span><span>${o.cw}</span><span class="mono">${o.today_h[0]}–${o.today_h[1]} → <b style="color:var(--amber)">${o.cw_h[0]}–${o.cw_h[1]}</b></span></div>`).join("")}
       </div>`;
     // map
