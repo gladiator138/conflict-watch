@@ -37,7 +37,7 @@ export function renderConsole(D: Data) {
   const F = D.facts;
   document.head.insertAdjacentHTML("beforeend", `<style>${CSS}</style>`);
   document.body.insertAdjacentHTML("beforeend", `${strip(F)}${navBar(F, "console")}
-    <div class="con"><nav class="rail" aria-label="Console pages">${PAGES.map(([id, ic, l, g], i) => `${i === 0 || PAGES[i - 1][3] !== g ? `<div class="rail-g">${g}</div>` : ""}<a href="#${id}" data-p="${id}"><span>${ic}</span>${l}</a>`).join("")}
+    <div class="con"><nav class="rail" aria-label="Console pages">${PAGES.map(([id, ic, l, g], i) => `${i === 0 || PAGES[i - 1][3] !== g ? `<div class="rail-g">${g}</div>` : ""}<a href="${D.inline ? "#console/" : "#"}${id}" data-p="${id}"><span>${ic}</span>${l}</a>`).join("")}
       <div class="k">CTRL/⌘ K · command<br>/ · search areas<br><span style="display:flex;gap:8px;align-items:center"><span class="radar"></span>WATCH ACTIVE</span></div></nav>
       <div class="page" id="page"></div></div>
     <div class="palette" id="pal" role="dialog" aria-label="Command palette"><div class="box"><input id="pal-i" placeholder="Jump to a page or area…" aria-label="Search"><ul id="pal-l"></ul></div></div>
@@ -157,7 +157,8 @@ export function renderConsole(D: Data) {
     const [id, qs] = h.split("?");
     const pg = pages[id] ? id : "brief";
     // Keep the "#console/" prefix in the single-file build so a refresh reopens the console, not the story.
-    if (D.inline && !/^#console/.test(location.hash)) history.replaceState(null, "", "#console/" + h);
+    // In an about:srcdoc frame (Streamlit) replaceState to a hash URL throws, so it is optional here.
+    if (D.inline && !/^#console/.test(location.hash)) { try { history.replaceState(null, "", "#console/" + h); } catch {} }
     $$(".rail a").forEach((a) => a.classList.toggle("on", a.dataset.p === pg));
     pages[pg](new URLSearchParams(qs ?? "")); sumbar(pg);
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) P.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: document.documentElement.classList.contains("pres") ? 120 : 260, easing: "cubic-bezier(.2,.7,.2,1)" });
