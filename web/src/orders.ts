@@ -121,7 +121,7 @@ function opoParts(D: Data, X: any, role: string, di: number) {
   const { cas } = sitrepText(D, X, role, di);
   const acts = b.decide;
   const maxH = Math.max(...acts.map((a: any) => hoursOf(a.timeline)));
-  const mission = `${c.hqs} will raise surveillance and readiness across ${T.sectors.join(", ")} wef ${dtg(c.wef)} to detect and pre-empt escalation on the ${T.front}, and will be prepared to act on any trigger in para 12.`;
+  const mission = `${c.hqs} will raise surveillance and readiness across ${T.sectors.join(", ")} wef ${dtg(c.wef)} to detect and pre-empt escalation on the ${T.front}, and will be prepared to act on any trigger in the coordinating instructions.`;
   const S: [string, string[]][] = [
     ["SITUATION", []],
     ["Background", [b.bluf]],
