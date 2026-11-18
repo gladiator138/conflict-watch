@@ -132,6 +132,63 @@ const PRESETS: Record<string, Partial<Sim>> = {
   "WORST CASE": { afpak: 150, ruua: 60, ilh: 200, iran: 85, oil: 140, attack: true },
 };
 
+// Tiered text: what each war means at GREEN / AMBER / RED. The baseline tier keeps the analysis text in CHAINS; a lever
+// that pushes a war into another tier swaps in that tier's chain. "{bill}" is filled with the live oil-bill estimate.
+type Tier = { them: string[]; ind: string[]; act: string[]; so: string };
+const TIER: Record<string, Partial<Record<string, Tier>>> = {
+  "Afghanistan–Pakistan": {
+    GREEN: { them: ["Western front quietens", "Pakistan Army freed from the west", "Fewer cross-border strikes"],
+      ind: ["Two-front pressure on Pakistan eases", "LoC: troops can shift back east", "Afghan evacuation risk low"],
+      act: ["Track Pakistani units moving east", "Routine LoC watch", "ISR back to normal tasking"],
+      so: "Af–Pak calming: Pakistan's western pull weakens, so watch for forces returning to the LoC." },
+    RED: { them: ["Major war on Pakistan's western front", "Refugee flow into KP & Balochistan", "Army stretched on two fronts"],
+      ind: ["High LoC spill-over & diversion risk", "15-day clock: an attack escalates fast", "Indians in Afghanistan exposed"],
+      act: ["Raise LoC readiness now", "Warning Order to WTC; ISR surge on hot districts", "Kabul evacuation plan to READY"],
+      so: "Af–Pak at war: the LoC is the risk point. Readiness now, ISR surge, evacuation ready." },
+  },
+  "US–Iran": {
+    GREEN: { them: ["Ceasefire holding", "Gulf shipping normal", "US forces drawing down"],
+      ind: ["Oil bill ≈ +${bill} B a year (est.)", "Diaspora safe; remittances steady", "Chabahar work can resume"],
+      act: ["Rebuild crude reserves while prices allow", "Keep the posture-news tripwire on", "Routine Gulf NEO planning"],
+      so: "Gulf quiet: rebuild reserves and keep the tripwire on; a restart comes by decision, not by build-up." },
+    RED: { them: ["War restarted: strikes across the Gulf", "Hormuz traffic under threat", "Brent spikes on every strike"],
+      ind: ["Oil bill ≈ +${bill} B a year (est.)", "~9 M Indians inside the strike envelope", "Hormuz & Red Sea shipping disrupted"],
+      act: ["Gulf NEO: Warning Order → execute", "Navy escorts for tankers (Op Sankalp model)", "Release reserves; RBI ready on the rupee"],
+      so: "Gulf war restarts: evacuation, tanker escort and the energy shield all at once." },
+  },
+  "Russia–Ukraine": {
+    GREEN: { them: ["Ceasefire / frozen front", "Sanctions talks open", "Energy prices ease"],
+      ind: ["Cheaper energy & fertiliser", "Defence spares flow steadier", "Russia less tied to China"],
+      act: ["Lock in long-term energy contracts", "Restock critical spares", "Re-open the INSTC trade route"],
+      so: "Russia–Ukraine ceasefire: an energy and spares window for India." },
+    AMBER: { them: ["Fighting winding down", "Front stabilising", "Sanctions stay in place"],
+      ind: ["Energy still elevated", "Spares supply uncertain", "Russia–China ties hold (LAC)"],
+      act: ["Keep energy & fertiliser diversified", "Hold spares stock", "Watch Russia–China on the LAC"],
+      so: "Russia–Ukraine easing but not over: keep diversifying energy and spares." },
+  },
+  "Israel–Hamas": {
+    AMBER: { them: ["Fighting flares in Gaza", "West Bank & Lebanon spill-over risk", "Houthi attacks resume"],
+      ind: ["Red Sea freight costs rise", "Indians in Israel & the Gulf at risk", "India–Middle East corridor delayed"],
+      act: ["Naval presence in the Red Sea", "Evacuation plan to READY (Op Ajay model)", "Watch the Houthi front"],
+      so: "Israel–Hamas flaring: Red Sea and diaspora move up the list." },
+    RED: { them: ["Major regional war", "Neighbours drawn in", "Red Sea shunned by shippers"],
+      ind: ["Suez route cut: freight & oil up", "Indians in Israel need evacuation", "Trade & remittances hit"],
+      act: ["Evacuate: Op Ajay model", "Escort merchant ships in the Red Sea", "Re-route trade via the Cape"],
+      so: "Israel–Hamas at regional war: evacuate, escort shipping, re-route trade." },
+  },
+};
+// Theatre priorities by the zone's level (baseline tier keeps PRI).
+const PRI_T: Record<string, Partial<Record<string, string[][]>>> = {
+  WTC: {
+    GREEN: [["Steady watch", "Af–Pak quiet: routine LoC watch."], ["Track redeployment", "Pakistani forces returning east."], ["Keep the clock", "15-day readiness drill stays."]],
+    RED: [["LoC readiness now", "Af–Pak at war or an attack in J&K: Warning Order today."], ["ISR surge", "Hot districts and LoC launch pads, daily."], ["15-day clock", "State fighting has followed within ~15 days since 2016: pre-set the response."]],
+  },
+  MTC: {
+    GREEN: [["Sea lanes open", "Routine Hormuz & Red Sea watch."], ["Rebuild reserves", "Buy while prices are low."], ["Tripwire on", "Restarts come by decision; posture news first."]],
+    RED: [["Escort & protect", "Tanker escort in Hormuz & the Red Sea (Op Sankalp model)."], ["NEO execute", "~9 M Indians in the Gulf: evacuation to execute."], ["Energy shield", "Release reserves, hedge crude, rupee readiness."]],
+  },
+};
+
 export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "2027") {
   const O = (D as any).outlook, X = D.theatre;
   if (!O) { host.innerHTML = `<p class="muted">2027 outlook not built.</p>`; return; }
@@ -187,16 +244,23 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
     const clock = SIM.attack ? "<b style=\"color:" + RAG_COLOR.RED + "\">Qualifying attack: 15-day clock running.</b> " : "";
     const so = ({
       WTC: { t: `${clock}${ln("Afghanistan–Pakistan", "Af–Pak")} in ${pl}.`, s: `${SEASON[per]} For India: pressure on the LoC while Pakistan fights on two fronts; state fighting has followed a major attack within ~15 days since 2016.` },
-      MTC: { t: `${ln("US–Iran", "US–Iran")} in ${pl}, up to ${k(pv("US–Iran")?.p90 ?? 0)} if it restarts.`, s: `A quiet ${per === "2027" ? "year" : "quarter"} is not a closed war. India's stake: ~9 M people in the Gulf, the Hormuz sea lanes and ${oilTxt}. Israel–Hamas: ${ln("Israel–Hamas", "")}.` },
+      MTC: { t: `${ln("US–Iran", "US–Iran")} in ${pl}, up to ${k(pv("US–Iran")?.p90 ?? 0)} if it restarts.`, s: `${lvl("US–Iran") === "RED" ? "" : `A quiet ${per === "2027" ? "year" : "quarter"} is not a closed war. `}India's stake: ~9 M people in the Gulf, the Hormuz sea lanes and ${oilTxt}. Israel–Hamas: ${ln("Israel–Hamas", "")}.` },
       NTC: { t: `No LAC forecast for ${pl}: one fatal clash in 36 years (Galwan 2020).`, s: `The risk reaches the north through Pakistan (${ln("Afghanistan–Pakistan", "Af–Pak")}) and Russia–China (${ln("Russia–Ukraine", "RU–UA")}).` },
-      CDS: { t: `${clock}${ln("Afghanistan–Pakistan", "Af–Pak")} on land · ${ln("US–Iran", "US–Iran")} at sea.`, s: `${ln("Russia–Ukraine", "RU–UA")} keeps energy dear; ${oilTxt}. ${SEASON[per]} Main effort: West and sea.` },
+      CDS: { t: `${clock}${ln("Afghanistan–Pakistan", "Af–Pak")} on land · ${ln("US–Iran", "US–Iran")} at sea.`, s: `${ln("Russia–Ukraine", "RU–UA")} ${({ RED: "keeps energy dear", AMBER: "still keeps energy elevated", GREEN: "eases energy prices" } as Record<string, string>)[lvl("Russia–Ukraine")] ?? ""}; ${oilTxt}. ${SEASON[per]} ${isBase() ? "Main effort: West and sea." : ""}` },
     } as Record<string, { t: string; s: string }>)[role] ?? { t: "", s: "" };
+    { const notes = [...wars].sort((x, y) => RANK[lvl(y)] - RANK[lvl(x)]).map((w) => { const v = pv(w); return v && !isBase() && v.level !== v.blevel ? TIER[w]?.[v.level]?.so : ""; }).filter(Boolean).slice(0, 2);
+      if (notes.length) so.s = `<b>${notes.join(" ")}</b> ${so.s}`; }
     const lvls = wars.map((w) => pv(w)?.level ?? "GREEN").concat(SIM.attack && (role === "WTC" || role === "CDS") ? ["RED"] : []);
     const soCol = RAG_COLOR[worst(lvls)];
     const sc = isBase() ? "" : `<div class="o7-scn">⚗ SCENARIO · what-if levers moved · not a forecast <button class="o7-reset">RESET</button></div>`;
     const chain = (w: string, i: number) => {
       const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = first ? (per === "2027" ? 250 + i * 450 : 60 + i * 140) : 0;
-      const ind = w === "US–Iran" ? C.ind.map((x) => (x.startsWith("Oil bill") ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : x)) : w === "Afghanistan–Pakistan" && SIM.attack ? ["15-day clock running: state fighting likely", ...C.ind] : C.ind;
+      const TT = !isBase() && v.level !== v.blevel ? TIER[w]?.[v.level] : undefined, src = TT ?? C;
+      const fill = (x: string) => x.replace("{bill}", String(bill));
+      let ind = src.ind.map(fill);
+      if (w === "US–Iran") ind = ind.map((x) => (x.startsWith("Oil bill") ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : x));
+      if (w === "Afghanistan–Pakistan" && SIM.attack) ind = ["15-day clock running: state fighting likely", ...ind];
+      const them = src.them, act = src.act, chg = TT ? " chg" : "", actH = v.level === "RED" && TT ? "INDIA SHOULD · NOW" : "INDIA SHOULD";
       const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
       const dv = v.b50 ? (v.p50 - v.b50) / Math.max(1, v.b50) : 0, moved = !isBase() && (Math.abs(dv) >= 0.01 || v.level !== v.blevel);
       const flip = prevLvl[w] && prevLvl[w] !== v.level ? " flip" : "";
@@ -204,10 +268,22 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
         <h4><span style="color:${C.c}">●</span>${esc(C.war)}
           <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b>${moved && v.level !== v.blevel ? `<s style="opacity:.6">${v.blevel}</s>` : ""}</span>
           <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}<span class="pg" title="Chance deaths reach 1.5× today's pace (a surge). 30% → AMBER, 50% → RED."><span class="pgb"><i style="width:${Math.round(v.p_up * 100)}%;background:${RAG_COLOR[rag(0, v.p_up)]}"></i><u style="left:30%"></u><u style="left:50%"></u></span>surge chance <b2>${Math.round(v.p_up * 100)}%</b2>${moved && Math.round(v.p_up * 100) !== Math.round(v.bpu * 100) ? ` <em2>(was ${Math.round(v.bpu * 100)}%)</em2>` : ""}</span>${moved ? `<em class="dv" style="color:${dv > 0 ? RAG_COLOR.RED : RAG_COLOR.GREEN}">${dv > 0 ? "▲" : "▼"} ${Math.abs(Math.round(dv * 100))}% vs baseline</em>` : ""}</span></h4>
-        <div class="o7-steps">${st("them", C.themLabel, C.them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", "INDIA SHOULD", C.act, d0 + 450)}</div></div>`;
+        <div class="o7-steps${chg}">${st("them", C.themLabel, them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", actH, act, d0 + 450)}</div>${TT ? `<div class="o7-tnote" style="--tc:${RAG_COLOR[v.level]}">▸ ${esc(TT.so)}</div>` : ""}</div>`;
     };
-    const items = [...P.items];
-    if (!isBase()) {
+    const zl = (c: string) => zone(c)?.lv ?? "AMBER";
+    let baseItems = P.items;
+    if (!isBase() && (role === "WTC" || role === "MTC")) baseItems = PRI_T[role]?.[zl(role)] ?? P.items;
+    if (!isBase() && role === "CDS") {
+      const w = zl("WTC"), mz = zl("MTC"), reds = [w === "RED" ? "West" : "", mz === "RED" ? "sea" : ""].filter(Boolean);
+      baseItems = [
+        ["Main effort", reds.length ? `${reds.join(" and ")} at RED: resources there first.` : w === "GREEN" && mz === "GREEN" ? "Both fronts quiet: shift effort to closing the LAC data gap." : "West & sea at AMBER: watch, pre-position, no surge yet."],
+        ["Energy shield", SIM.oil >= 100 ? `Brent +${SIM.oil}%: release reserves, hedge, rupee readiness.` : SIM.oil < 30 ? "Prices calm: refill reserves." : "Reserves, crude hedging, rupee readiness on a posture alert."],
+        ["Evacuation", ["Afghanistan–Pakistan", "US–Iran", "Israel–Hamas"].some((x) => lvl(x) === "RED") ? `Execute where RED: ${["Afghanistan–Pakistan", "US–Iran", "Israel–Hamas"].filter((x) => lvl(x) === "RED").map((x) => CHAINS[x].short).join(", ")}.` : "Gulf & Afghanistan plans live; 6 of 7 past evacuations were on our list."],
+        P.items[3], P.items[4],
+      ];
+    }
+    const items = [...baseItems];
+    if (!isBase() && role !== "CDS" && baseItems === P.items) {
       if (SIM.attack && (role === "WTC" || role === "CDS")) items.unshift(["Readiness now", "Qualifying attack: state fighting has followed within ~15 days since 2016. Warning Order today."]);
       if (SIM.oil >= 100 && (role === "MTC" || role === "CDS")) items.unshift(["Energy shock", `Brent +${SIM.oil}% ≈ $${bill} B a year: release reserves, hedge crude, ready the rupee.`]);
       if ((SIM.iran ?? 0) >= 50 && (role === "MTC" || role === "CDS")) items.unshift(["Gulf NEO", "Restart likely: move evacuation plans to ready; escort tankers."]);
@@ -219,7 +295,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       ${role === "NTC" ? `<div class="o7-gap"><b>Northern theatre: no 2027 numbers.</b> The data hold one fatal LAC clash since 1975 (Galwan, Jun 2020), too few to project; the outlook works through the wars that touch it.</div>` : ""}
       ${wars.map(chain).join("")}
       <div class="o7-india" style="animation-delay:${first ? 300 + wars.length * 450 : 0}ms"><div class="h">${P.h}</div>
-        <div class="row">${items.map(([a, b], i) => `<div class="${!isBase() && i < items.length - P.items.length ? "new" : ""}"><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>`;
+        <div class="row">${items.map(([a, b], i) => `<div class="${!isBase() && (i < items.length - baseItems.length || baseItems !== P.items) ? "new" : ""}"><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>`;
     side.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => { per = b.dataset.per!; first = true; render(); syncSim(); }));
     side.querySelector(".o7-reset")?.addEventListener("click", () => { Object.assign(SIM, SIM0); syncSim(); render(); });
     wars.forEach((w) => (prevLvl[w] = lvl(w)));
@@ -417,6 +493,9 @@ const SIMCSS = `
 .o7-tg em { display:block; font-style:normal; font-size:12.5px; color: var(--tx2); }
 .o7-scn { display:flex; align-items:center; gap:10px; font: 800 12px var(--mono); letter-spacing:.12em; color: var(--amber); border:1px dashed var(--amber); border-radius:10px; padding:7px 12px; }
 .o7-scn button { margin-left:auto; font: 800 11px var(--mono); letter-spacing:.12em; padding:5px 12px; border-radius:999px; border:1px solid var(--amber); background: transparent; color: var(--amber); cursor:pointer; }
+.o7-steps.chg .o7-st { animation: o7chg .9s ease both !important; opacity:1; }
+@keyframes o7chg { 0% { box-shadow: 0 0 0 0 rgba(242,179,61,.0); background: rgba(242,179,61,.28); } 100% { box-shadow:none; } }
+.o7-tnote { margin-top:8px; font-size:14px; font-weight:700; color: var(--tc); }
 .o7-ch .dv { display:block; font: 800 12px var(--mono); font-style:normal; margin-top:3px; }
 .o7-ch .lv s { font: 700 11px var(--mono); }
 .o7-ch.flip { animation: o7flip .7s ease both; }
