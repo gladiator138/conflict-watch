@@ -137,6 +137,10 @@ const PRESETS: Record<string, Partial<Sim>> = {
 type Tier = { them: string[]; ind: string[]; act: string[]; so: string };
 const TIER: Record<string, Partial<Record<string, Tier>>> = {
   "Afghanistan–Pakistan": {
+    AMBER: { them: ["Army fighting on its western front", "Hundreds killed a month", "Kandahar · Balochistan · Kunar hot"],
+      ind: ["LoC diversion risk", "Attack → state fighting in ~15 days (since 2016)", "Afghan evacuation"],
+      act: ["Watch the LoC while Af–Pak is AMBER", "ISR on the top-3 districts", "Readiness keyed to the 15-day clock"],
+      so: "Af–Pak at AMBER: watch the LoC and keep the 15-day clock set." },
     GREEN: { them: ["Western front quietens", "Pakistan Army freed from the west", "Fewer cross-border strikes"],
       ind: ["Two-front pressure on Pakistan eases", "LoC: troops can shift back east", "Afghan evacuation risk low"],
       act: ["Track Pakistani units moving east", "Routine LoC watch", "ISR back to normal tasking"],
@@ -147,6 +151,10 @@ const TIER: Record<string, Partial<Record<string, Tier>>> = {
       so: "Af–Pak at war: the LoC is the risk point. Readiness now, ISR surge, evacuation ready." },
   },
   "US–Iran": {
+    AMBER: { them: ["Restart risk rising: posture moves in the Gulf", "Tanker insurance and freight up", "US & Iran trading threats"],
+      ind: ["Oil bill ≈ +${bill} B a year (est.)", "~9 M Indians in the Gulf: plans to READY", "Hormuz & Chabahar route at risk"],
+      act: ["Watch the posture-news tripwire daily", "Gulf NEO plan to READY", "Top up reserves; hedge crude"],
+      so: "Gulf restart risk rising: move from watch to ready." },
     GREEN: { them: ["Ceasefire holding", "Gulf shipping normal", "US forces drawing down"],
       ind: ["Oil bill ≈ +${bill} B a year (est.)", "Diaspora safe; remittances steady", "Chabahar work can resume"],
       act: ["Rebuild crude reserves while prices allow", "Keep the posture-news tripwire on", "Routine Gulf NEO planning"],
@@ -157,6 +165,14 @@ const TIER: Record<string, Partial<Record<string, Tier>>> = {
       so: "Gulf war restarts: evacuation, tanker escort and the energy shield all at once." },
   },
   "Russia–Ukraine": {
+    RED: { them: ["Front widening (Donetsk 55% → 30%)", "War reaches inside Russia", "Sanctions & energy shock"],
+      ind: ["Energy & fertiliser prices", "Defence spares supply", "Russia–China closeness (LAC)"],
+      act: ["Diversify energy & fertiliser", "Stock critical spares", "Watch Russia–China on the LAC"],
+      so: "Russia–Ukraine stays at war: energy and spares stay dear." },
+    "RED+": { them: ["Escalation: front widening fast", "Strikes deep inside Russia; NATO tension up", "Energy & grain shock"],
+      ind: ["Energy & fertiliser prices spike", "Defence spares disrupted", "Russia leans harder on China (LAC)"],
+      act: ["Switch to alternate energy & fertiliser suppliers", "Draw on spares reserve; alternate vendors", "Raise watch on Russia–China along the LAC"],
+      so: "Russia–Ukraine escalating: an energy, fertiliser and spares shock for India." },
     GREEN: { them: ["Ceasefire / frozen front", "Sanctions talks open", "Energy prices ease"],
       ind: ["Cheaper energy & fertiliser", "Defence spares flow steadier", "Russia less tied to China"],
       act: ["Lock in long-term energy contracts", "Restock critical spares", "Re-open the INSTC trade route"],
@@ -167,6 +183,10 @@ const TIER: Record<string, Partial<Record<string, Tier>>> = {
       so: "Russia–Ukraine easing but not over: keep diversifying energy and spares." },
   },
   "Israel–Hamas": {
+    GREEN: { them: ["Cooled to ~100 deaths a month", "Gaza & West Bank still watched", "Red Sea / Houthi risk"],
+      ind: ["Red Sea trade route", "Indians in Israel & the Gulf", "India–Middle East corridor on hold"],
+      act: ["Naval presence: Red Sea & Arabian Sea", "Evacuation plan ready (Op Ajay model)"],
+      so: "Israel–Hamas quiet: routine Red Sea watch." },
     AMBER: { them: ["Fighting flares in Gaza", "West Bank & Lebanon spill-over risk", "Houthi attacks resume"],
       ind: ["Red Sea freight costs rise", "Indians in Israel & the Gulf at risk", "India–Middle East corridor delayed"],
       act: ["Naval presence in the Red Sea", "Evacuation plan to READY (Op Ajay model)", "Watch the Houthi front"],
@@ -220,6 +240,12 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
     return { p10: Math.round(p10), p50: Math.round(p50), p90: Math.round(p90), level, p_up: pu, bpu: v.p_up ?? 0, b50: v.p50, blevel: v.level, surge: T, n };
   };
   const lvl = (w: string) => pv(w)?.level ?? "-";
+  const tierOf = (w: string, v: any): Tier | undefined => {
+    if (isBase() || !v) return undefined;
+    if (v.level !== v.blevel) return TIER[w]?.[v.level];
+    if (v.b50 && v.p50 >= 1.5 * v.b50) return TIER[w]?.[`${v.level}+`];
+    return undefined;
+  };
   const pvRaw = (w: string) => { const v = pv(w); return v ? rag(v.p50 / v.n, v.p_up) : "GREEN"; };
   const zone = (code: string) => {
     const z = ZONE[code]; if (!z) return null; if (isBase() || code === "NTC") return z;
@@ -248,14 +274,14 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       NTC: { t: `No LAC forecast for ${pl}: one fatal clash in 36 years (Galwan 2020).`, s: `The risk reaches the north through Pakistan (${ln("Afghanistan–Pakistan", "Af–Pak")}) and Russia–China (${ln("Russia–Ukraine", "RU–UA")}).` },
       CDS: { t: `${clock}${ln("Afghanistan–Pakistan", "Af–Pak")} on land · ${ln("US–Iran", "US–Iran")} at sea.`, s: `${ln("Russia–Ukraine", "RU–UA")} ${({ RED: "keeps energy dear", AMBER: "still keeps energy elevated", GREEN: "eases energy prices" } as Record<string, string>)[lvl("Russia–Ukraine")] ?? ""}; ${oilTxt}. ${SEASON[per]} ${isBase() ? "Main effort: West and sea." : ""}` },
     } as Record<string, { t: string; s: string }>)[role] ?? { t: "", s: "" };
-    { const notes = [...wars].sort((x, y) => RANK[lvl(y)] - RANK[lvl(x)]).map((w) => { const v = pv(w); return v && !isBase() && v.level !== v.blevel ? TIER[w]?.[v.level]?.so : ""; }).filter(Boolean).slice(0, 2);
+    { const notes = [...wars].sort((x, y) => RANK[lvl(y)] - RANK[lvl(x)]).map((w) => { const v = pv(w); return v ? tierOf(w, v)?.so ?? "" : ""; }).filter(Boolean).slice(0, 2);
       if (notes.length) so.s = `<b>${notes.join(" ")}</b> ${so.s}`; }
     const lvls = wars.map((w) => pv(w)?.level ?? "GREEN").concat(SIM.attack && (role === "WTC" || role === "CDS") ? ["RED"] : []);
     const soCol = RAG_COLOR[worst(lvls)];
     const sc = isBase() ? "" : `<div class="o7-scn">⚗ SCENARIO · what-if levers moved · not a forecast <button class="o7-reset">RESET</button></div>`;
     const chain = (w: string, i: number) => {
       const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = first ? (per === "2027" ? 250 + i * 450 : 60 + i * 140) : 0;
-      const TT = !isBase() && v.level !== v.blevel ? TIER[w]?.[v.level] : undefined, src = TT ?? C;
+      const TT = tierOf(w, v), src = TT ?? C;
       const fill = (x: string) => x.replace("{bill}", String(bill));
       let ind = src.ind.map(fill);
       if (w === "US–Iran") ind = ind.map((x) => (x.startsWith("Oil bill") ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : x));
