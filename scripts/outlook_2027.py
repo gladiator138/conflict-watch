@@ -27,8 +27,9 @@ for i in range(A.shape[0]):
         if r6 < 1: continue
         r3 = (cs[t + 1] - cs[t - 2]) / 3; r12 = (cs[t + 1] - cs[t - 11]) / 12
         y = cs[t + 16] - cs[t + 4]
-        rows.append((i, r6, r3 / max(r12, 1e-9), y))
-H = pd.DataFrame(rows, columns=["cid", "r6", "mom", "y"])
+        qs = [cs[t + 4 + 3 * j + 3] - cs[t + 4 + 3 * j] for j in range(4)]  # Q1..Q4 of the 2027 window
+        rows.append((i, r6, r3 / max(r12, 1e-9), y, *qs))
+H = pd.DataFrame(rows, columns=["cid", "r6", "mom", "y", "q1", "q2", "q3", "q4"])
 H["ratio"] = H["y"] / (12 * H["r6"])
 band_edges = [1, 10, 100, 1000, np.inf]; band_lab = ["1-9", "10-99", "100-999", "1,000+"]
 H["band"] = pd.cut(H["r6"], band_edges, right=False, labels=band_lab)
@@ -61,6 +62,15 @@ for case, g in C.groupby("conflict_case"):
         p_up=round(float((sel["ratio"] >= 1.5).mean()), 2), p_down=round(float((sel["ratio"] <= 0.5).mean()), 2),
         p_quiet=round(float((sel["y"] < 25).mean()), 2),
         rating_now=sc.get(case, {}).get("rating"), oct_forecast=sc.get(case, {}).get("forecast"))
+    quarters = {}
+    for j in range(1, 5):
+        rq = sel[f"q{j}"] / (3 * sel["r6"]); qq = rq.quantile([.1, .5, .9]).to_dict(); b3 = 3 * r6
+        mp = b3 * qq[.5] / 3
+        lv = "RED" if mp >= 1000 else "AMBER" if mp >= 100 else "GREEN"
+        pu = float((rq >= 1.5).mean())
+        if lv == "GREEN" and pu >= 0.30: lv = "AMBER"
+        quarters[f"Q{j}"] = dict(p10=int(round(b3 * qq[.1])), p50=int(round(b3 * qq[.5])), p90=int(round(b3 * qq[.9])), month_p50=int(round(mp)), p_up=round(pu, 2), level=lv)
+    out[case]["quarters"] = quarters
     m = out[case]["month2027_p50"]
     lvl = "RED" if m >= 1000 else "AMBER" if m >= 100 else "GREEN"
     if lvl == "GREEN" and out[case]["p_up"] >= 0.30: lvl = "AMBER"

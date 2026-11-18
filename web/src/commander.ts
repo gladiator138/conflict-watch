@@ -114,26 +114,24 @@ export function renderCommander(D: Data) {
         <div class="tile-more"><div class="tile-tr">Confidence ${brief.confidence}</div><div class="tile-r">${brief.confidence_why}</div></div>
       </button>` : "";
     const ids = [...cases, ...ctx];
-    const IMPACT: Record<string, string> = {
-      WTC: "Pakistan fighting on two fronts → LoC diversion risk for India",
-      MTC: "Gulf war reached 14 countries → oil, ~9 M Indians, sea lanes",
-      NTC: "Drill: LAC surge (synthetic) → readiness of forward formations",
-      CDS: "Main effort West & sea · Russia–Ukraine drives energy prices" };
+    const IMPACT: Record<string, [string, string, string]> = {
+      WTC: ["~15 days", "from a qualifying terror attack to India–Pakistan state fighting (3 of 4 times since 2016)", "Pakistan fighting on two fronts → LoC diversion risk"],
+      MTC: ["~9 M", "Indians in the Gulf, inside the reach of the US–Iran war [domain]", "Oil bill ≈ +$52 B a year if 2026 prices hold (est.) · Hormuz sea lanes"],
+      NTC: ["1", "fatal LAC clash in the data since 1975: Galwan, 15 Jun 2020 (24 killed)", "Fatality data cannot warn of the next one → add non-fatal LAC indicators"],
+      CDS: ["$52 B", "a year on India's oil bill if the 2026 Gulf-war price rise holds (est.)", "Main effort West & sea · 6 of 7 Indian evacuations were on our list a month ahead"] };
     const big2 = () => {
       const main0 = brief && cases.length ? byId[cases[0]] : null;
-      const sitCol = brief ? RAG_COLOR[brief.rating] : RAG_COLOR[S[0].rating];
-      const sit = brief
-        ? `<div class="b2-v" style="color:${sitCol}">${brief.rating} <span>${brief.arrow}</span></div><div class="b2-s">${cap(brief.trend)} · ${brief.dtg}</div>`
-        : `<div class="b2-chips">${S.map((s) => `<span style="--c:${RAG_COLOR[s.rating]}"><b>${s.rating}</b>${s.name.replace("Afghanistan–Pakistan", "Af–Pak").replace("Russia–Ukraine", "RU–UA").replace("Israel–Hamas", "IL–Hamas")}</span>`).join("")}</div>`;
+      const imp = IMPACT[role] ?? IMPACT.CDS, sitCol = "var(--amber)";
+      const sit = `<div class="b2-v" style="color:${sitCol}">${imp[0]}</div><div class="b2-s">${imp[1]}</div>`;
       const fc = main0
         ? `<div class="b2-v" style="color:${RAG_COLOR[main0.rating]}" data-count="${main0.forecast}">${fmt(main0.forecast)}</div>
            <div class="b2-s">deaths forecast · ${main0.name} · ${main0.month}</div>
            <div class="b2-t">${trend(main0)}${watch[0] ? ` · hotspot <b>${watch[0].name} ${pct(watch[0].p)}</b>` : ""}</div>`
         : brief && watch[0]
-        ? `<div class="b2-v" style="color:${RAG_COLOR[brief.rating]}">${pct(watch[0].p)}</div><div class="b2-s">chance of escalation next month · ${watch[0].name}</div><div class="b2-t">SYNTHETIC drill data · no real LAC events</div>`
+        ? `<div class="b2-v" style="color:${RAG_COLOR[brief.rating]}">${pct(watch[0].p)}</div><div class="b2-s">chance of escalation next month · ${watch[0].name}</div><div class="b2-t">SYNTHETIC drill · real data hold only 1 LAC clash (Galwan 2020)</div>`
         : `<div class="b2-rows">${S.map((s) => `<div><span>${s.name}</span><b style="color:${RAG_COLOR[s.rating]}">${fmt(s.forecast)}</b><em>${s.trend_pct > 0 ? "+" : ""}${s.trend_pct}%</em></div>`).join("")}</div><div class="b2-s">deaths forecast, ${S[0].month}</div>`;
       const ev1 = brief ? "t:brief" : `c:${S[0].id}`, ev2 = main0 ? `c:${main0.id}` : brief ? "w:all" : `c:${S[0].id}`;
-      return `<button class="b2" data-ev="${ev1}" style="--lc:${sitCol}"><div class="b2-h">SITUATION NOW · IMPACT</div>${sit}<div class="b2-i">${IMPACT[role] ?? IMPACT.CDS}</div></button>
+      return `<button class="b2" data-ev="${ev1}" style="--lc:${sitCol}"><div class="b2-h">IMPACT ON INDIA</div>${sit}<div class="b2-i">${imp[2]}</div></button>
         <button class="b2" data-ev="${ev2}" style="--lc:var(--teal)"><div class="b2-h">NEAR FORECAST · NEXT MONTH</div>${fc}</button>`;
     };
     main.innerHTML = `

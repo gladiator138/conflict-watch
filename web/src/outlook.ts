@@ -42,6 +42,9 @@ const CSS = `
 .o7-india .row div { background: rgba(5,11,18,.5); border:1px solid var(--line); border-radius:10px; padding:8px 10px; font-size:13.5px; line-height:1.35; }
 .o7-india .row div b { display:block; font-size:15px; margin-bottom:2px; }
 .o7-gap { border:1px dashed #E28CC1; background: rgba(226,140,193,.06); border-radius:12px; padding:10px 14px; font-size:14px; }
+.o7-per { display:flex; gap:6px; flex-wrap:wrap; }
+.o7-per button { font: 800 12px var(--mono); letter-spacing:.12em; padding:8px 14px; border-radius:999px; border:1px solid var(--line2); background: var(--panel); color: var(--tx2); cursor:pointer; }
+.o7-per button.on { background: var(--teal); color:#05070A; border-color: var(--teal); }
 .o7-foot { grid-column: 1 / -1; font-size:12.5px; color: var(--tx3); }
 `;
 
@@ -66,7 +69,7 @@ const CHAINS: Record<string, Chain> = {
     act: ["Naval presence: Red Sea & Arabian Sea", "Evacuation plan ready (Op Ajay model)"] },
 };
 const ROLE_WARS: Record<string, string[]> = { WTC: ["Afghanistan–Pakistan"], MTC: ["US–Iran", "Israel–Hamas"], NTC: ["Russia–Ukraine", "Afghanistan–Pakistan"], CDS: ["US–Iran", "Afghanistan–Pakistan", "Russia–Ukraine", "Israel–Hamas"] };
-const ZONE: Record<string, { lv: string; why: string; at: [number, number] }> = { WTC: { lv: "AMBER", why: "Af–Pak rising", at: [71.6, 28.6] }, MTC: { lv: "AMBER", why: "restart risk · oil", at: [67, 9] }, NTC: { lv: "DATA GAP", why: "no LAC data", at: [87, 33.5] } };
+const ZONE: Record<string, { lv: string; why: string; at: [number, number] }> = { WTC: { lv: "AMBER", why: "Af–Pak rising", at: [71.6, 28.6] }, MTC: { lv: "AMBER", why: "restart risk · oil", at: [67, 9] }, NTC: { lv: "DATA GAP", why: "1 fatal clash since 1975", at: [87, 33.5] } };
 const PRI: Record<string, { h: string; items: string[][] }> = {
   WTC: { h: "WESTERN THEATRE · 2027 PRIORITIES", items: [["LoC first", "Raise LoC watch whenever Af–Pak is AMBER/RED."], ["Eyes on 3 districts", "Kandahar, Balochistan, Kunar."], ["15-day clock", "Pre-set readiness after any qualifying attack."]] },
   MTC: { h: "MARITIME THEATRE · 2027 PRIORITIES", items: [["Sea lanes", "Hormuz, Arabian Sea, Red Sea under watch."], ["NEO ready", "~9 M Indians in the Gulf."], ["Same-day action", "Posture alert → Warning Order."]] },
@@ -75,32 +78,36 @@ const PRI: Record<string, { h: string; items: string[][] }> = {
 };
 const BOX: [[number, number], [number, number]] = [[28, 2], [98, 51]];
 
-export function mountOutlook(host: HTMLElement, D: Data, role: string) {
+export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "2027") {
   const O = (D as any).outlook, X = D.theatre;
   if (!O) { host.innerHTML = `<p class="muted">2027 outlook not built.</p>`; return; }
   if (!document.getElementById("o7-css")) document.head.insertAdjacentHTML("beforeend", `<style id="o7-css">${CSS}</style>`);
   const wars = ROLE_WARS[role] ?? ROLE_WARS.CDS, P = PRI[role] ?? PRI.CDS;
-  const lvl = (w: string) => O.cases[w]?.level2027 ?? "-";
+  const PER = ["2027", "Q1", "Q2", "Q3", "Q4"], pl = per === "2027" ? "2027" : `${per} 2027`;
+  const pv = (w: string) => { const c = O.cases[w]; if (!c) return null; return per === "2027" ? { ...c.y2027, level: c.level2027 } : c.quarters?.[per]; };
+  const lvl = (w: string) => pv(w)?.level ?? "-";
   const chain = (w: string, i: number) => {
-    const C = CHAINS[w], c = O.cases[w], d0 = 250 + i * 450;
+    const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = 250 + i * 450;
     const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
     return `<div class="o7-ch" style="--c:${C.c};animation-delay:${d0}ms">
       <h4><span style="color:${C.c}">●</span>${esc(C.war)}
-        <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → 2027 <b style="background:${RAG_COLOR[c.level2027]}">${c.level2027}</b></span>
-        <span class="n">~${k(c.y2027.p50)} deaths in 2027</span></h4>
+        <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b></span>
+        <span class="n">~${k(v.p50)} deaths in ${pl} <span style="opacity:.7">(${k(v.p10)}–${k(v.p90)})</span></span></h4>
       <div class="o7-steps">${st("them", C.themLabel, C.them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", C.ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", "INDIA SHOULD", C.act, d0 + 450)}</div></div>`;
   };
   host.innerHTML = `<div class="o7">
-    <div class="o7-map"><div class="o7-tag">${esc((X?.theatres?.[role]?.name ?? "All theatres").toUpperCase())} · 2027</div>
+    <div class="o7-map"><div class="o7-tag">${esc((X?.theatres?.[role]?.name ?? "All theatres").toUpperCase())} · ${pl.toUpperCase()}</div>
       <div class="o7-leg"><span><i style="background:${RAG_COLOR.RED}"></i>RED</span><span><i style="background:${RAG_COLOR.AMBER}"></i>AMBER</span><span><i style="background:${RAG_COLOR.GREEN}"></i>GREEN</span><span><i style="border:1.5px dashed #E28CC1"></i>DATA GAP</span><span>┅ impact on India</span></div></div>
     <div class="o7-chains">
-      ${role === "NTC" ? `<div class="o7-gap"><b>Northern theatre: no 2027 numbers.</b> The data hold no fatal LAC events, so the outlook works through the wars that touch it.</div>` : ""}
+      <div class="o7-per" role="tablist" aria-label="Period">${PER.map((p) => `<button role="tab" data-per="${p}" class="${p === per ? "on" : ""}">${p === "2027" ? "2027 · WHOLE YEAR" : p}</button>`).join("")}</div>
+      ${role === "NTC" ? `<div class="o7-gap"><b>Northern theatre: no 2027 numbers.</b> The data hold one fatal LAC clash since 1975 (Galwan, Jun 2020), too few to project; the outlook works through the wars that touch it.</div>` : ""}
       ${wars.map(chain).join("")}
       <div class="o7-india" style="animation-delay:${300 + wars.length * 450}ms"><div class="h">${P.h}</div>
         <div class="row">${P.items.map(([a, b]) => `<div><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>
     </div>
-    <div class="o7-foot">2027 level = middle case of a scenario range from history (what happened next to similar conflicts in 117 countries, 1989–2025; the range held 89% out of time). Not a validated forecast. Chains are our analysis.</div>
+    <div class="o7-foot">Level = middle case of a scenario range from history, for the whole year or each quarter of 2027: what happened next to similar conflicts in 117 countries, 1989–2025 (the range held 89% out of time). Not a validated forecast. Chains are our analysis.</div>
   </div>`;
+  host.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => mountOutlook(host, D, role, b.dataset.per!)));
   const box = host.querySelector(".o7-map") as HTMLElement;
   const draw = () => {
     if (!box.clientWidth) return requestAnimationFrame(draw);
@@ -131,7 +138,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string) {
       if (on) {
         mk("circle", { cx: b[0], cy: b[1], r: 5, fill: C.c, stroke: "#05070A", "stroke-width": 2 }, m.top);
         const [dx, dy, an] = C.lab;
-        const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl", fill: col }, m.top); t.textContent = `${C.short} · 2027 ${lvl(w)}`;
+        const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl", fill: col }, m.top); t.textContent = `${C.short} · ${pl} ${lvl(w)}`;
         const t2 = mk("text", { x: a[0] + dx, y: a[1] + dy + 15, "text-anchor": an, class: "lbl", fill: C.c }, m.top); t2.textContent = `→ India: ${C.via}`;
       }
     });
