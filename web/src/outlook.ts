@@ -291,24 +291,48 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       const seas = q && q.peak_moy ? (q.peak_pct >= 10 ? `Strongest month ${MON[q.peak_moy]} (${pct(q.peak_pct)}${oneOff(q.peak_pct)})` : q.low_pct <= -10 ? `Seasonal low: ${MON[q.low_moy]} (${pct(q.low_pct)}${oneOff(q.low_pct)})` : `Seasonal norm (${MON[q.peak_moy]} ${pct(q.peak_pct)})`)
         : `Momentum ${c.momentum_class}; ${Math.round((c.p_down ?? 0) * 100)}% chance 2027 runs lower`;
       const them = [chg(w) ? `${chg(w).replace(/^(.)/, (m) => m.toUpperCase())}` : `~${k(mo)} deaths a month`, seas, src.them[0]];
-      const qOil = per === "2027" ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : `≈ +$${Math.round(bill / 4)} B on oil in ${pl} (est., Brent +${SIM.oil}%)`;
-      const dline: Record<string, string> = {
-        "US–Iran": `Restart / surge chance in ${pl}: ${sp}%`,
+      // Risk rank of this quarter within 2027 (0 = lowest … 3 = highest), from deaths and surge chance; the year uses its level.
+      const score = (x: any) => x.p50 * (1 + x.p_up), order = [...qv].map(score).sort((x, y) => x - y);
+      const rk = per === "2027" ? ({ GREEN: 1, AMBER: 2, RED: 3 } as Record<string, number>)[v.level] ?? 1 : Math.max(0, order.indexOf(score(v)));
+      const RK: Record<string, { ind: string[]; act: string[] }> = {
+        "US–Iran": { ind: ["Lowest-risk Gulf quarter: diaspora exposure low", "~9 M Indians in the Gulf: exposure modest", "~9 M Indians in the Gulf: exposure rising; tanker insurance up", "Highest-risk Gulf quarter: ~9 M Indians & Hormuz shipping most exposed"],
+          act: ["Rebuild crude reserves while risk is lowest", "Hedge part of the period's crude buys", "Refresh Gulf NEO lists; check tanker insurance cover", "Gulf NEO plan to READY; navy on station off Hormuz"] },
+        "Afghanistan–Pakistan": { ind: ["Quietest Af–Pak quarter: LoC diversion risk lowest", "LoC diversion risk moderate", "LoC diversion risk high; watch Afghan evacuation", "Highest-risk Af–Pak quarter: LoC & Afghan evacuation most exposed"],
+          act: ["Lowest-risk quarter: keep the 15-day clock; review ISR tasking", "ISR on the top-3 districts", "Raise LoC watch; refresh the Kabul evacuation list", "LoC readiness up; ISR surge on hot districts"] },
+        "Russia–Ukraine": { ind: ["Lightest RU–UA quarter: energy & fertiliser pressure eases", "Energy & fertiliser stay dear", "Energy, fertiliser & spares pressure high", "Heaviest RU–UA quarter: energy, fertiliser & spares most exposed"],
+          act: ["Buy energy & fertiliser forward while pressure eases", "Keep energy suppliers diversified", "Build spares stock ahead of the heavy quarter", "Draw on spares reserve; switch to alternate energy suppliers"] },
+        "Israel–Hamas": { ind: ["Quietest IL–H quarter: Red Sea trade near normal", "Red Sea trade costs steady", "Red Sea freight & Houthi risk rising", "Highest-risk IL–H quarter: Red Sea trade & Indians in Israel most exposed"],
+          act: ["Routine Red Sea patrol", "Naval presence: Red Sea & Arabian Sea", "Refresh the evacuation plan (Op Ajay model)", "Evacuation to READY; escort merchant ships"] },
+      };
+      const R0 = RK[w];
+      const qb = Math.round(bill / 4), exp = (sp / 100) * qb;
+      const expo: Record<string, string> = {
+        "US–Iran": per === "2027" ? `Oil bill ≈ +$${bill} B a year if Brent +${SIM.oil}% (est.)` : `Expected oil cost ≈ $${exp.toFixed(1)} B in ${per} (${sp}% restart × $${qb} B)`,
         "Afghanistan–Pakistan": `LoC watch: surge chance ${sp}% in ${pl}`,
         "Russia–Ukraine": `~${k(mo)} deaths a month in ${pl}: ${v.level === "RED" ? "energy stays dear" : v.level === "AMBER" ? "energy still elevated" : "energy prices ease"}`,
         "Israel–Hamas": `Red Sea risk: surge chance ${sp}% in ${pl}`,
       };
-      const rest = src.ind.map(fill).filter((x) => !x.startsWith("Oil bill") && !/^LoC diversion|^Red Sea trade route$|^Energy & fertiliser prices$/.test(x));
-      let ind = w === "US–Iran" ? [qOil, dline[w], rest[0]] : [dline[w], ...rest.slice(0, 2)];
-      if (w === "Afghanistan–Pakistan" && SIM.attack) ind = ["15-day clock running: state fighting likely", ...ind.slice(0, 2)];
+      const tot = qv.reduce((t, x) => t + x.p50, 0) || 1;
+      const quant = per === "2027" ? `Worst case ~${k(v.p90)} in 2027 (~${k(Math.round(v.p90 / 12))} a month)` : `${per} holds ${Math.round((100 * v.p50) / tot)}% of 2027's expected deaths; worst case ~${k(Math.round(v.p90 / 3))} a month`;
+      const yr = (x: string) => (per === "2027" ? `Across 2027: ${x.charAt(0).toLowerCase()}${x.slice(1)}` : x);
+      const cap = Math.min(rk, v.level === "GREEN" ? 2 : 3); // a GREEN war never gets RED-level actions
+      const l2 = TT ? fill(TT.ind[0]).replace(/^Oil bill.*/, TT.ind[1] ?? "") : yr(R0.ind[rk]);
+      let ind = [expo[w], l2, quant];
+      if (w === "Afghanistan–Pakistan" && SIM.attack) ind = ["15-day clock running: state fighting likely", ind[0], ind[2]];
       const ready = v.level === "GREEN" ? "keep plans current" : v.level === "AMBER" ? "plans to READY" : "forces & plans at READY";
       const timing = per === "2027" ? `Peak quarter: ${pk} (~${k(qv[QS.indexOf(pk)].p50)} deaths) · plan for it`
         : per === pk ? `${pl} is the peak quarter for ${C.short}: ${ready}`
         : QS.indexOf(per) + 1 === QS.indexOf(pk) ? `Prepare in ${pl}: ${pk} is the peak quarter (~${k(qv[QS.indexOf(pk)].p50)})`
         : QS.indexOf(per) > QS.indexOf(pk) ? `Past the ${pk} peak (~${k(v.p50)} in ${per} vs ~${k(qv[QS.indexOf(pk)].p50)}): ${v.level === "GREEN" ? "draw down to routine" : "hold, then review"}`
         : `${per} ~${k(v.p50)}, below the ${pk} peak (~${k(qv[QS.indexOf(pk)].p50)}): ${ready}`;
-      const pre = q && q.peak_pct >= 15 && q.peak_pct < 100 && w === "Afghanistan–Pakistan" ? [`Pre-position ISR before ${MON[q.peak_moy]} (${pct(q.peak_pct)})`] : [];
-      const act = [timing, ...pre, ...src.act].slice(0, 3), chgC = TT ? " chg" : "", actH = v.level === "RED" && TT ? "INDIA SHOULD · NOW" : "INDIA SHOULD";
+      const a2 = TT ? TT.act[0] : rk === 3 && cap === 2 ? `Peak but still GREEN: rehearse; ${R0.act[2].charAt(0).toLowerCase()}${R0.act[2].slice(1)}` : yr(R0.act[cap]);
+      const a3 = q && q.peak_moy
+        ? (q.peak_pct >= 100 ? `Watch ${MON[q.peak_moy]}: past spike month (${pct(q.peak_pct)}, one-off events)`
+          : q.peak_pct >= 15 && w === "Afghanistan–Pakistan" ? `Pre-position ISR before ${MON[q.peak_moy]} (${pct(q.peak_pct)})`
+          : q.peak_pct >= 10 ? `Watch ${MON[q.peak_moy]}: strongest month of ${per} (${pct(q.peak_pct)})`
+          : `Lightest month ${MON[q.low_moy]} (${pct(q.low_pct)}): use it for rest & refit`)
+        : (TT ? TT.act[1] : src.act[0]);
+      const act = [timing, a2, a3], chgC = TT ? " chg" : "", actH = v.level === "RED" && TT ? "INDIA SHOULD · NOW" : "INDIA SHOULD";
       const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
       const dv = v.b50 ? (v.p50 - v.b50) / Math.max(1, v.b50) : 0, moved = !isBase() && (Math.abs(dv) >= 0.01 || v.level !== v.blevel);
       const flip = prevLvl[w] && prevLvl[w] !== v.level ? " flip" : "";
