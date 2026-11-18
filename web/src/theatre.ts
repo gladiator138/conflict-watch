@@ -6,7 +6,7 @@ import { type Data, RAG_COLOR } from "./data";
 import { regionMap, ramp, tip } from "./maps";
 import { $, $$, tag } from "./widgets";
 import { mountDocs } from "./orders";
-import { outlookHTML } from "./outlook";
+import { mountOutlook } from "./outlook";
 
 const ROLES = ["WTC", "NTC", "MTC", "CDS"] as const;
 const BBOX: Record<string, [[number, number], [number, number]]> = {
@@ -70,7 +70,7 @@ export function renderTheatre(P: HTMLElement, D: Data, q: URLSearchParams) {
       </div>
       <div class="panel" style="margin-bottom:16px"><div class="ph"><span class="t">Commander's brief (SITREP) and orders</span><span class="muted small mono">auto-drafted from the ${b.dtg} brief · staff check and release</span></div>
         <div id="th-docs"></div></div>
-      ${D.outlook ? `<div class="panel" style="margin-bottom:16px" id="th-2027"><div class="ph"><span class="t">${role}: outlook for 2027</span><span class="muted small mono">scenario range from history · not a validated forecast</span></div>${outlookHTML(D, role)}</div>` : ""}
+      ${D.outlook ? `<div class="panel" style="margin-bottom:16px" id="th-2027"><div class="ph"><span class="t">${role}: 2027 outlook · how the wars reach India</span><span class="muted small mono">scenario range from history · not a validated forecast</span></div><div id="th-2027-host"></div></div>` : ""}
       <div class="grid g2">
         <div class="panel" style="padding:10px"><div class="ph"><span class="t">${role} AOR · notional</span><span class="muted small mono">◆ = synthetic · ● = model nowcast</span></div>
           <div class="mapbox" id="th-map" style="height:460px"></div></div>
@@ -108,6 +108,7 @@ export function renderTheatre(P: HTMLElement, D: Data, q: URLSearchParams) {
       m.top.appendChild(s);
     }
     mountDocs($("#th-docs"), D, X, role, di, (q.get("doc") as any) || "sitrep");
+    if (D.outlook) mountOutlook($("#th-2027-host"), D, role);
     $$("#th-r button").forEach((x) => x.addEventListener("click", () => { role = x.dataset.r!; draw(); }));
     $("#th-d").addEventListener("input", (e) => { di = +(e.target as HTMLInputElement).value; draw(); });
   };
