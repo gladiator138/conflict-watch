@@ -105,106 +105,274 @@ const PRI: Record<string, { h: string; items: string[][] }> = {
 };
 const BOX: [[number, number], [number, number]] = [[28, 2], [98, 51]];
 
+// ── What-if scenario levers (Ops Console). They change only the scenario shown, never the data: each lever scales a
+// war's 2027 range (or moves US–Iran between its low, middle and high case), then the same RAG rule as the data file
+// is re-applied (monthly middle case ≥ 1000 RED, ≥ 100 AMBER; GREEN turns AMBER if the chance of a surge ≥ 30%).
+type Sim = { afpak: number; ruua: number; ilh: number; iran: number | null; oil: number; attack: boolean };
+const SIM0: Sim = { afpak: 0, ruua: 0, ilh: 0, iran: null, oil: 55, attack: false };
+const SIM: Sim = { ...SIM0 };
+const isBase = () => JSON.stringify(SIM) === JSON.stringify(SIM0);
+const LEVERS: Record<string, (keyof Sim)[]> = { WTC: ["afpak", "attack"], MTC: ["iran", "ilh", "oil"], NTC: ["ruua", "afpak"], CDS: ["afpak", "iran", "ruua", "ilh", "oil", "attack"] };
+const MULT: Record<string, keyof Sim> = { "Afghanistan–Pakistan": "afpak", "Russia–Ukraine": "ruua", "Israel–Hamas": "ilh" };
+const rag = (monthly: number, pu: number) => { const l = monthly >= 1000 ? "RED" : monthly >= 100 ? "AMBER" : "GREEN"; return l === "GREEN" && pu >= 0.3 ? "AMBER" : l; };
+const RANK: Record<string, number> = { GREEN: 0, AMBER: 1, RED: 2 };
+const worst = (ls: string[]) => ls.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), "GREEN");
+const oilBill = () => Math.round((52 * SIM.oil) / 55);
+const PRESETS: Record<string, Partial<Sim>> = {
+  "BASELINE": {},
+  "CALM 2027": { afpak: -60, ruua: -80, ilh: -50, iran: 3, oil: 10 },
+  "WEST HEATS UP": { afpak: 120, attack: true },
+  "GULF RESTART": { iran: 70, oil: 110, ilh: 100 },
+  "WORST CASE": { afpak: 150, ruua: 60, ilh: 200, iran: 85, oil: 140, attack: true },
+};
+
 export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "2027") {
   const O = (D as any).outlook, X = D.theatre;
   if (!O) { host.innerHTML = `<p class="muted">2027 outlook not built.</p>`; return; }
-  if (!document.getElementById("o7-css")) document.head.insertAdjacentHTML("beforeend", `<style id="o7-css">${CSS}</style>`);
+  if (!document.getElementById("o7-css")) document.head.insertAdjacentHTML("beforeend", `<style id="o7-css">${CSS}${SIMCSS}</style>`);
   const wars = ROLE_WARS[role] ?? ROLE_WARS.CDS, P = PRI[role] ?? PRI.CDS;
-  const PER = ["2027", "Q1", "Q2", "Q3", "Q4"], pl = per === "2027" ? "2027" : `${per} 2027`;
-  const pv = (w: string) => { const c = O.cases[w]; if (!c) return null; return per === "2027" ? { ...c.y2027, level: c.level2027 } : c.quarters?.[per]; };
-  const lvl = (w: string) => pv(w)?.level ?? "-";
-  // "So what" changes with the period: level and deaths of the theatre's wars, change vs the previous period, season.
-  const SEASON: Record<string, string> = { Q1: "Seasonal norm for Af–Pak.", Q2: "Af–Pak's quietest quarter in our data (June −11%).", Q3: "Af–Pak fighting season: September runs +26% in our data.", Q4: "October stays high (+22%); December is the year's low (−24%).", "2027": "Af–Pak peaks every September–October." };
-  const prev = (w: string) => { const c = O.cases[w]; if (!c) return null; if (per === "2027") return c.last12; if (per === "Q1") return Math.round(c.recent_month * 3); return c.quarters?.[`Q${+per[1] - 1}`]?.p50; };
-  const chg = (w: string) => { const v = pv(w), p0 = prev(w); if (!v || !p0) return ""; const d = (v.p50 - p0) / p0; return Math.abs(d) < 0.05 ? "about level" : `${d > 0 ? "▲ up" : "▼ down"} ${Math.round(Math.abs(d) * 100)}% on ${per === "2027" ? "the last 12 months" : per === "Q1" ? "today's pace" : `Q${+per[1] - 1}`}`; };
-  const ln = (w: string, nm: string) => { const v = pv(w); return v ? `<b style="color:${RAG_COLOR[v.level]}">${nm} ${v.level}</b> ~${k(v.p50)} deaths <span class="c">(${chg(w)})</span>` : ""; };
-  const so = ({
-    WTC: { t: `${ln("Afghanistan–Pakistan", "Af–Pak")} in ${pl}.`, s: `${SEASON[per]} For India: pressure on the LoC while Pakistan fights on two fronts; state fighting has followed a major attack within ~15 days since 2016.` },
-    MTC: { t: `${ln("US–Iran", "US–Iran")} in ${pl}, up to ${k(pv("US–Iran")?.p90 ?? 0)} if it restarts.`, s: `A quiet ${per === "2027" ? "year" : "quarter"} is not a closed war. India's stake: ~9 M people in the Gulf, the Hormuz sea lanes and ≈ $52 B a year on oil (est.). Israel–Hamas: ${ln("Israel–Hamas", "")}.` },
-    NTC: { t: `No LAC forecast for ${pl}: one fatal clash in 36 years (Galwan 2020).`, s: `The risk reaches the north through Pakistan (${ln("Afghanistan–Pakistan", "Af–Pak")}) and Russia–China (${ln("Russia–Ukraine", "RU–UA")}).` },
-    CDS: { t: `${ln("Afghanistan–Pakistan", "Af–Pak")} on land · ${ln("US–Iran", "US–Iran")} at sea.`, s: `${ln("Russia–Ukraine", "RU–UA")} keeps energy dear. ${SEASON[per]} Main effort: West and sea.` },
-  } as Record<string, { t: string; s: string }>)[role] ?? { t: "", s: "" };
-  const top = wars.map((w) => pv(w)?.level).includes("RED") ? "RED" : wars.map((w) => pv(w)?.level).includes("AMBER") ? "AMBER" : "GREEN";
-  const soCol = RAG_COLOR[top];
-  const chain = (w: string, i: number) => {
-    const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = per === "2027" ? 250 + i * 450 : 60 + i * 140;
-    const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
-    return `<div class="o7-ch" style="--c:${C.c};animation-delay:${d0}ms">
-      <h4><span style="color:${C.c}">●</span>${esc(C.war)}
-        <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b></span>
-        <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}</span></h4>
-      <div class="o7-steps">${st("them", C.themLabel, C.them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", C.ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", "INDIA SHOULD", C.act, d0 + 450)}</div></div>`;
-  };
+  const PER = ["2027", "Q1", "Q2", "Q3", "Q4"];
   host.innerHTML = `<div class="o7">
-    <div class="o7-map"><div class="o7-tag">${esc((X?.theatres?.[role]?.name ?? "All theatres").toUpperCase())} · ${pl.toUpperCase()}</div>
-      <div class="o7-leg"><span><i style="background:${RAG_COLOR.RED}"></i>RED</span><span><i style="background:${RAG_COLOR.AMBER}"></i>AMBER</span><span><i style="background:${RAG_COLOR.GREEN}"></i>GREEN</span><span><i style="border:1.5px dashed #E28CC1"></i>DATA GAP</span><span>┅ impact on India</span></div></div>
-    <div class="o7-chains">
-      <div class="o7-so" style="--sc:${soCol}"><div class="h">SO WHAT FOR INDIA · ${pl.toUpperCase()}</div><div class="t">${so.t}</div><div class="s">${so.s}</div></div>
+    <div class="o7-left"><div class="o7-map"></div><div class="o7-sim"></div></div>
+    <div class="o7-chains"></div>
+    <div class="o7-foot">${esc(O.meta.footnote ?? "Level = middle case of a scenario range from history, for the whole year or each quarter of 2027: what happened next to similar conflicts in 117 countries, 1989–2025 (the range held 89% out of time). Not a validated forecast. Chains are our analysis.")} What-if levers are a scenario tool: they rescale our ranges and re-apply the same RAG rule; they are not a model run.</div></div>`;
+  const box = host.querySelector(".o7-map") as HTMLElement, side = host.querySelector(".o7-chains") as HTMLElement, simEl = host.querySelector(".o7-sim") as HTMLElement;
+  let first = true, prevZone: Record<string, string> = {}, prevLvl: Record<string, string> = {};
+
+  // Base value of a war for the period, and the same value under the current levers.
+  const base = (w: string) => { const c = O.cases[w]; if (!c) return null; return per === "2027" ? { ...c.y2027, level: c.level2027, p_up: c.p_up } : c.quarters?.[per]; };
+  const pv = (w: string) => {
+    const v = base(w); if (!v) return null;
+    const n = per === "2027" ? 12 : 3; let { p10, p50, p90 } = v, pu = v.p_up ?? 0;
+    const mk = MULT[w];
+    if (mk) { const f = Math.max(0, 1 + (SIM[mk] as number) / 100); p10 *= f; p50 *= f; p90 *= f; }
+    if (w === "US–Iran" && SIM.iran !== null) {
+      const r = SIM.iran / 100, r0 = Math.max(0.01, pu);
+      if (r >= r0) { const t = (r - r0) / Math.max(0.01, 1 - r0); p10 = p10 + t * (p50 - p10); p50 = p50 + t * (p90 - p50); p90 = Math.max(p90 * (1 + 0.5 * t), p50); }
+      else { const t = r / r0; p90 = p50 + t * (p90 - p50); p50 = p10 + t * (p50 - p10); }
+      pu = r;
+    }
+    const level = isBase() ? v.level : rag(p50 / n, pu);
+    return { p10: Math.round(p10), p50: Math.round(p50), p90: Math.round(p90), level, p_up: pu, b50: v.p50, blevel: v.level };
+  };
+  const lvl = (w: string) => pv(w)?.level ?? "-";
+  const zone = (code: string) => {
+    const z = ZONE[code]; if (!z) return null; if (isBase() || code === "NTC") return z;
+    if (code === "WTC") { const l = SIM.attack ? "RED" : lvl("Afghanistan–Pakistan"); return { ...z, lv: l, why: SIM.attack ? "attack · 15-day clock running" : SIM.afpak > 0 ? "Af–Pak escalating" : SIM.afpak < 0 ? "Af–Pak easing" : z.why }; }
+    if (code === "MTC") {
+      const ir = SIM.iran ?? Math.round((O.cases["US–Iran"]?.p_up ?? 0.12) * 100);
+      let l = worst([lvl("US–Iran"), lvl("Israel–Hamas")]);
+      if (l === "GREEN" && (ir >= 10 || SIM.oil >= 30)) l = "AMBER"; // restart risk or oil shock keeps the sea at AMBER
+      if (SIM.oil >= 100 && l === "AMBER") l = "RED";
+      return { ...z, lv: l, why: ir >= 50 ? "Gulf war restarting" : SIM.oil >= 100 ? `oil shock +${SIM.oil}%` : l === "GREEN" ? "sea lanes quiet" : z.why };
+    }
+    return z;
+  };
+
+  const render = () => {
+    const pl = per === "2027" ? "2027" : `${per} 2027`;
+    const SEASON: Record<string, string> = { Q1: "Seasonal norm for Af–Pak.", Q2: "Af–Pak's quietest quarter in our data (June −11%).", Q3: "Af–Pak fighting season: September runs +26% in our data.", Q4: "October stays high (+22%); December is the year's low (−24%).", "2027": "Af–Pak peaks every September–October." };
+    const prev = (w: string) => { const c = O.cases[w]; if (!c) return null; if (per === "2027") return c.last12; if (per === "Q1") return Math.round(c.recent_month * 3); return c.quarters?.[`Q${+per[1] - 1}`]?.p50; };
+    const chg = (w: string) => { const v = pv(w), p0 = prev(w); if (!v || !p0) return ""; const d = (v.p50 - p0) / p0; return Math.abs(d) < 0.05 ? "about level" : `${d > 0 ? "▲ up" : "▼ down"} ${Math.round(Math.abs(d) * 100)}% on ${per === "2027" ? "the last 12 months" : per === "Q1" ? "today's pace" : `Q${+per[1] - 1}`}`; };
+    const ln = (w: string, nm: string) => { const v = pv(w); return v ? `<b style="color:${RAG_COLOR[v.level]}">${nm} ${v.level}</b> ~${k(v.p50)} deaths <span class="c">(${chg(w)})</span>` : ""; };
+    const bill = oilBill(), oilTxt = `≈ $${bill} B a year on oil (est., Brent +${SIM.oil}%)`;
+    const clock = SIM.attack ? "<b style=\"color:" + RAG_COLOR.RED + "\">Qualifying attack: 15-day clock running.</b> " : "";
+    const so = ({
+      WTC: { t: `${clock}${ln("Afghanistan–Pakistan", "Af–Pak")} in ${pl}.`, s: `${SEASON[per]} For India: pressure on the LoC while Pakistan fights on two fronts; state fighting has followed a major attack within ~15 days since 2016.` },
+      MTC: { t: `${ln("US–Iran", "US–Iran")} in ${pl}, up to ${k(pv("US–Iran")?.p90 ?? 0)} if it restarts.`, s: `A quiet ${per === "2027" ? "year" : "quarter"} is not a closed war. India's stake: ~9 M people in the Gulf, the Hormuz sea lanes and ${oilTxt}. Israel–Hamas: ${ln("Israel–Hamas", "")}.` },
+      NTC: { t: `No LAC forecast for ${pl}: one fatal clash in 36 years (Galwan 2020).`, s: `The risk reaches the north through Pakistan (${ln("Afghanistan–Pakistan", "Af–Pak")}) and Russia–China (${ln("Russia–Ukraine", "RU–UA")}).` },
+      CDS: { t: `${clock}${ln("Afghanistan–Pakistan", "Af–Pak")} on land · ${ln("US–Iran", "US–Iran")} at sea.`, s: `${ln("Russia–Ukraine", "RU–UA")} keeps energy dear; ${oilTxt}. ${SEASON[per]} Main effort: West and sea.` },
+    } as Record<string, { t: string; s: string }>)[role] ?? { t: "", s: "" };
+    const lvls = wars.map((w) => pv(w)?.level ?? "GREEN").concat(SIM.attack && (role === "WTC" || role === "CDS") ? ["RED"] : []);
+    const soCol = RAG_COLOR[worst(lvls)];
+    const sc = isBase() ? "" : `<div class="o7-scn">⚗ SCENARIO · what-if levers moved · not a forecast <button class="o7-reset">RESET</button></div>`;
+    const chain = (w: string, i: number) => {
+      const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = first ? (per === "2027" ? 250 + i * 450 : 60 + i * 140) : 0;
+      const ind = w === "US–Iran" ? C.ind.map((x) => (x.startsWith("Oil bill") ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : x)) : w === "Afghanistan–Pakistan" && SIM.attack ? ["15-day clock running: state fighting likely", ...C.ind] : C.ind;
+      const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+      const dv = v.b50 ? (v.p50 - v.b50) / Math.max(1, v.b50) : 0, moved = !isBase() && (Math.abs(dv) >= 0.01 || v.level !== v.blevel);
+      const flip = prevLvl[w] && prevLvl[w] !== v.level ? " flip" : "";
+      return `<div class="o7-ch${flip}" style="--c:${C.c};animation-delay:${d0}ms">
+        <h4><span style="color:${C.c}">●</span>${esc(C.war)}
+          <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b>${moved && v.level !== v.blevel ? `<s style="opacity:.6">${v.blevel}</s>` : ""}</span>
+          <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}${moved ? `<em class="dv" style="color:${dv > 0 ? RAG_COLOR.RED : RAG_COLOR.GREEN}">${dv > 0 ? "▲" : "▼"} ${Math.abs(Math.round(dv * 100))}% vs baseline</em>` : ""}</span></h4>
+        <div class="o7-steps">${st("them", C.themLabel, C.them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", "INDIA SHOULD", C.act, d0 + 450)}</div></div>`;
+    };
+    const items = [...P.items];
+    if (!isBase()) {
+      if (SIM.attack && (role === "WTC" || role === "CDS")) items.unshift(["Readiness now", "Qualifying attack: state fighting has followed within ~15 days since 2016. Warning Order today."]);
+      if (SIM.oil >= 100 && (role === "MTC" || role === "CDS")) items.unshift(["Energy shock", `Brent +${SIM.oil}% ≈ $${bill} B a year: release reserves, hedge crude, ready the rupee.`]);
+      if ((SIM.iran ?? 0) >= 50 && (role === "MTC" || role === "CDS")) items.unshift(["Gulf NEO", "Restart likely: move evacuation plans to ready; escort tankers."]);
+    }
+    side.classList.toggle("re", !first);
+    side.innerHTML = `${sc}
+      <div class="o7-so${first ? "" : " re"}" style="--sc:${soCol}"><div class="h">SO WHAT FOR INDIA · ${pl.toUpperCase()}${isBase() ? "" : " · SCENARIO"}</div><div class="t">${so.t}</div><div class="s">${so.s}</div></div>
       <div class="o7-per" role="tablist" aria-label="Period">${PER.map((p) => `<button role="tab" data-per="${p}" class="${p === per ? "on" : ""}">${p === "2027" ? "2027 · WHOLE YEAR" : p}</button>`).join("")}</div>
       ${role === "NTC" ? `<div class="o7-gap"><b>Northern theatre: no 2027 numbers.</b> The data hold one fatal LAC clash since 1975 (Galwan, Jun 2020), too few to project; the outlook works through the wars that touch it.</div>` : ""}
       ${wars.map(chain).join("")}
-      <div class="o7-india" style="animation-delay:${300 + wars.length * 450}ms"><div class="h">${P.h}</div>
-        <div class="row">${P.items.map(([a, b]) => `<div><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>
-    </div>
-    <div class="o7-foot">${esc(O.meta.footnote ?? "Level = middle case of a scenario range from history, for the whole year or each quarter of 2027: what happened next to similar conflicts in 117 countries, 1989–2025 (the range held 89% out of time). Not a validated forecast. Chains are our analysis.")}</div>
-  </div>`;
-  host.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => mountOutlook(host, D, role, b.dataset.per!)));
-  const box = host.querySelector(".o7-map") as HTMLElement;
-  const draw = () => {
-    if (!box.clientWidth) return requestAnimationFrame(draw);
-    const keep = [...box.children];
-    const m = regionMap(box, D.world, BOX);
-    keep.forEach((c) => box.appendChild(c));
-    { const st = document.createElementNS("http://www.w3.org/2000/svg", "text"); st.setAttribute("x", String(m.w - 24)); st.setAttribute("y", String(m.h - 40)); st.setAttribute("text-anchor", "end"); st.setAttribute("class", "stamp fade"); st.textContent = pl.toUpperCase(); m.layer.appendChild(st); }
-    const ns = "http://www.w3.org/2000/svg";
-    const mk = (tag: string, a: Record<string, any>, parent: Element) => { const e = document.createElementNS(ns, tag); for (const [kk, v] of Object.entries(a)) e.setAttribute(kk, String(v)); parent.appendChild(e); return e; };
-    for (const f of X?.aor?.features ?? []) {
-      const code = f.properties.code, z = ZONE[code]; if (!z) continue;
-      const on = role === "CDS" || code === role, col = z.lv === "DATA GAP" ? "#E28CC1" : RAG_COLOR[z.lv];
-      const p = mk("path", { d: m.path(f) || "", class: on ? "zone breath" : "zone", style: `--fo:${(on ? 0.26 : 0.06) * (code === "MTC" ? 0.45 : 1)}`, fill: col, "fill-opacity": (on ? 0.26 : 0.06) * (code === "MTC" ? 0.45 : 1), stroke: col, "stroke-width": on ? 2.6 : 1 }, m.layer);
-      if (z.lv === "DATA GAP" || !on) p.setAttribute("stroke-dasharray", "5 4");
-      const ct = m.proj(z.at);
-      if (ct && isFinite(ct[0])) {
-        const t = mk("text", { x: ct[0], y: ct[1], "text-anchor": "middle", class: "zl fade", style: "animation-delay:.3s", fill: col, "fill-opacity": on ? 1 : 0.45 }, m.top); t.textContent = `${code} · ${z.lv}`;
-        const t2 = mk("text", { x: ct[0], y: ct[1] + 16, "text-anchor": "middle", class: "lbl fade", style: "animation-delay:.4s", fill: "#C9D6E3", "fill-opacity": on ? 1 : 0.45 }, m.top); t2.textContent = z.why;
-      }
-    }
-    Object.keys(CHAINS).forEach((w, i) => {
-      const C = CHAINS[w], on = wars.includes(w), col = RAG_COLOR[lvl(w)] ?? C.c;
-      const a = m.proj(C.at), b = m.proj(C.to); if (!a || !b) return;
-      const mx = (a[0] + b[0]) / 2, my = Math.min(a[1], b[1]) - Math.abs(b[0] - a[0]) * 0.22;
-      const d = `M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}`;
-      mk("path", { d, class: "arc-bg", stroke: C.c, "stroke-opacity": on ? 0.14 : 0.03 }, m.layer);
-      const dl = 0.15 + i * 0.22, v0 = pv(w), sw = on && v0 ? Math.max(2.4, Math.min(7, 1.2 + 1.1 * Math.log10(1 + v0.p50))) : 2;
-      if (on) mk("path", { d, fill: "none", stroke: C.c, "stroke-width": sw * 3.2, "stroke-opacity": 0.12, class: "fade", style: `animation-delay:${dl + 0.6}s;filter:blur(4px)` }, m.layer);
-      mk("path", { d, class: on ? "arc draw" : "arc", stroke: C.c, "stroke-width": sw, "stroke-opacity": on ? 1 : 0.15, style: on ? `animation-delay:${dl}s, ${dl + 1.1}s` : "" }, m.layer);
-      if (on) { // particles travelling from the war into India; more and faster when the period is deadlier
-        const n = v0 && v0.p50 > 1000 ? 4 : v0 && v0.p50 > 100 ? 3 : 2, dur = v0 && v0.p50 > 1000 ? 2.2 : 3.2;
-        for (let j = 0; j < n; j++) {
-          const c = mk("circle", { r: Math.max(3, sw * 0.9), fill: "#fff", "fill-opacity": 0.95, stroke: C.c, "stroke-width": 2 }, m.top);
-          const am = document.createElementNS(ns, "animateMotion");
-          am.setAttribute("dur", `${dur}s`); am.setAttribute("repeatCount", "indefinite"); am.setAttribute("path", d);
-          am.setAttribute("begin", `${dl + 1.1 + (j * dur) / n}s`); am.setAttribute("keyPoints", "0;1"); am.setAttribute("keyTimes", "0;1"); am.setAttribute("calcMode", "linear");
-          c.setAttribute("opacity", "0"); c.appendChild(am);
-          const op = document.createElementNS(ns, "set"); op.setAttribute("attributeName", "opacity"); op.setAttribute("to", "1"); op.setAttribute("begin", `${dl + 1.1 + (j * dur) / n}s`); c.appendChild(op);
+      <div class="o7-india" style="animation-delay:${first ? 300 + wars.length * 450 : 0}ms"><div class="h">${P.h}</div>
+        <div class="row">${items.map(([a, b], i) => `<div class="${!isBase() && i < items.length - P.items.length ? "new" : ""}"><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>`;
+    side.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => { per = b.dataset.per!; first = true; render(); }));
+    side.querySelector(".o7-reset")?.addEventListener("click", () => { Object.assign(SIM, SIM0); syncSim(); render(); });
+    wars.forEach((w) => (prevLvl[w] = lvl(w)));
+    drawMap(pl);
+    first = false;
+  };
+
+  const drawMap = (pl: string) => {
+    box.innerHTML = `<div class="o7-tag">${esc((X?.theatres?.[role]?.name ?? "All theatres").toUpperCase())} · ${pl.toUpperCase()}${isBase() ? "" : " · SCENARIO"}</div>
+      <div class="o7-leg"><span><i style="background:${RAG_COLOR.RED}"></i>RED</span><span><i style="background:${RAG_COLOR.AMBER}"></i>AMBER</span><span><i style="background:${RAG_COLOR.GREEN}"></i>GREEN</span><span><i style="border:1.5px dashed #E28CC1"></i>DATA GAP</span><span>┅ impact on India</span></div>`;
+    const go = () => {
+      if (!box.clientWidth) return requestAnimationFrame(go);
+      const keep = [...box.children];
+      const m = regionMap(box, D.world, BOX);
+      keep.forEach((c) => box.appendChild(c));
+      const svg = box.querySelector("svg.map"); if (svg && !first) svg.classList.add("still");
+      { const st = document.createElementNS("http://www.w3.org/2000/svg", "text"); st.setAttribute("x", String(m.w - 24)); st.setAttribute("y", String(m.h - 40)); st.setAttribute("text-anchor", "end"); st.setAttribute("class", "stamp fade"); st.textContent = isBase() ? pl.toUpperCase() : "WHAT-IF"; m.layer.appendChild(st); }
+      const ns = "http://www.w3.org/2000/svg";
+      const mk = (tag: string, a: Record<string, any>, parent: Element) => { const e = document.createElementNS(ns, tag); for (const [kk, v] of Object.entries(a)) e.setAttribute(kk, String(v)); parent.appendChild(e); return e; };
+      for (const f of X?.aor?.features ?? []) {
+        const code = f.properties.code, z = zone(code); if (!z) continue;
+        const on = role === "CDS" || code === role, col = z.lv === "DATA GAP" ? "#E28CC1" : RAG_COLOR[z.lv];
+        const fo = (on ? (z.lv === "RED" ? 0.34 : 0.26) : 0.06) * (code === "MTC" ? 0.45 : 1);
+        const changed = prevZone[code] && prevZone[code] !== z.lv;
+        const p = mk("path", { d: m.path(f) || "", class: on ? `zone breath${z.lv === "RED" ? " fast" : ""}${changed ? " zflash" : ""}` : "zone", style: `--fo:${fo}`, fill: col, "fill-opacity": fo, stroke: col, "stroke-width": on ? (z.lv === "RED" ? 3.4 : 2.6) : 1 }, m.layer);
+        if (z.lv === "DATA GAP" || !on) p.setAttribute("stroke-dasharray", "5 4");
+        prevZone[code] = z.lv;
+        const ct = m.proj(z.at);
+        if (ct && isFinite(ct[0])) {
+          const t = mk("text", { x: ct[0], y: ct[1], "text-anchor": "middle", class: `zl fade${changed ? " pop" : ""}`, style: "animation-delay:.3s", fill: col, "fill-opacity": on ? 1 : 0.45 }, m.top); t.textContent = `${code} · ${z.lv}`;
+          const t2 = mk("text", { x: ct[0], y: ct[1] + 16, "text-anchor": "middle", class: "lbl fade", style: "animation-delay:.4s", fill: "#C9D6E3", "fill-opacity": on ? 1 : 0.45 }, m.top); t2.textContent = z.why;
         }
       }
-      // hotspot: size scales with the period's middle-case deaths
-      const v = pv(w), rr = on && v ? Math.max(8, Math.min(30, 5 + 4.2 * Math.log10(1 + v.p50))) : 5;
-      if (on) mk("circle", { cx: a[0], cy: a[1], r: rr, fill: col, "fill-opacity": 0.25, stroke: col, "stroke-width": 2, class: "halo", style: `animation-delay:${dl}s` }, m.top);
-      mk("circle", { cx: a[0], cy: a[1], r: on ? rr * 0.55 : 3, fill: col, "fill-opacity": on ? 0.9 : 0.4, class: "pop", style: `animation-delay:${dl}s` }, m.top);
-      if (on) {
-        mk("circle", { cx: b[0], cy: b[1], r: 7, fill: C.c, stroke: "#05070A", "stroke-width": 2, class: "pop", style: `animation-delay:${dl + 1.0}s` }, m.top);
-        mk("circle", { cx: b[0], cy: b[1], r: 7, fill: "none", stroke: C.c, "stroke-width": 2, class: "halo", style: `animation-delay:${dl + 1.1}s` }, m.top);
-        let [dx, dy, an] = C.lab;
-        if (m.w < 760 && an === "end") { const tw = 10.5 * `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`.length; if (a[0] + dx - tw < 4) { an = "start"; dx = 12; } }
-        const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl fade", style: `animation-delay:${dl + .2}s`, fill: col }, m.top); t.textContent = `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`;
-        const t2 = mk("text", { x: a[0] + dx, y: a[1] + dy + 15, "text-anchor": an, class: "lbl fade", style: `animation-delay:${dl + .5}s`, fill: C.c }, m.top); t2.textContent = `→ India: ${C.via}`;
-      }
-    });
+      Object.keys(CHAINS).forEach((w, i) => {
+        const C = CHAINS[w], on = wars.includes(w), col = RAG_COLOR[lvl(w)] ?? C.c;
+        const a = m.proj(C.at), b = m.proj(C.to); if (!a || !b) return;
+        const mx = (a[0] + b[0]) / 2, my = Math.min(a[1], b[1]) - Math.abs(b[0] - a[0]) * 0.22;
+        const d = `M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}`;
+        mk("path", { d, class: "arc-bg", stroke: C.c, "stroke-opacity": on ? 0.14 : 0.03 }, m.layer);
+        const dl = first ? 0.15 + i * 0.22 : 0.05 * i, v0 = pv(w), sw = on && v0 ? Math.max(2.4, Math.min(8, 1.2 + 1.1 * Math.log10(1 + v0.p50))) : 2;
+        if (on) mk("path", { d, fill: "none", stroke: col, "stroke-width": sw * 3.2, "stroke-opacity": v0?.level === "RED" ? 0.22 : 0.12, class: "fade", style: `animation-delay:${dl + 0.6}s;filter:blur(4px)` }, m.layer);
+        mk("path", { d, class: on ? "arc draw" : "arc", stroke: C.c, "stroke-width": sw, "stroke-opacity": on ? 1 : 0.15, style: on ? `animation-delay:${dl}s, ${dl + 1.1}s;animation-duration:1.1s, ${v0?.level === "RED" ? 0.8 : v0?.level === "AMBER" ? 1.6 : 2.6}s` : "" }, m.layer);
+        if (on) { // particles from the war into India: more and faster when the scenario is deadlier
+          const n = v0 && v0.p50 > 10000 ? 6 : v0 && v0.p50 > 1000 ? 4 : v0 && v0.p50 > 100 ? 3 : v0 && v0.p50 > 10 ? 2 : 1, dur = v0?.level === "RED" ? 1.5 : v0?.level === "AMBER" ? 2.4 : 3.6;
+          for (let j = 0; j < n; j++) {
+            const c = mk("circle", { r: Math.max(3, sw * 0.9), fill: "#fff", "fill-opacity": 0.95, stroke: col, "stroke-width": 2 }, m.top);
+            const am = document.createElementNS(ns, "animateMotion");
+            am.setAttribute("dur", `${dur}s`); am.setAttribute("repeatCount", "indefinite"); am.setAttribute("path", d);
+            am.setAttribute("begin", `${dl + 1.1 + (j * dur) / n}s`); am.setAttribute("keyPoints", "0;1"); am.setAttribute("keyTimes", "0;1"); am.setAttribute("calcMode", "linear");
+            c.setAttribute("opacity", "0"); c.appendChild(am);
+            const op = document.createElementNS(ns, "set"); op.setAttribute("attributeName", "opacity"); op.setAttribute("to", "1"); op.setAttribute("begin", `${dl + 1.1 + (j * dur) / n}s`); c.appendChild(op);
+          }
+        }
+        const v = pv(w), rr = on && v ? Math.max(8, Math.min(34, 5 + 4.2 * Math.log10(1 + v.p50))) : 5;
+        if (on) mk("circle", { cx: a[0], cy: a[1], r: rr, fill: col, "fill-opacity": 0.25, stroke: col, "stroke-width": 2, class: `halo${v?.level === "RED" ? " fast" : ""}`, style: `animation-delay:${dl}s` }, m.top);
+        mk("circle", { cx: a[0], cy: a[1], r: on ? rr * 0.55 : 3, fill: col, "fill-opacity": on ? 0.9 : 0.4, class: "pop", style: `animation-delay:${dl}s` }, m.top);
+        if (on) {
+          mk("circle", { cx: b[0], cy: b[1], r: 7, fill: C.c, stroke: "#05070A", "stroke-width": 2, class: "pop", style: `animation-delay:${dl + 1.0}s` }, m.top);
+          mk("circle", { cx: b[0], cy: b[1], r: 7, fill: "none", stroke: C.c, "stroke-width": 2, class: "halo", style: `animation-delay:${dl + 1.1}s` }, m.top);
+          let [dx, dy, an] = C.lab;
+          if (m.w < 760 && an === "end") { const tw = 10.5 * `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`.length; if (a[0] + dx - tw < 4) { an = "start"; dx = 12; } }
+          const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl fade", style: `animation-delay:${dl + .2}s`, fill: col }, m.top); t.textContent = `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`;
+          const t2 = mk("text", { x: a[0] + dx, y: a[1] + dy + 15, "text-anchor": an, class: "lbl fade", style: `animation-delay:${dl + .5}s`, fill: C.c }, m.top); t2.textContent = `→ India: ${C.via}`;
+        }
+      });
+    };
+    requestAnimationFrame(go);
   };
-  requestAnimationFrame(draw);
+
+  // Lever panel (built once; re-rendering the map and cards leaves it in place so a drag is not interrupted).
+  const ir0 = Math.round((O.cases["US–Iran"]?.p_up ?? 0.12) * 100);
+  const DEF: Record<string, { lab: string; min: number; max: number; step: number; base: number; fmt: (v: number) => string; say: (v: number) => string; war?: string }> = {
+    afpak: { lab: "Af–Pak fighting", min: -90, max: 200, step: 5, base: 0, war: "Afghanistan–Pakistan", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -60 ? "ceasefire" : v < -10 ? "easing" : v <= 10 ? "as today" : v < 100 ? "escalating" : "major offensive") },
+    iran: { lab: "US–Iran restart risk", min: 0, max: 100, step: 1, base: ir0, war: "US–Iran", fmt: (v) => `${v}%`, say: (v) => (v < 5 ? "deal holds" : v < 20 ? "low" : v < 50 ? "rising" : v < 80 ? "likely" : "war restarts") },
+    ruua: { lab: "RU–UA fighting", min: -90, max: 100, step: 5, base: 0, war: "Russia–Ukraine", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -70 ? "ceasefire" : v < -10 ? "winding down" : v <= 10 ? "as today" : "escalation") },
+    ilh: { lab: "Israel–Hamas fighting", min: -80, max: 300, step: 10, base: 0, war: "Israel–Hamas", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -50 ? "truce holds" : v <= 20 ? "as today" : v < 150 ? "flare-up" : "truce collapses") },
+    oil: { lab: "Brent oil shock", min: 0, max: 150, step: 5, base: 55, fmt: (v) => `+${v}%`, say: (v) => `≈ $${Math.round((52 * v) / 55)} B/yr on India's crude bill` },
+  };
+  const levers = LEVERS[role] ?? LEVERS.CDS;
+  simEl.innerHTML = `<div class="o7-sim-h"><b>⚗ WHAT-IF · MOVE THE LEVERS</b><span>Scenario only · same RAG rule · not a model run</span></div>
+    <div class="o7-pre">${Object.keys(PRESETS).map((p) => `<button data-pre="${p}">${p}</button>`).join("")}</div>
+    <div class="o7-lv">${levers.map((id) => {
+      if (id === "attack") return `<label class="o7-tg"><input type="checkbox" data-id="attack"><span class="sw"></span><span><b>Qualifying terror attack in J&amp;K</b><em>starts the 15-day clock → WTC RED</em></span></label>`;
+      const L = DEF[id as string];
+      return `<div class="o7-sl" data-id="${id}"><div class="top"><b>${L.lab}</b><span class="val"></span><span class="res"></span></div>
+        <div class="trk"><input type="range" min="${L.min}" max="${L.max}" step="${L.step}" aria-label="${L.lab}"><i class="bm" style="left:${((L.base - L.min) / (L.max - L.min)) * 100}%" title="baseline"></i></div><div class="say"></div></div>`;
+    }).join("")}</div>`;
+  const syncSim = () => {
+    simEl.querySelectorAll<HTMLElement>(".o7-sl").forEach((row) => {
+      const id = row.dataset.id as keyof Sim, L = DEF[id as string], inp = row.querySelector("input") as HTMLInputElement;
+      const v = id === "iran" ? (SIM.iran ?? L.base) : (SIM[id] as number);
+      inp.value = String(v);
+      const pct = ((v - L.min) / (L.max - L.min)) * 100, lv = L.war ? lvl(L.war) : SIM.oil >= 100 ? "RED" : SIM.oil >= 30 ? "AMBER" : "GREEN";
+      inp.style.setProperty("--p", `${pct}%`); inp.style.setProperty("--lc", RAG_COLOR[lv] ?? "#4FD1E0");
+      (row.querySelector(".val") as HTMLElement).textContent = L.fmt(v);
+      (row.querySelector(".say") as HTMLElement).textContent = L.say(v);
+      const r = row.querySelector(".res") as HTMLElement; r.textContent = lv; r.style.background = RAG_COLOR[lv] ?? "#888";
+      row.classList.toggle("moved", v !== L.base);
+    });
+    const tg = simEl.querySelector<HTMLInputElement>('input[data-id="attack"]'); if (tg) tg.checked = SIM.attack;
+  };
+  let tmr = 0;
+  const schedule = () => { syncSim(); clearTimeout(tmr); tmr = window.setTimeout(render, 140); };
+  simEl.querySelectorAll<HTMLElement>(".o7-sl").forEach((row) => {
+    const id = row.dataset.id as keyof Sim, inp = row.querySelector("input") as HTMLInputElement;
+    inp.addEventListener("input", () => { (SIM as any)[id] = +inp.value; schedule(); });
+    inp.addEventListener("dblclick", () => { (SIM as any)[id] = (SIM0 as any)[id]; schedule(); });
+  });
+  simEl.querySelector<HTMLInputElement>('input[data-id="attack"]')?.addEventListener("change", (e) => { SIM.attack = (e.target as HTMLInputElement).checked; schedule(); });
+  simEl.querySelectorAll<HTMLElement>(".o7-pre button").forEach((b) => b.addEventListener("click", () => { Object.assign(SIM, SIM0, PRESETS[b.dataset.pre!]); syncSim(); render(); }));
+  render();
+  syncSim();
 }
+
+const SIMCSS = `
+.o7-left { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.o7-left .o7-map { height: clamp(380px, 62vh, 640px); }
+.o7-map svg.map.still { animation:none; }
+.o7-map .breath.fast { animation: o7fade .5s ease both, o7breath 1.1s ease-in-out .5s infinite; }
+.o7-map .halo.fast { animation-duration: 1.1s; }
+.o7-map .zflash { animation: o7zf .9s ease 2, o7breath 1.6s ease-in-out 1.8s infinite; }
+@keyframes o7zf { 0%,100% { fill-opacity: var(--fo); } 40% { fill-opacity: .75; } }
+.o7-sim { background: var(--panel); border:1px solid var(--line); border-radius:14px; padding:12px 14px; }
+.o7-sim-h { display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.o7-sim-h b { font: 800 12px var(--mono); letter-spacing:.16em; color: var(--teal); }
+.o7-sim-h span { font-size:12px; color: var(--tx3); }
+.o7-pre { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.o7-pre button { font: 800 11px var(--mono); letter-spacing:.1em; padding:6px 11px; border-radius:999px; border:1px solid var(--line2); background: transparent; color: var(--tx2); cursor:pointer; }
+.o7-pre button:hover { border-color: var(--teal); color: var(--tx); }
+.o7-lv { display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px 20px; }
+.o7-pre button:focus:not(:focus-visible) { border-color: var(--line2); }
+.o7-sl .top { display:flex; align-items:center; gap:8px; font-size:14px; }
+.o7-sl .top b { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.o7-sl .say { color: var(--tx2); font-size:12.5px; margin-top:5px; }
+.o7-sl .val { margin-left:auto; font: 800 13px var(--mono); white-space:nowrap; }
+.o7-sl .res { font: 800 10.5px var(--mono); letter-spacing:.08em; color:#05070A; padding:2px 7px; border-radius:5px; transition: background .3s; }
+.o7-sl.moved .val { color: var(--amber); }
+.o7-sl .trk { position:relative; margin-top:6px; }
+.o7-sl .bm { position:absolute; top:-3px; width:2px; height:20px; background: var(--tx2); transform: translateX(-1px); pointer-events:none; opacity:.7; }
+.o7-sl input[type=range] { -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:99px; outline:none; cursor:pointer;
+  background: linear-gradient(90deg, var(--lc) 0 var(--p), rgba(255,255,255,.12) var(--p) 100%); }
+.o7-sl input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--lc); box-shadow:0 0 0 4px rgba(0,0,0,.35); }
+.o7-sl input[type=range]::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#fff; border:4px solid var(--lc); }
+.o7-tg { display:flex; align-items:center; gap:10px; cursor:pointer; font-size:14px; }
+.o7-tg input { position:absolute; opacity:0; width:0; height:0; }
+.o7-tg .sw { width:44px; height:24px; border-radius:99px; background: rgba(255,255,255,.15); position:relative; flex:none; transition: background .2s; }
+.o7-tg .sw::after { content:""; position:absolute; left:3px; top:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition: transform .2s; }
+.o7-tg input:checked + .sw { background: #FF6B6B; } .o7-tg input:checked + .sw::after { transform: translateX(20px); }
+.o7-tg input:focus-visible + .sw { outline: 2px solid var(--teal); outline-offset:2px; }
+.o7-tg em { display:block; font-style:normal; font-size:12.5px; color: var(--tx2); }
+.o7-scn { display:flex; align-items:center; gap:10px; font: 800 12px var(--mono); letter-spacing:.12em; color: var(--amber); border:1px dashed var(--amber); border-radius:10px; padding:7px 12px; }
+.o7-scn button { margin-left:auto; font: 800 11px var(--mono); letter-spacing:.12em; padding:5px 12px; border-radius:999px; border:1px solid var(--amber); background: transparent; color: var(--amber); cursor:pointer; }
+.o7-ch .dv { display:block; font: 800 12px var(--mono); font-style:normal; margin-top:3px; }
+.o7-ch .lv s { font: 700 11px var(--mono); }
+.o7-ch.flip { animation: o7flip .7s ease both; }
+@keyframes o7flip { 0% { box-shadow: 0 0 0 0 var(--c); transform: scale(.985); } 40% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--c) 45%, transparent); } 100% { box-shadow:none; transform:none; opacity:1; } }
+.o7-chains.re .o7-ch, .o7-chains.re .o7-st, .o7-chains.re .o7-india { animation:none; opacity:1; transform:none; }
+.o7-chains.re .o7-ch.flip { animation: o7flip .7s ease both; }
+.o7-so.re { animation: none; opacity:1; transition: border-color .4s, background .4s; }
+.o7-india .row div.new { border-color: var(--amber); background: rgba(242,179,61,.10); }
+`;
 
 export function openOutlookModal(D: Data, role: string) {
   document.getElementById("ol-modal")?.remove();
