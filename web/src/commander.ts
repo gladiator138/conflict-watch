@@ -114,6 +114,28 @@ export function renderCommander(D: Data) {
         <div class="tile-more"><div class="tile-tr">Confidence ${brief.confidence}</div><div class="tile-r">${brief.confidence_why}</div></div>
       </button>` : "";
     const ids = [...cases, ...ctx];
+    const IMPACT: Record<string, string> = {
+      WTC: "Pakistan fighting on two fronts → LoC diversion risk for India",
+      MTC: "Gulf war reached 14 countries → oil, ~9 M Indians, sea lanes",
+      NTC: "Drill: LAC surge (synthetic) → readiness of forward formations",
+      CDS: "Main effort West & sea · Russia–Ukraine drives energy prices" };
+    const big2 = () => {
+      const main0 = brief && cases.length ? byId[cases[0]] : null;
+      const sitCol = brief ? RAG_COLOR[brief.rating] : RAG_COLOR[S[0].rating];
+      const sit = brief
+        ? `<div class="b2-v" style="color:${sitCol}">${brief.rating} <span>${brief.arrow}</span></div><div class="b2-s">${cap(brief.trend)} · ${brief.dtg}</div>`
+        : `<div class="b2-chips">${S.map((s) => `<span style="--c:${RAG_COLOR[s.rating]}"><b>${s.rating}</b>${s.name.replace("Afghanistan–Pakistan", "Af–Pak").replace("Russia–Ukraine", "RU–UA").replace("Israel–Hamas", "IL–Hamas")}</span>`).join("")}</div>`;
+      const fc = main0
+        ? `<div class="b2-v" style="color:${RAG_COLOR[main0.rating]}" data-count="${main0.forecast}">${fmt(main0.forecast)}</div>
+           <div class="b2-s">deaths forecast · ${main0.name} · ${main0.month}</div>
+           <div class="b2-t">${trend(main0)}${watch[0] ? ` · hotspot <b>${watch[0].name} ${pct(watch[0].p)}</b>` : ""}</div>`
+        : brief && watch[0]
+        ? `<div class="b2-v" style="color:${RAG_COLOR[brief.rating]}">${pct(watch[0].p)}</div><div class="b2-s">chance of escalation next month · ${watch[0].name}</div><div class="b2-t">SYNTHETIC drill data · no real LAC events</div>`
+        : `<div class="b2-rows">${S.map((s) => `<div><span>${s.name}</span><b style="color:${RAG_COLOR[s.rating]}">${fmt(s.forecast)}</b><em>${s.trend_pct > 0 ? "+" : ""}${s.trend_pct}%</em></div>`).join("")}</div><div class="b2-s">deaths forecast, ${S[0].month}</div>`;
+      const ev1 = brief ? "t:brief" : `c:${S[0].id}`, ev2 = main0 ? `c:${main0.id}` : brief ? "w:all" : `c:${S[0].id}`;
+      return `<button class="b2" data-ev="${ev1}" style="--lc:${sitCol}"><div class="b2-h">SITUATION NOW · IMPACT</div>${sit}<div class="b2-i">${IMPACT[role] ?? IMPACT.CDS}</div></button>
+        <button class="b2" data-ev="${ev2}" style="--lc:var(--teal)"><div class="b2-h">NEAR FORECAST · NEXT MONTH</div>${fc}</button>`;
+    };
     main.innerHTML = `
     <header class="cmd-h">
       <div>
@@ -138,12 +160,15 @@ export function renderCommander(D: Data) {
         <div class="ph"><span class="t">${brief ? `${T.front}: area of responsibility` : "Where it touches India"}</span><span class="tag data">${brief && brief.synthetic ? "SYNTHETIC" : "DATA"}</span></div>
         <div class="mapbox" id="cmd-map" aria-label="Map"></div>
       </div>
-      <aside class="cmd-side" aria-label="Orders and watch-list">
+      <aside class="cmd-side" aria-label="Situation and near forecast">
+        ${big2()}
+        <div class="side-old">
         <div class="side-h">${brief ? "DECIDE TODAY" : "ORDERS THIS MONTH"}</div>
         ${orders.map((o) => `<button class="order" data-ev="${o.key}" style="--lc:${o.color}">
           <span class="o-l">${o.label}</span><span class="o-w">${o.chip}</span><span class="o-a">${o.title}</span><span class="o-m">${o.meta}</span></button>`).join("")}
         <div class="side-h" style="margin-top:6px">${brief ? "WATCH IN THE AOR" : "WATCH NEXT MONTH"} <button class="lnk" data-ev="w:all">ALL ${watch.length} ▸</button></div>
         <div class="wl">${watch.map((a, i) => wlRow(a, i, maxP)).join("")}</div>
+        </div>
       </aside>
     </section>
     <nav class="cmd-go" aria-label="Trust">
