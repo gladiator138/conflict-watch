@@ -10,7 +10,7 @@ const k = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}
 const CSS = `
 .o7 { display:grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap:18px; align-items:start; }
 @media (max-width: 1100px) { .o7 { grid-template-columns: 1fr; } }
-.o7-map { position:relative; height:720px; background: var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.o7-map { position:relative; height: clamp(420px, 78vh, 720px); background: var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 .o7-map .arc { fill:none; stroke-width:2.6; stroke-dasharray: 9 7; animation: o7dash 1.6s linear infinite; }
 .o7-map .arc-bg { fill:none; stroke-width:9; }
 .o7-map .lbl { font: 700 12px var(--mono); letter-spacing:.08em; paint-order: stroke; stroke:#05070A; stroke-width:4px; }
@@ -196,7 +196,8 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       if (on) {
         mk("circle", { cx: b[0], cy: b[1], r: 7, fill: C.c, stroke: "#05070A", "stroke-width": 2, class: "pop", style: `animation-delay:${dl + 1.0}s` }, m.top);
         mk("circle", { cx: b[0], cy: b[1], r: 7, fill: "none", stroke: C.c, "stroke-width": 2, class: "halo", style: `animation-delay:${dl + 1.1}s` }, m.top);
-        const [dx, dy, an] = C.lab;
+        let [dx, dy, an] = C.lab;
+        if (m.w < 760 && an === "end") { const tw = 10.5 * `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`.length; if (a[0] + dx - tw < 4) { an = "start"; dx = 12; } }
         const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl fade", style: `animation-delay:${dl + .2}s`, fill: col }, m.top); t.textContent = `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`;
         const t2 = mk("text", { x: a[0] + dx, y: a[1] + dy + 15, "text-anchor": an, class: "lbl fade", style: `animation-delay:${dl + .5}s`, fill: C.c }, m.top); t2.textContent = `→ India: ${C.via}`;
       }

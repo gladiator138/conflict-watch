@@ -1,3 +1,4 @@
+import { mountOutlook } from "./outlook";
 import { type Data, type Score, CASES, CASE_COLOR, CASE_SHORT, CASE_NAME, RAG_COLOR, fmt, fmtM, pct } from "./data";
 import { verify, DOCTRINE } from "./rules";
 import { mount, update, axis, csv, resizeAll } from "./charts";
@@ -30,7 +31,7 @@ const CSS = `
 `;
 
 const PAGES = [["brief", "◉", "Brief", "DECIDE"], ["theatre", "✪", "Theatre", "DECIDE"], ["warning", "⚠", "Warning", "DECIDE"],
-  ["map", "◎", "Map", "EXPLORE"], ["area", "⌖", "Area", "EXPLORE"], ["forecast", "↗", "Forecast", "EXPLORE"], ["whatif", "⚗", "What-if", "EXPLORE"],
+  ["map", "◎", "Map", "EXPLORE"], ["area", "⌖", "Area", "EXPLORE"], ["forecast", "↗", "Forecast", "EXPLORE"], ["outlook", "◷", "2027 Outlook", "EXPLORE"], ["whatif", "⚗", "What-if", "EXPLORE"],
   ["scorecard", "▦", "Scorecard", "VERIFY"], ["dq", "✓", "Data quality", "VERIFY"], ["about", "ⓘ", "About", "VERIFY"]] as const;
 
 export function renderConsole(D: Data) {
@@ -111,6 +112,15 @@ export function renderConsole(D: Data) {
       P.innerHTML = `<div class="eyebrow">EARLY WARNING · AUC ${F.warning.auc} · ${F.warning.lift}× RANDOM</div><h2>Warning</h2><div class="sub">Replay 2026 month by month, or switch to the live October list. Click an area to drill down.</div><div id="w-box"></div>`;
       const W = warningPanel($("#w-box"), D, { month: q.get("month") ?? "2026-03", thr: q.get("thr") ? +q.get("thr")! : 0.15, onArea: (id) => { location.hash = "area?id=" + encodeURIComponent(id); } });
       if (q.get("mode")) W.set(undefined, undefined, q.get("mode") as any);
+    },
+    outlook(q) {
+      const roles = ["CDS", "WTC", "MTC", "NTC"]; let r = q.get("r") && roles.includes(q.get("r")!) ? q.get("r")! : "CDS";
+      P.innerHTML = `<div class="eyebrow">2027 OUTLOOK · SCENARIO RANGE FROM HISTORY</div><h2>How the wars reach India in 2027</h2>
+        <div class="sub">Pick a theatre and a period. Not a validated forecast: what happened next to similar conflicts in 117 countries.</div>
+        <div class="seg" id="ol-r" style="margin:6px 0 14px">${roles.map((x) => `<button data-r="${x}" class="${x === r ? "on" : ""}">${x}</button>`).join("")}</div><div id="ol-p"></div>`;
+      const go = () => { mountOutlook($("#ol-p"), D, r); document.querySelectorAll<HTMLElement>("#ol-r button").forEach((b) => b.classList.toggle("on", b.dataset.r === r)); };
+      document.querySelectorAll<HTMLElement>("#ol-r button").forEach((b) => b.addEventListener("click", () => { r = b.dataset.r!; go(); }));
+      if (D.outlook) go(); else $("#ol-p").innerHTML = `<p class="muted">2027 outlook not built.</p>`;
     },
     whatif(q) {
       P.innerHTML = `<div class="eyebrow">DECISION ROOM</div><h2>What-if simulator</h2><div class="sub">The exact submitted ensemble, for every slider position.</div><div id="wi"></div>`;
