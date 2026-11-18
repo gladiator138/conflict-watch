@@ -2,15 +2,15 @@
 // chain "war → what it does to them → what it means for India → what India should do". Levels come from
 // web/public/data/outlook2027.json (analogue scenario range, scripts/outlook_2027.py); the chains are our analysis.
 import { type Data, RAG_COLOR } from "./data";
-import { regionMap, pulse } from "./maps";
+import { regionMap } from "./maps";
 
 const esc = (s: any) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const k = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : String(n));
 
 const CSS = `
-.o7 { display:grid; grid-template-columns: minmax(0,1.05fr) minmax(0,1fr); gap:18px; align-items:start; }
+.o7 { display:grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap:18px; align-items:start; }
 @media (max-width: 1100px) { .o7 { grid-template-columns: 1fr; } }
-.o7-map { position:relative; height:620px; background: var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+.o7-map { position:relative; height:720px; background: var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 .o7-map .arc { fill:none; stroke-width:2.6; stroke-dasharray: 9 7; animation: o7dash 1.6s linear infinite; }
 .o7-map .arc-bg { fill:none; stroke-width:9; }
 .o7-map .lbl { font: 700 12px var(--mono); letter-spacing:.08em; paint-order: stroke; stroke:#05070A; stroke-width:4px; }
@@ -45,6 +45,25 @@ const CSS = `
 .o7-per { display:flex; gap:6px; flex-wrap:wrap; }
 .o7-per button { font: 800 12px var(--mono); letter-spacing:.12em; padding:8px 14px; border-radius:999px; border:1px solid var(--line2); background: var(--panel); color: var(--tx2); cursor:pointer; }
 .o7-per button.on { background: var(--teal); color:#05070A; border-color: var(--teal); }
+.o7-so { border-radius:14px; padding:14px 18px; background: linear-gradient(120deg, rgba(242,179,61,.16), rgba(255,107,107,.10)); border:1px solid rgba(242,179,61,.55); opacity:0; animation: o7in .5s ease .1s forwards; }
+.o7-so .h { font: 800 12px var(--mono); letter-spacing:.2em; color: var(--amber); margin-bottom:4px; }
+.o7-so .t { font-size: clamp(20px, 1.6vw, 26px); font-weight:800; line-height:1.25; }
+.o7-ch h4 .n { margin-left:auto; text-align:right; font: 700 12px var(--mono); color: var(--tx3); }
+.o7-ch h4 .n b { display:block; font: 800 30px var(--sans); line-height:1; color: var(--lvc); letter-spacing:-.01em; }
+.o7-ch h4 .lv b { font-size:13px; padding:3px 9px; }
+.o7-st.ind { background: rgba(79,209,224,.10); border:1px solid rgba(79,209,224,.45); }
+.o7-st.ind li { font-size:15px; font-weight:600; }
+.o7-st.them li { color: var(--tx2); }
+.o7-map .stamp { font: 900 64px var(--sans); letter-spacing:-.02em; fill: #fff; fill-opacity:.07; }
+.o7-map .draw { animation: o7draw 1.1s ease-out both, o7dash 1.6s linear 1.1s infinite; }
+@keyframes o7draw { from { stroke-dasharray: 1400; stroke-dashoffset: 1400; } to { stroke-dasharray: 1400; stroke-dashoffset: 0; } }
+.o7-map .pop { transform-box: fill-box; transform-origin: center; animation: o7pop .7s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes o7pop { from { transform: scale(0); opacity:0 } to { transform: scale(1); opacity:1 } }
+.o7-map .fade { opacity:0; animation: o7fade .6s ease forwards; }
+@keyframes o7fade { to { opacity:1 } }
+.o7-map .halo { transform-box: fill-box; transform-origin:center; animation: o7halo 2.2s ease-out infinite; }
+@keyframes o7halo { 0% { transform: scale(.6); opacity:.7 } 100% { transform: scale(2.4); opacity:0 } }
+.o7-map .zone { animation: o7fade .8s ease both; }
 .o7-foot { grid-column: 1 / -1; font-size:12.5px; color: var(--tx3); }
 `;
 
@@ -76,6 +95,12 @@ const PRI: Record<string, { h: string; items: string[][] }> = {
   NTC: { h: "NORTHERN THEATRE · 2027 PRIORITIES", items: [["Close the data gap", "Face-offs, build-ups, infrastructure, patrol clashes."], ["Watch the partners", "Russia–China closeness; Pakistan on two fronts."], ["Drill the flow", "FLASH drill on synthetic data until real indicators exist."]] },
   CDS: { h: "INDIA LEVEL (CDS) · 2027 PRIORITIES", items: [["Main effort: West & sea", "Af–Pak the rising front; US–Iran the restart risk with the widest reach."], ["Energy shield", "Reserves, crude hedging, rupee readiness on a posture alert."], ["Evacuation ready", "Gulf & Afghanistan plans live; 6 of 7 past evacuations were on our list."], ["Close the LAC gap", "Add non-fatal LAC & LoC indicators in H1 2027."], ["One monthly picture", "Watch-list & RAG in the HQ IDS brief; tripwire daily."]] },
 };
+const SOWHAT: Record<string, string> = {
+  WTC: "Pakistan is fighting on two fronts. Expect pressure on the LoC, and state fighting within ~15 days of any major attack.",
+  MTC: "The Gulf war can restart by decision. India's stake: ~9 M people, the Hormuz sea lanes and ≈ $52 B a year on oil (est.).",
+  NTC: "No data to forecast the LAC: Galwan showed a first clash leaves no warning in fatality data. The risk reaches us through Pakistan and Russia–China.",
+  CDS: "Two wars reach India in 2027: Af–Pak on land (LoC) and US–Iran at sea (oil, diaspora). Russia–Ukraine keeps energy dear.",
+};
 const BOX: [[number, number], [number, number]] = [[28, 2], [98, 51]];
 
 export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "2027") {
@@ -87,18 +112,19 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
   const pv = (w: string) => { const c = O.cases[w]; if (!c) return null; return per === "2027" ? { ...c.y2027, level: c.level2027 } : c.quarters?.[per]; };
   const lvl = (w: string) => pv(w)?.level ?? "-";
   const chain = (w: string, i: number) => {
-    const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = 250 + i * 450;
+    const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = per === "2027" ? 250 + i * 450 : 60 + i * 140;
     const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
     return `<div class="o7-ch" style="--c:${C.c};animation-delay:${d0}ms">
       <h4><span style="color:${C.c}">●</span>${esc(C.war)}
         <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b></span>
-        <span class="n">~${k(v.p50)} deaths in ${pl} <span style="opacity:.7">(${k(v.p10)}–${k(v.p90)})</span></span></h4>
+        <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}</span></h4>
       <div class="o7-steps">${st("them", C.themLabel, C.them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", C.ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", "INDIA SHOULD", C.act, d0 + 450)}</div></div>`;
   };
   host.innerHTML = `<div class="o7">
     <div class="o7-map"><div class="o7-tag">${esc((X?.theatres?.[role]?.name ?? "All theatres").toUpperCase())} · ${pl.toUpperCase()}</div>
       <div class="o7-leg"><span><i style="background:${RAG_COLOR.RED}"></i>RED</span><span><i style="background:${RAG_COLOR.AMBER}"></i>AMBER</span><span><i style="background:${RAG_COLOR.GREEN}"></i>GREEN</span><span><i style="border:1.5px dashed #E28CC1"></i>DATA GAP</span><span>┅ impact on India</span></div></div>
     <div class="o7-chains">
+      <div class="o7-so"><div class="h">SO WHAT FOR INDIA · ${pl.toUpperCase()}</div><div class="t">${esc(SOWHAT[role] ?? SOWHAT.CDS)}</div></div>
       <div class="o7-per" role="tablist" aria-label="Period">${PER.map((p) => `<button role="tab" data-per="${p}" class="${p === per ? "on" : ""}">${p === "2027" ? "2027 · WHOLE YEAR" : p}</button>`).join("")}</div>
       ${role === "NTC" ? `<div class="o7-gap"><b>Northern theatre: no 2027 numbers.</b> The data hold one fatal LAC clash since 1975 (Galwan, Jun 2020), too few to project; the outlook works through the wars that touch it.</div>` : ""}
       ${wars.map(chain).join("")}
@@ -114,17 +140,18 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
     const keep = [...box.children];
     const m = regionMap(box, D.world, BOX);
     keep.forEach((c) => box.appendChild(c));
+    { const st = document.createElementNS("http://www.w3.org/2000/svg", "text"); st.setAttribute("x", String(m.w - 24)); st.setAttribute("y", String(m.h - 40)); st.setAttribute("text-anchor", "end"); st.setAttribute("class", "stamp fade"); st.textContent = pl.toUpperCase(); m.layer.appendChild(st); }
     const ns = "http://www.w3.org/2000/svg";
     const mk = (tag: string, a: Record<string, any>, parent: Element) => { const e = document.createElementNS(ns, tag); for (const [kk, v] of Object.entries(a)) e.setAttribute(kk, String(v)); parent.appendChild(e); return e; };
     for (const f of X?.aor?.features ?? []) {
       const code = f.properties.code, z = ZONE[code]; if (!z) continue;
       const on = role === "CDS" || code === role, col = z.lv === "DATA GAP" ? "#E28CC1" : RAG_COLOR[z.lv];
-      const p = mk("path", { d: m.path(f) || "", fill: col, "fill-opacity": (on ? 0.24 : 0.06) * (code === "MTC" ? 0.45 : 1), stroke: col, "stroke-width": on ? 2.4 : 1 }, m.layer);
+      const p = mk("path", { d: m.path(f) || "", class: "zone", fill: col, "fill-opacity": (on ? 0.26 : 0.06) * (code === "MTC" ? 0.45 : 1), stroke: col, "stroke-width": on ? 2.6 : 1 }, m.layer);
       if (z.lv === "DATA GAP" || !on) p.setAttribute("stroke-dasharray", "5 4");
       const ct = m.proj(z.at);
       if (ct && isFinite(ct[0])) {
-        const t = mk("text", { x: ct[0], y: ct[1], "text-anchor": "middle", class: "zl", fill: col, "fill-opacity": on ? 1 : 0.45 }, m.top); t.textContent = `${code} · ${z.lv}`;
-        const t2 = mk("text", { x: ct[0], y: ct[1] + 16, "text-anchor": "middle", class: "lbl", fill: "#C9D6E3", "fill-opacity": on ? 1 : 0.45 }, m.top); t2.textContent = z.why;
+        const t = mk("text", { x: ct[0], y: ct[1], "text-anchor": "middle", class: "zl fade", style: "animation-delay:.3s", fill: col, "fill-opacity": on ? 1 : 0.45 }, m.top); t.textContent = `${code} · ${z.lv}`;
+        const t2 = mk("text", { x: ct[0], y: ct[1] + 16, "text-anchor": "middle", class: "lbl fade", style: "animation-delay:.4s", fill: "#C9D6E3", "fill-opacity": on ? 1 : 0.45 }, m.top); t2.textContent = z.why;
       }
     }
     Object.keys(CHAINS).forEach((w, i) => {
@@ -133,13 +160,18 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       const mx = (a[0] + b[0]) / 2, my = Math.min(a[1], b[1]) - Math.abs(b[0] - a[0]) * 0.22;
       const d = `M${a[0]},${a[1]} Q${mx},${my} ${b[0]},${b[1]}`;
       mk("path", { d, class: "arc-bg", stroke: C.c, "stroke-opacity": on ? 0.14 : 0.03 }, m.layer);
-      mk("path", { d, class: "arc", stroke: C.c, "stroke-opacity": on ? 1 : 0.15, style: `animation-duration:${1.2 + i * 0.25}s` }, m.layer);
-      pulse(m, C.at[0], C.at[1], col, undefined, i * 300, on ? 9 : 5);
+      const dl = 0.15 + i * 0.22;
+      mk("path", { d, class: on ? "arc draw" : "arc", stroke: C.c, "stroke-width": on ? 3.2 : 2, "stroke-opacity": on ? 1 : 0.15, style: on ? `animation-delay:${dl}s, ${dl + 1.1}s` : "" }, m.layer);
+      // hotspot: size scales with the period's middle-case deaths
+      const v = pv(w), rr = on && v ? Math.max(8, Math.min(30, 5 + 4.2 * Math.log10(1 + v.p50))) : 5;
+      if (on) mk("circle", { cx: a[0], cy: a[1], r: rr, fill: col, "fill-opacity": 0.25, stroke: col, "stroke-width": 2, class: "halo", style: `animation-delay:${dl}s` }, m.top);
+      mk("circle", { cx: a[0], cy: a[1], r: on ? rr * 0.55 : 3, fill: col, "fill-opacity": on ? 0.9 : 0.4, class: "pop", style: `animation-delay:${dl}s` }, m.top);
       if (on) {
-        mk("circle", { cx: b[0], cy: b[1], r: 5, fill: C.c, stroke: "#05070A", "stroke-width": 2 }, m.top);
+        mk("circle", { cx: b[0], cy: b[1], r: 7, fill: C.c, stroke: "#05070A", "stroke-width": 2, class: "pop", style: `animation-delay:${dl + 1.0}s` }, m.top);
+        mk("circle", { cx: b[0], cy: b[1], r: 7, fill: "none", stroke: C.c, "stroke-width": 2, class: "halo", style: `animation-delay:${dl + 1.1}s` }, m.top);
         const [dx, dy, an] = C.lab;
-        const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl", fill: col }, m.top); t.textContent = `${C.short} · ${pl} ${lvl(w)}`;
-        const t2 = mk("text", { x: a[0] + dx, y: a[1] + dy + 15, "text-anchor": an, class: "lbl", fill: C.c }, m.top); t2.textContent = `→ India: ${C.via}`;
+        const t = mk("text", { x: a[0] + dx, y: a[1] + dy, "text-anchor": an, class: "zl fade", style: `animation-delay:${dl + .2}s`, fill: col }, m.top); t.textContent = `${C.short} · ${pl} ${lvl(w)} · ~${k(v?.p50 ?? 0)}`;
+        const t2 = mk("text", { x: a[0] + dx, y: a[1] + dy + 15, "text-anchor": an, class: "lbl fade", style: `animation-delay:${dl + .5}s`, fill: C.c }, m.top); t2.textContent = `→ India: ${C.via}`;
       }
     });
   };
