@@ -114,7 +114,13 @@ const SIM: Sim = { ...SIM0 };
 const isBase = () => JSON.stringify(SIM) === JSON.stringify(SIM0);
 const LEVERS: Record<string, (keyof Sim)[]> = { WTC: ["afpak", "attack"], MTC: ["iran", "ilh", "oil"], NTC: ["ruua", "afpak"], CDS: ["afpak", "iran", "ruua", "ilh", "oil", "attack"] };
 const MULT: Record<string, keyof Sim> = { "Afghanistan–Pakistan": "afpak", "Russia–Ukraine": "ruua", "Israel–Hamas": "ilh" };
-const rag = (monthly: number, pu: number) => { const l = monthly >= 1000 ? "RED" : monthly >= 100 ? "AMBER" : "GREEN"; return l === "GREEN" && pu >= 0.3 ? "AMBER" : l; };
+// Rating: the data file's rule (monthly middle case ≥ 1000 RED, ≥ 100 AMBER; ≥ 30% chance of a surge → AMBER) plus the
+// deck's escalation test: RED once a surge (deaths ≥ 1.5× today's pace) is more likely than not (≥ 50%).
+// The chance of a surge comes from a lognormal fitted to each range (p50, p90); the surge line is calibrated so that at
+// baseline the fit returns the data file's own p_up exactly, so baseline ratings are unchanged.
+const rag = (monthly: number, pu: number) => (monthly >= 1000 || pu >= 0.5 ? "RED" : monthly >= 100 || pu >= 0.3 ? "AMBER" : "GREEN");
+const Phi = (x: number) => { const t = 1 / (1 + 0.2316419 * Math.abs(x)), d = 0.3989423 * Math.exp((-x * x) / 2), p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return x > 0 ? 1 - p : p; };
+const PhiInv = (p: number) => { let lo = -8, hi = 8; for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (Phi(m) < p) lo = m; else hi = m; } return (lo + hi) / 2; };
 const RANK: Record<string, number> = { GREEN: 0, AMBER: 1, RED: 2 };
 const worst = (ls: string[]) => ls.reduce((a, b) => (RANK[b] > RANK[a] ? b : a), "GREEN");
 const oilBill = () => Math.round((52 * SIM.oil) / 55);
@@ -144,8 +150,9 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
   const pv = (w: string) => {
     const v = base(w); if (!v) return null;
     const n = per === "2027" ? 12 : 3; let { p10, p50, p90 } = v, pu = v.p_up ?? 0;
-    const mk = MULT[w];
-    if (mk) { const f = Math.max(0, 1 + (SIM[mk] as number) / 100); p10 *= f; p50 *= f; p90 *= f; }
+    const mk = MULT[w], sg = v.p50 > 0 && v.p90 > v.p50 ? Math.log(v.p90 / v.p50) / 1.2816 : 1;
+    const T = v.p50 > 0 && pu > 0 && pu < 1 ? v.p50 * Math.exp(sg * PhiInv(1 - pu)) : 0; // surge line for this period
+    if (mk) { const f = Math.max(0.001, 1 + (SIM[mk] as number) / 100); p10 *= f; p50 *= f; p90 *= f; if (T) pu = 1 - Phi((Math.log(T) - Math.log(p50)) / sg); }
     if (w === "US–Iran" && SIM.iran !== null) {
       const r = SIM.iran / 100, r0 = Math.max(0.01, pu);
       if (r >= r0) { const t = (r - r0) / Math.max(0.01, 1 - r0); p10 = p10 + t * (p50 - p10); p50 = p50 + t * (p90 - p50); p90 = Math.max(p90 * (1 + 0.5 * t), p50); }
@@ -153,9 +160,10 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       pu = r;
     }
     const level = isBase() ? v.level : rag(p50 / n, pu);
-    return { p10: Math.round(p10), p50: Math.round(p50), p90: Math.round(p90), level, p_up: pu, b50: v.p50, blevel: v.level };
+    return { p10: Math.round(p10), p50: Math.round(p50), p90: Math.round(p90), level, p_up: pu, bpu: v.p_up ?? 0, b50: v.p50, blevel: v.level, surge: T, n };
   };
   const lvl = (w: string) => pv(w)?.level ?? "-";
+  const pvRaw = (w: string) => { const v = pv(w); return v ? rag(v.p50 / v.n, v.p_up) : "GREEN"; };
   const zone = (code: string) => {
     const z = ZONE[code]; if (!z) return null; if (isBase() || code === "NTC") return z;
     if (code === "WTC") { const l = SIM.attack ? "RED" : lvl("Afghanistan–Pakistan"); return { ...z, lv: l, why: SIM.attack ? "attack · 15-day clock running" : SIM.afpak > 0 ? "Af–Pak escalating" : SIM.afpak < 0 ? "Af–Pak easing" : z.why }; }
@@ -195,7 +203,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       return `<div class="o7-ch${flip}" style="--c:${C.c};animation-delay:${d0}ms">
         <h4><span style="color:${C.c}">●</span>${esc(C.war)}
           <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b>${moved && v.level !== v.blevel ? `<s style="opacity:.6">${v.blevel}</s>` : ""}</span>
-          <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}${moved ? `<em class="dv" style="color:${dv > 0 ? RAG_COLOR.RED : RAG_COLOR.GREEN}">${dv > 0 ? "▲" : "▼"} ${Math.abs(Math.round(dv * 100))}% vs baseline</em>` : ""}</span></h4>
+          <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}<span class="pg" title="Chance deaths reach 1.5× today's pace (a surge). 30% → AMBER, 50% → RED."><span class="pgb"><i style="width:${Math.round(v.p_up * 100)}%;background:${RAG_COLOR[rag(0, v.p_up)]}"></i><u style="left:30%"></u><u style="left:50%"></u></span>surge chance <b2>${Math.round(v.p_up * 100)}%</b2>${moved && Math.round(v.p_up * 100) !== Math.round(v.bpu * 100) ? ` <em2>(was ${Math.round(v.bpu * 100)}%)</em2>` : ""}</span>${moved ? `<em class="dv" style="color:${dv > 0 ? RAG_COLOR.RED : RAG_COLOR.GREEN}">${dv > 0 ? "▲" : "▼"} ${Math.abs(Math.round(dv * 100))}% vs baseline</em>` : ""}</span></h4>
         <div class="o7-steps">${st("them", C.themLabel, C.them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", "INDIA SHOULD", C.act, d0 + 450)}</div></div>`;
     };
     const items = [...P.items];
@@ -212,7 +220,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       ${wars.map(chain).join("")}
       <div class="o7-india" style="animation-delay:${first ? 300 + wars.length * 450 : 0}ms"><div class="h">${P.h}</div>
         <div class="row">${items.map(([a, b], i) => `<div class="${!isBase() && i < items.length - P.items.length ? "new" : ""}"><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>`;
-    side.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => { per = b.dataset.per!; first = true; render(); }));
+    side.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => { per = b.dataset.per!; first = true; render(); syncSim(); }));
     side.querySelector(".o7-reset")?.addEventListener("click", () => { Object.assign(SIM, SIM0); syncSim(); render(); });
     wars.forEach((w) => (prevLvl[w] = lvl(w)));
     drawMap(pl);
@@ -286,19 +294,48 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
   const DEF: Record<string, { lab: string; min: number; max: number; step: number; base: number; fmt: (v: number) => string; say: (v: number) => string; war?: string }> = {
     afpak: { lab: "Af–Pak fighting", min: -90, max: 200, step: 5, base: 0, war: "Afghanistan–Pakistan", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -60 ? "ceasefire" : v < -10 ? "easing" : v <= 10 ? "as today" : v < 100 ? "escalating" : "major offensive") },
     iran: { lab: "US–Iran restart risk", min: 0, max: 100, step: 1, base: ir0, war: "US–Iran", fmt: (v) => `${v}%`, say: (v) => (v < 5 ? "deal holds" : v < 20 ? "low" : v < 50 ? "rising" : v < 80 ? "likely" : "war restarts") },
-    ruua: { lab: "RU–UA fighting", min: -90, max: 100, step: 5, base: 0, war: "Russia–Ukraine", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -70 ? "ceasefire" : v < -10 ? "winding down" : v <= 10 ? "as today" : "escalation") },
+    ruua: { lab: "RU–UA fighting", min: -98, max: 100, step: 5, base: 0, war: "Russia–Ukraine", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -95 ? "full ceasefire" : v <= -70 ? "ceasefire" : v < -10 ? "winding down" : v <= 10 ? "as today" : "escalation") },
     ilh: { lab: "Israel–Hamas fighting", min: -80, max: 300, step: 10, base: 0, war: "Israel–Hamas", fmt: (v) => (v === 0 ? "baseline" : `${v > 0 ? "+" : ""}${v}%`), say: (v) => (v <= -50 ? "truce holds" : v <= 20 ? "as today" : v < 150 ? "flare-up" : "truce collapses") },
     oil: { lab: "Brent oil shock", min: 0, max: 150, step: 5, base: 55, fmt: (v) => `+${v}%`, say: (v) => `≈ $${Math.round((52 * v) / 55)} B/yr on India's crude bill` },
   };
   const levers = LEVERS[role] ?? LEVERS.CDS;
-  simEl.innerHTML = `<div class="o7-sim-h"><b>⚗ WHAT-IF · MOVE THE LEVERS</b><span>Scenario only · same RAG rule · not a model run</span></div>
+  simEl.innerHTML = `<div class="o7-sim-h"><b>⚗ WHAT-IF · MOVE THE LEVERS</b><span>Scenario on our 2027 ranges · not a model run</span></div>
+    <div class="o7-chips"></div>
     <div class="o7-pre">${Object.keys(PRESETS).map((p) => `<button data-pre="${p}">${p}</button>`).join("")}</div>
     <div class="o7-lv">${levers.map((id) => {
       if (id === "attack") return `<label class="o7-tg"><input type="checkbox" data-id="attack"><span class="sw"></span><span><b>Qualifying terror attack in J&amp;K</b><em>starts the 15-day clock → WTC RED</em></span></label>`;
       const L = DEF[id as string];
       return `<div class="o7-sl" data-id="${id}"><div class="top"><b>${L.lab}</b><span class="val"></span><span class="res"></span></div>
-        <div class="trk"><input type="range" min="${L.min}" max="${L.max}" step="${L.step}" aria-label="${L.lab}"><i class="bm" style="left:${((L.base - L.min) / (L.max - L.min)) * 100}%" title="baseline"></i></div><div class="say"></div></div>`;
-    }).join("")}</div>`;
+        <div class="trk"><input type="range" min="${L.min}" max="${L.max}" step="${L.step}" aria-label="${L.lab}"><i class="bm" style="left:${((L.base - L.min) / (L.max - L.min)) * 100}%" title="baseline"></i></div><div class="bot"><span class="say"></span><span class="thr"></span></div></div>`;
+    }).join("")}</div>
+    <details class="o7-rule"><summary>How the rating is set</summary>
+      <p><b style="color:${RAG_COLOR.RED}">RED</b> if the middle case is ≥ 1,000 deaths a month <i>or</i> a surge is more likely than not (≥ 50%). <b style="color:${RAG_COLOR.AMBER}">AMBER</b> if ≥ 100 a month <i>or</i> surge chance ≥ 30%. Otherwise <b style="color:${RAG_COLOR.GREEN}">GREEN</b>.</p>
+      <p><b>Surge</b> = deaths at least 1.5× today's pace (the deck's escalation test). Its chance comes from a lognormal fitted to each war's 2027 range; at baseline it returns the data file's own figures (e.g. Af–Pak 13%, US–Iran 12%), so baseline ratings do not move. For US–Iran the lever <i>is</i> the chance of a restart.</p>
+      <p><b>Theatre zones:</b> WTC follows Af–Pak (RED on a qualifying attack). MTC is the worse of US–Iran and Israel–Hamas, held at AMBER while restart risk ≥ 10% or Brent ≥ +30%, RED at Brent ≥ +100%. Coloured ticks on each lever mark where it turns <span style="color:${RAG_COLOR.AMBER}">AMBER</span> and <span style="color:${RAG_COLOR.RED}">RED</span> for the selected period.</p>
+    </details>`;
+  // Where on each lever the war turns AMBER and RED (for the period shown): scan the lever's range.
+  const marks = () => simEl.querySelectorAll<HTMLElement>(".o7-sl").forEach((row) => {
+    const id = row.dataset.id as keyof Sim, L = DEF[id as string], trk = row.querySelector(".trk") as HTMLElement;
+    trk.querySelectorAll(".tk").forEach((e) => e.remove());
+    const keep = (SIM as any)[id], xs: number[] = [], ls: string[] = [];
+    for (let x = L.min; x <= L.max + 1e-9; x += L.step) { (SIM as any)[id] = x; xs.push(x); ls.push(L.war ? pvRaw(L.war) : x >= 100 ? "RED" : x >= 30 ? "AMBER" : "GREEN"); }
+    (SIM as any)[id] = keep;
+    const up: string[] = [], dn: string[] = [];
+    for (let i = 1; i < xs.length; i++) if (ls[i] !== ls[i - 1]) {
+      const x = xs[i], col = RAG_COLOR[ls[i]];
+      trk.insertAdjacentHTML("beforeend", `<i class="tk" style="left:${((x - L.min) / (L.max - L.min)) * 100}%;background:${RANK[ls[i]] > RANK[ls[i - 1]] ? col : RAG_COLOR[ls[i - 1]]}" title="${ls[i - 1]} → ${ls[i]} at ${L.fmt(x)}"></i>`);
+      if (x > L.base) up.push(`<span style="color:${col}">${ls[i]} from ${L.fmt(x)}</span>`);
+      else dn.unshift(`<span style="color:${RAG_COLOR[ls[i - 1]]}">${ls[i - 1]} below ${L.fmt(x)}</span>`);
+    }
+    const all = [...dn, ...up];
+    (row.querySelector(".thr") as HTMLElement).innerHTML = all.join(" · ") || `<span style="color:${RAG_COLOR[ls[0]]}">${ls[0]} across the range</span>`;
+  });
+  const chips = () => {
+    const el = simEl.querySelector(".o7-chips") as HTMLElement;
+    const z = ["WTC", "MTC"].map((c) => [c, zone(c)?.lv ?? "-"]), all = worst(z.map((x) => x[1])); // CDS = worse of the two fronts that touch India
+    el.innerHTML = [...z, ["CDS", all]].map(([c, l]) => `<span class="chip" style="--cc:${RAG_COLOR[l] ?? "#888"}"><b>${c}</b>${l}</span>`).join("") +
+      Object.keys(CHAINS).map((w) => { const v = pv(w)!; return `<span class="chip sm" style="--cc:${RAG_COLOR[v.level]}"><b>${CHAINS[w].short}</b>${v.level} · surge ${Math.round(v.p_up * 100)}%</span>`; }).join("");
+  };
   const syncSim = () => {
     simEl.querySelectorAll<HTMLElement>(".o7-sl").forEach((row) => {
       const id = row.dataset.id as keyof Sim, L = DEF[id as string], inp = row.querySelector("input") as HTMLInputElement;
@@ -311,6 +348,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       const r = row.querySelector(".res") as HTMLElement; r.textContent = lv; r.style.background = RAG_COLOR[lv] ?? "#888";
       row.classList.toggle("moved", v !== L.base);
     });
+    marks(); chips();
     const tg = simEl.querySelector<HTMLInputElement>('input[data-id="attack"]'); if (tg) tg.checked = SIM.attack;
   };
   let tmr = 0;
@@ -345,7 +383,22 @@ const SIMCSS = `
 .o7-pre button:focus:not(:focus-visible) { border-color: var(--line2); }
 .o7-sl .top { display:flex; align-items:center; gap:8px; font-size:14px; }
 .o7-sl .top b { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
-.o7-sl .say { color: var(--tx2); font-size:12.5px; margin-top:5px; }
+.o7-sl .bot { display:flex; justify-content:space-between; gap:8px; margin-top:5px; flex-wrap:wrap; }
+.o7-sl .say { color: var(--tx2); font-size:12.5px; }
+.o7-sl .thr { font: 700 11px var(--mono); letter-spacing:.04em; }
+.o7-sl .tk { position:absolute; top:-2px; width:3px; height:18px; border-radius:2px; transform: translateX(-1px); pointer-events:none; box-shadow: 0 0 0 1px #05070A; }
+.o7-chips { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+.o7-chips .chip { display:inline-flex; gap:6px; align-items:center; font: 800 11px var(--mono); letter-spacing:.08em; padding:4px 9px; border-radius:7px; border:1px solid var(--cc); color: var(--cc); background: color-mix(in srgb, var(--cc) 12%, transparent); transition: all .3s; }
+.o7-chips .chip b { color: var(--tx); font-weight:800; }
+.o7-chips .chip.sm { font-size:10.5px; padding:3px 7px; opacity:.9; }
+.o7-rule { margin-top:12px; font-size:13px; color: var(--tx2); border-top:1px solid var(--line); padding-top:8px; }
+.o7-rule summary { cursor:pointer; font: 800 11px var(--mono); letter-spacing:.12em; color: var(--tx2); }
+.o7-rule p { margin:6px 0; line-height:1.45; }
+.o7-ch .pg { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:4px; font: 700 11px var(--mono); color: var(--tx3); }
+.o7-ch .pg b2 { font-weight:800; color: var(--tx); } .o7-ch .pg em2 { font-style:normal; color: var(--tx3); }
+.o7-ch .pgb { position:relative; width:90px; height:7px; border-radius:99px; background: rgba(255,255,255,.12); overflow:hidden; }
+.o7-ch .pgb i { position:absolute; left:0; top:0; bottom:0; border-radius:99px; transition: width .4s; }
+.o7-ch .pgb u { position:absolute; top:0; bottom:0; width:1px; background: rgba(255,255,255,.55); }
 .o7-sl .val { margin-left:auto; font: 800 13px var(--mono); white-space:nowrap; }
 .o7-sl .res { font: 800 10.5px var(--mono); letter-spacing:.08em; color:#05070A; padding:2px 7px; border-radius:5px; transition: background .3s; }
 .o7-sl.moved .val { color: var(--amber); }
