@@ -1,0 +1,5 @@
+,recent_month,last12,cal2025,ytd2026,momentum,momentum_class,band,basis,n_cases,n_obs,y2027,month2027_p50,p_up,p_down,p_quiet,rating_now,oct_forecast,level2027
+Afghanistan–Pakistan,284,3737,2649,2767,1.12,flat,100-999,"level 100-999 deaths/month, flat",88,716,"{'p10': 201, 'p25': 1085, 'p50': 2479, 'p75': 3801, 'p90': 5600}",207,0.13,0.37,0.06,AMBER,318,AMBER
+Israel–Hamas,134,2052,14547,1191,0.96,flat,100-999,"level 100-999 deaths/month, flat",88,716,"{'p10': 95, 'p25': 512, 'p50': 1170, 'p75': 1793, 'p90': 2641}",97,0.13,0.37,0.06,GREEN,128,GREEN
+Russia–Ukraine,6358,95476,94765,64454,1.07,flat,"1,000+","level 1,000+ deaths/month (all momentum)",26,384,"{'p10': 0, 'p25': 2292, 'p50': 36191, 'p75': 77642, 'p90': 108812}",3016,0.08,0.5,0.16,RED,6780,RED
+US–Iran,121,3967,2167,3965,0.22,falling,100-999,"level 100-999 deaths/month, falling",173,1434,"{'p10': 0, 'p25': 96, 'p50': 568, 'p75': 1340, 'p90': 2408}",47,0.12,0.58,0.15,AMBER,26,GREEN
