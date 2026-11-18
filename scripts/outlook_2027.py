@@ -74,6 +74,9 @@ for case, g in C.groupby("conflict_case"):
         pu = float((rq >= 1.5).mean())
         if lv == "GREEN" and pu >= 0.30: lv = "AMBER"
         quarters[f"Q{j}"] = dict(season_factor=round(sf, 3), p10=int(round(b3 * qq[.1])), p50=int(round(b3 * qq[.5])), p90=int(round(b3 * qq[.9])), month_p50=int(round(mp)), p_up=round(pu, 2), level=lv)
+        mm = SE.reindex([3 * j - 2, 3 * j - 1, 3 * j]).dropna()  # the quarter's strongest and weakest month in this war's own pattern
+        if len(mm):
+            quarters[f"Q{j}"].update(peak_moy=int(mm.idxmax()), peak_pct=int(round(100 * mm.max())), low_moy=int(mm.idxmin()), low_pct=int(round(100 * mm.min())))
     out[case]["quarters"] = quarters
     m = out[case]["month2027_p50"]
     lvl = "RED" if m >= 1000 else "AMBER" if m >= 100 else "GREEN"

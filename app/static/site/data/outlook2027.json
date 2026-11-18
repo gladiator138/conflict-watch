@@ -42,7 +42,11 @@
      "p90": 1780,
      "month_p50": 200,
      "p_up": 0.17,
-     "level": "AMBER"
+     "level": "AMBER",
+     "peak_moy": 3,
+     "peak_pct": 6,
+     "low_moy": 1,
+     "low_pct": -6
     },
     "Q2": {
      "season_factor": 0.94,
@@ -51,7 +55,11 @@
      "p90": 1467,
      "month_p50": 159,
      "p_up": 0.15,
-     "level": "AMBER"
+     "level": "AMBER",
+     "peak_moy": 4,
+     "peak_pct": -2,
+     "low_moy": 6,
+     "low_pct": -11
     },
     "Q3": {
      "season_factor": 1.08,
@@ -60,7 +68,11 @@
      "p90": 1517,
      "month_p50": 161,
      "p_up": 0.12,
-     "level": "AMBER"
+     "level": "AMBER",
+     "peak_moy": 9,
+     "peak_pct": 26,
+     "low_moy": 8,
+     "low_pct": -1
     },
     "Q4": {
      "season_factor": 1.001,
@@ -69,7 +81,11 @@
      "p90": 1519,
      "month_p50": 150,
      "p_up": 0.14,
-     "level": "AMBER"
+     "level": "AMBER",
+     "peak_moy": 10,
+     "peak_pct": 22,
+     "low_moy": 12,
+     "low_pct": -24
     }
    },
    "level2027": "AMBER"
@@ -106,7 +122,11 @@
      "p90": 690,
      "month_p50": 77,
      "p_up": 0.17,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 1,
+     "peak_pct": 8,
+     "low_moy": 2,
+     "low_pct": -55
     },
     "Q2": {
      "season_factor": 0.8,
@@ -115,7 +135,11 @@
      "p90": 589,
      "month_p50": 64,
      "p_up": 0.15,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 6,
+     "peak_pct": -15,
+     "low_moy": 4,
+     "low_pct": -61
     },
     "Q3": {
      "season_factor": 0.854,
@@ -124,7 +148,11 @@
      "p90": 566,
      "month_p50": 60,
      "p_up": 0.12,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 8,
+     "peak_pct": 0,
+     "low_moy": 9,
+     "low_pct": -29
     },
     "Q4": {
      "season_factor": 1.2,
@@ -133,7 +161,11 @@
      "p90": 859,
      "month_p50": 85,
      "p_up": 0.14,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 10,
+     "peak_pct": 235,
+     "low_moy": 12,
+     "low_pct": 20
     }
    },
    "level2027": "GREEN"
@@ -170,7 +202,11 @@
      "p90": 25555,
      "month_p50": 2450,
      "p_up": 0.1,
-     "level": "RED"
+     "level": "RED",
+     "peak_moy": 3,
+     "peak_pct": 7,
+     "low_moy": 1,
+     "low_pct": -34
     },
     "Q2": {
      "season_factor": 1.2,
@@ -179,7 +215,11 @@
      "p90": 31289,
      "month_p50": 2603,
      "p_up": 0.07,
-     "level": "RED"
+     "level": "RED",
+     "peak_moy": 5,
+     "peak_pct": 35,
+     "low_moy": 4,
+     "low_pct": 16
     },
     "Q3": {
      "season_factor": 1.056,
@@ -188,7 +228,11 @@
      "p90": 27140,
      "month_p50": 2175,
      "p_up": 0.07,
-     "level": "RED"
+     "level": "RED",
+     "peak_moy": 7,
+     "peak_pct": 25,
+     "low_moy": 9,
+     "low_pct": -21
     },
     "Q4": {
      "season_factor": 0.8,
@@ -197,7 +241,11 @@
      "p90": 22492,
      "month_p50": 1555,
      "p_up": 0.1,
-     "level": "RED"
+     "level": "RED",
+     "peak_moy": 10,
+     "peak_pct": -14,
+     "low_moy": 12,
+     "low_pct": -27
     }
    },
    "level2027": "RED"
@@ -234,7 +282,11 @@
      "p90": 807,
      "month_p50": 31,
      "p_up": 0.14,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 3,
+     "peak_pct": 74,
+     "low_moy": 1,
+     "low_pct": -17
     },
     "Q2": {
      "season_factor": 1.2,
@@ -243,7 +295,11 @@
      "p90": 938,
      "month_p50": 52,
      "p_up": 0.17,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 4,
+     "peak_pct": 170,
+     "low_moy": 5,
+     "low_pct": 24
     },
     "Q3": {
      "season_factor": 0.8,
@@ -252,7 +308,11 @@
      "p90": 428,
      "month_p50": 16,
      "p_up": 0.1,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 9,
+     "peak_pct": 6,
+     "low_moy": 8,
+     "low_pct": -54
     },
     "Q4": {
      "season_factor": 0.8,
@@ -261,7 +321,11 @@
      "p90": 453,
      "month_p50": 14,
      "p_up": 0.11,
-     "level": "GREEN"
+     "level": "GREEN",
+     "peak_moy": 11,
+     "peak_pct": 28,
+     "low_moy": 10,
+     "low_pct": -71
     }
    },
    "level2027": "GREEN"

@@ -223,10 +223,10 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
   let first = true, prevZone: Record<string, string> = {}, prevLvl: Record<string, string> = {};
 
   // Base value of a war for the period, and the same value under the current levers.
-  const base = (w: string) => { const c = O.cases[w]; if (!c) return null; return per === "2027" ? { ...c.y2027, level: c.level2027, p_up: c.p_up } : c.quarters?.[per]; };
-  const pv = (w: string) => {
-    const v = base(w); if (!v) return null;
-    const n = per === "2027" ? 12 : 3; let { p10, p50, p90 } = v, pu = v.p_up ?? 0;
+  const base = (w: string, pp = per) => { const c = O.cases[w]; if (!c) return null; return pp === "2027" ? { ...c.y2027, level: c.level2027, p_up: c.p_up } : c.quarters?.[pp]; };
+  const pv = (w: string, pp = per) => {
+    const v = base(w, pp); if (!v) return null;
+    const n = pp === "2027" ? 12 : 3; let { p10, p50, p90 } = v, pu = v.p_up ?? 0;
     const mk = MULT[w], sg = v.p50 > 0 && v.p90 > v.p50 ? Math.log(v.p90 / v.p50) / 1.2816 : 1;
     const T = v.p50 > 0 && pu > 0 && pu < 1 ? v.p50 * Math.exp(sg * PhiInv(1 - pu)) : 0; // surge line for this period
     if (mk) { const f = Math.max(0.001, 1 + (SIM[mk] as number) / 100); p10 *= f; p50 *= f; p90 *= f; if (T) pu = 1 - Phi((Math.log(T) - Math.log(p50)) / sg); }
@@ -283,10 +283,32 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       const C = CHAINS[w], c = O.cases[w], v = pv(w)!, d0 = first ? (per === "2027" ? 250 + i * 450 : 60 + i * 140) : 0;
       const TT = tierOf(w, v), src = TT ?? C;
       const fill = (x: string) => x.replace("{bill}", String(bill));
-      let ind = src.ind.map(fill);
-      if (w === "US–Iran") ind = ind.map((x) => (x.startsWith("Oil bill") ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : x));
-      if (w === "Afghanistan–Pakistan" && SIM.attack) ind = ["15-day clock running: state fighting likely", ...ind];
-      const them = src.them, act = src.act, chg = TT ? " chg" : "", actH = v.level === "RED" && TT ? "INDIA SHOULD · NOW" : "INDIA SHOULD";
+      // Bullets built from this period's numbers in our data (deaths, change, season, surge chance, peak quarter) plus the tier's analysis.
+      const MON = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const q = per === "2027" ? null : c.quarters?.[per], sp = Math.round(v.p_up * 100), mo = Math.round(v.p50 / v.n);
+      const QS = ["Q1", "Q2", "Q3", "Q4"], qv = QS.map((x) => pv(w, x)!), pk = QS[qv.reduce((bi, x, i) => (x.p50 > qv[bi].p50 ? i : bi), 0)];
+      const pct = (x: number) => `${x > 0 ? "+" : ""}${x}%`, oneOff = (x: number) => (Math.abs(x) >= 100 ? ", one-off events" : "");
+      const seas = q && q.peak_moy ? (q.peak_pct >= 10 ? `Strongest month ${MON[q.peak_moy]} (${pct(q.peak_pct)}${oneOff(q.peak_pct)})` : q.low_pct <= -10 ? `Seasonal low: ${MON[q.low_moy]} (${pct(q.low_pct)}${oneOff(q.low_pct)})` : `Seasonal norm (${MON[q.peak_moy]} ${pct(q.peak_pct)})`)
+        : `Momentum ${c.momentum_class}; ${Math.round((c.p_down ?? 0) * 100)}% chance 2027 runs lower`;
+      const them = [chg(w) ? `${chg(w).replace(/^(.)/, (m) => m.toUpperCase())}` : `~${k(mo)} deaths a month`, seas, src.them[0]];
+      const qOil = per === "2027" ? `Oil bill ≈ +$${bill} B a year (est., Brent +${SIM.oil}%)` : `≈ +$${Math.round(bill / 4)} B on oil in ${pl} (est., Brent +${SIM.oil}%)`;
+      const dline: Record<string, string> = {
+        "US–Iran": `Restart / surge chance in ${pl}: ${sp}%`,
+        "Afghanistan–Pakistan": `LoC watch: surge chance ${sp}% in ${pl}`,
+        "Russia–Ukraine": `~${k(mo)} deaths a month in ${pl}: ${v.level === "RED" ? "energy stays dear" : v.level === "AMBER" ? "energy still elevated" : "energy prices ease"}`,
+        "Israel–Hamas": `Red Sea risk: surge chance ${sp}% in ${pl}`,
+      };
+      const rest = src.ind.map(fill).filter((x) => !x.startsWith("Oil bill") && !/^LoC diversion|^Red Sea trade route$|^Energy & fertiliser prices$/.test(x));
+      let ind = w === "US–Iran" ? [qOil, dline[w], rest[0]] : [dline[w], ...rest.slice(0, 2)];
+      if (w === "Afghanistan–Pakistan" && SIM.attack) ind = ["15-day clock running: state fighting likely", ...ind.slice(0, 2)];
+      const ready = v.level === "GREEN" ? "keep plans current" : v.level === "AMBER" ? "plans to READY" : "forces & plans at READY";
+      const timing = per === "2027" ? `Peak quarter: ${pk} (~${k(qv[QS.indexOf(pk)].p50)} deaths) · plan for it`
+        : per === pk ? `${pl} is the peak quarter for ${C.short}: ${ready}`
+        : QS.indexOf(per) + 1 === QS.indexOf(pk) ? `Prepare in ${pl}: ${pk} is the peak quarter (~${k(qv[QS.indexOf(pk)].p50)})`
+        : QS.indexOf(per) > QS.indexOf(pk) ? `Past the ${pk} peak (~${k(v.p50)} in ${per} vs ~${k(qv[QS.indexOf(pk)].p50)}): ${v.level === "GREEN" ? "draw down to routine" : "hold, then review"}`
+        : `${per} ~${k(v.p50)}, below the ${pk} peak (~${k(qv[QS.indexOf(pk)].p50)}): ${ready}`;
+      const pre = q && q.peak_pct >= 15 && q.peak_pct < 100 && w === "Afghanistan–Pakistan" ? [`Pre-position ISR before ${MON[q.peak_moy]} (${pct(q.peak_pct)})`] : [];
+      const act = [timing, ...pre, ...src.act].slice(0, 3), chgC = TT ? " chg" : "", actH = v.level === "RED" && TT ? "INDIA SHOULD · NOW" : "INDIA SHOULD";
       const st = (cls: string, h: string, items: string[], d: number) => `<div class="o7-st ${cls}" style="animation-delay:${d}ms"><div class="h">${h}</div><ul>${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
       const dv = v.b50 ? (v.p50 - v.b50) / Math.max(1, v.b50) : 0, moved = !isBase() && (Math.abs(dv) >= 0.01 || v.level !== v.blevel);
       const flip = prevLvl[w] && prevLvl[w] !== v.level ? " flip" : "";
@@ -294,7 +316,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
         <h4><span style="color:${C.c}">●</span>${esc(C.war)}
           <span class="lv">NOW <b style="background:${RAG_COLOR[c.rating_now] ?? "#888"}">${c.rating_now}</b> → ${pl} <b style="background:${RAG_COLOR[v.level]}">${v.level}</b>${moved && v.level !== v.blevel ? `<s style="opacity:.6">${v.blevel}</s>` : ""}</span>
           <span class="n" style="--lvc:${RAG_COLOR[v.level]}"><b>~${k(v.p50)}</b>deaths in ${pl} · range ${k(v.p10)}–${k(v.p90)}<span class="pg" title="Chance deaths reach 1.5× today's pace (a surge). 30% → AMBER, 50% → RED."><span class="pgb"><i style="width:${Math.round(v.p_up * 100)}%;background:${RAG_COLOR[rag(0, v.p_up)]}"></i><u style="left:30%"></u><u style="left:50%"></u></span>surge chance <b2>${Math.round(v.p_up * 100)}%</b2>${moved && Math.round(v.p_up * 100) !== Math.round(v.bpu * 100) ? ` <em2>(was ${Math.round(v.bpu * 100)}%)</em2>` : ""}</span>${moved ? `<em class="dv" style="color:${dv > 0 ? RAG_COLOR.RED : RAG_COLOR.GREEN}">${dv > 0 ? "▲" : "▼"} ${Math.abs(Math.round(dv * 100))}% vs baseline</em>` : ""}</span></h4>
-        <div class="o7-steps${chg}">${st("them", C.themLabel, them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", actH, act, d0 + 450)}</div>${TT ? `<div class="o7-tnote" style="--tc:${RAG_COLOR[v.level]}">▸ ${esc(TT.so)}</div>` : ""}</div>`;
+        <div class="o7-steps${chgC}">${st("them", C.themLabel, them, d0 + 150)}<div class="o7-ar"><span>➜</span></div>${st("ind", "ON INDIA", ind, d0 + 300)}<div class="o7-ar"><span>➜</span></div>${st("do", actH, act, d0 + 450)}</div>${TT ? `<div class="o7-tnote" style="--tc:${RAG_COLOR[v.level]}">▸ ${esc(TT.so)}</div>` : ""}</div>`;
     };
     const zl = (c: string) => zone(c)?.lv ?? "AMBER";
     let baseItems = P.items;
@@ -309,6 +331,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       ];
     }
     const items = [...baseItems];
+    const glance = wars.map((w) => { const v = pv(w)!; return `${CHAINS[w].short} ${v.level} ~${k(v.p50)} · surge ${Math.round(v.p_up * 100)}%`; }).join(" · ");
     if (!isBase() && role !== "CDS" && baseItems === P.items) {
       if (SIM.attack && (role === "WTC" || role === "CDS")) items.unshift(["Readiness now", "Qualifying attack: state fighting has followed within ~15 days since 2016. Warning Order today."]);
       if (SIM.oil >= 100 && (role === "MTC" || role === "CDS")) items.unshift(["Energy shock", `Brent +${SIM.oil}% ≈ $${bill} B a year: release reserves, hedge crude, ready the rupee.`]);
@@ -321,7 +344,7 @@ export function mountOutlook(host: HTMLElement, D: Data, role: string, per = "20
       ${role === "NTC" ? `<div class="o7-gap"><b>Northern theatre: no 2027 numbers.</b> The data hold one fatal LAC clash since 1975 (Galwan, Jun 2020), too few to project; the outlook works through the wars that touch it.</div>` : ""}
       ${wars.map(chain).join("")}
       <div class="o7-india" style="animation-delay:${first ? 300 + wars.length * 450 : 0}ms"><div class="h">${P.h}</div>
-        <div class="row">${items.map(([a, b], i) => `<div class="${!isBase() && (i < items.length - baseItems.length || baseItems !== P.items) ? "new" : ""}"><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>`;
+        <div class="row"><div class="gl"><b>${esc(pl)} at a glance</b>${esc(glance)}</div>${items.map(([a, b], i) => `<div class="${!isBase() && (i < items.length - baseItems.length || baseItems !== P.items) ? "new" : ""}"><b>${esc(a)}</b>${esc(b)}</div>`).join("")}</div></div>`;
     side.querySelectorAll<HTMLElement>(".o7-per button").forEach((b) => b.addEventListener("click", () => { per = b.dataset.per!; first = true; render(); syncSim(); }));
     side.querySelector(".o7-reset")?.addEventListener("click", () => { Object.assign(SIM, SIM0); syncSim(); render(); });
     wars.forEach((w) => (prevLvl[w] = lvl(w)));
@@ -521,6 +544,7 @@ const SIMCSS = `
 .o7-scn button { margin-left:auto; font: 800 11px var(--mono); letter-spacing:.12em; padding:5px 12px; border-radius:999px; border:1px solid var(--amber); background: transparent; color: var(--amber); cursor:pointer; }
 .o7-steps.chg .o7-st { animation: o7chg .9s ease both !important; opacity:1; }
 @keyframes o7chg { 0% { box-shadow: 0 0 0 0 rgba(242,179,61,.0); background: rgba(242,179,61,.28); } 100% { box-shadow:none; } }
+.o7-india .row div.gl { border-color: rgba(79,209,224,.55); background: rgba(79,209,224,.08); font-family: var(--mono); font-size:12.5px; }
 .o7-tnote { margin-top:8px; font-size:14px; font-weight:700; color: var(--tc); }
 .o7-ch .dv { display:block; font: 800 12px var(--mono); font-style:normal; margin-top:3px; }
 .o7-ch .lv s { font: 700 11px var(--mono); }
