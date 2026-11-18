@@ -114,7 +114,7 @@ export function renderConsole(D: Data) {
       if (q.get("mode")) W.set(undefined, undefined, q.get("mode") as any);
     },
     outlook(q) {
-      const roles = ["CDS", "WTC", "MTC", "NTC"]; let r = q.get("r") && roles.includes(q.get("r")!) ? q.get("r")! : "CDS";
+      const roles = ["CDS", "WTC", "MTC", "NTC"].filter((x) => x === "CDS" || D.theatre?.theatres?.[x]); let r = q.get("r") && roles.includes(q.get("r")!) ? q.get("r")! : "CDS";
       P.innerHTML = `<div class="eyebrow">2027 OUTLOOK · SCENARIO RANGE FROM HISTORY</div><h2>How the wars reach India in 2027</h2>
         <div class="sub">Pick a theatre and a period. Not a validated forecast: what happened next to similar conflicts in 117 countries.</div>
         <div class="seg" id="ol-r" style="margin:6px 0 14px">${roles.map((x) => `<button data-r="${x}" class="${x === r ? "on" : ""}">${x}</button>`).join("")}</div><div id="ol-p"></div>`;

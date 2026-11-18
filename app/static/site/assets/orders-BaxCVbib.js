@@ -1,4 +1,4 @@
-import{R as k,d as X}from"./main-JwKUs9Ro.js";import{r as St,c as Ct,$ as j}from"./widgets-C08jshOF.js";const z=t=>String(t??"").replace(/[&<>"]/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[e]),W=t=>t>=1e3?`${(t/1e3).toFixed(t>=1e4?0:1)}k`:String(t),At=`
+import{R as k,d as X}from"./main-lr-P28KZ.js";import{r as St,c as Ct,$ as j}from"./widgets-CijCEHSm.js";const z=t=>String(t??"").replace(/[&<>"]/g,e=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[e]),W=t=>t>=1e3?`${(t/1e3).toFixed(t>=1e4?0:1)}k`:String(t),At=`
 .o7 { display:grid; grid-template-columns: minmax(0,1.2fr) minmax(0,1fr); gap:18px; align-items:start; }
 @media (max-width: 1100px) { .o7 { grid-template-columns: 1fr; } }
 .o7-map { position:relative; height: clamp(420px, 78vh, 720px); background: var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
