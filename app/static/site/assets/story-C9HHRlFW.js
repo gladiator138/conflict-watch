@@ -1,4 +1,4 @@
-import{g as _a}from"./index-Cv7Rbbxj.js";import{s as zs,n as Xs,b as Xt,c as Rt,d as ta,a as De,e as mt,C as Da,p as Ka,f as qs,q as Vs,g as js}from"./main-By_qHAWV.js";import{v as Ks,D as Js,t as xe,k as fa,m as Zs,$ as y,i as Qs,r as Er,p as Kr,n as St,c as Y,u as ha,o as q,e as Jr,h as Zr,f as en,w as tn,s as an,d as Qr,a as es,b as Ja,j as ts,l as rn}from"./widgets-BPIy6VSK.js";function sn(n,e){for(var s=0;s<e.length;s++){var a=e[s];a.enumerable=a.enumerable||!1,a.configurable=!0,"value"in a&&(a.writable=!0),Object.defineProperty(n,a.key,a)}}function nn(n,e,s){return e&&sn(n.prototype,e),n}/*!
+import{g as _a}from"./index-Cv7Rbbxj.js";import{s as zs,n as Xs,b as Xt,c as Rt,d as ta,a as De,e as mt,C as Da,p as Ka,f as qs,q as Vs,g as js}from"./main-BJ6WltQS.js";import{v as Ks,D as Js,t as xe,k as fa,m as Zs,$ as y,i as Qs,r as Er,p as Kr,n as St,c as Y,u as ha,o as q,e as Jr,h as Zr,f as en,w as tn,s as an,d as Qr,a as es,b as Ja,j as ts,l as rn}from"./widgets-B00I8qH1.js";function sn(n,e){for(var s=0;s<e.length;s++){var a=e[s];a.enumerable=a.enumerable||!1,a.configurable=!0,"value"in a&&(a.writable=!0),Object.defineProperty(n,a.key,a)}}function nn(n,e,s){return e&&sn(n.prototype,e),n}/*!
  * Observer 3.15.1
  * https://gsap.com
  *
@@ -170,7 +170,7 @@ import{g as _a}from"./index-Cv7Rbbxj.js";import{s as zs,n as Xs,b as Xt,c as Rt,
         <div class="chart short" id="abl-ch" style="height:250px"></div>
         <div class="ph" style="margin-top:6px"><span class="t">What drives the forecast (mean |SHAP|)</span></div><div class="chart short" id="shap-ch" style="height:250px"></div></div>
     </div>
-    <p class="small muted" style="margin-top:12px">Ensemble = 3-month mean + ETS (damped, log) + LightGBM-Δ, chosen on the 2022–25 back-test only. Known failure: the Feb 2026 US–Iran war began with no build-up in the death series. ${xe("data")}</p>
+    <p class="small muted" style="margin-top:12px">Dashboard model: 3-month mean + ETS (damped, log) + LightGBM-Δ, chosen on the 2022–25 back-test only. The deck's final model is the global ensemble (global LightGBM 0.90 + competition LightGBM-Δ 0.10). Known failure: the Feb 2026 US–Iran war began with no build-up in the death series. ${xe("data")}</p>
   </div></section>
 
   <section class="ch" id="warning"><div class="wrap">
