@@ -35,6 +35,7 @@ band_edges = [1, 10, 100, 1000, np.inf]; band_lab = ["1-9", "10-99", "100-999", 
 H["band"] = pd.cut(H["r6"], band_edges, right=False, labels=band_lab)
 H["momc"] = np.select([H["mom"] >= 1.25, H["mom"] <= 0.8], ["rising", "falling"], "flat")
 
+SEAS = pd.read_csv(ROOT / "outputs/tables/insight_seasonality.csv")
 C = pd.read_parquet(ROOT / "data/processed/case_month.parquet")[["conflict_case", "month", "deaths"]]
 C["month"] = pd.to_datetime(C["month"])
 facts = json.loads((ROOT / "web/public/data/facts.json").read_text())
@@ -63,13 +64,16 @@ for case, g in C.groupby("conflict_case"):
         p_quiet=round(float((sel["y"] < 25).mean()), 2),
         rating_now=sc.get(case, {}).get("rating"), oct_forecast=sc.get(case, {}).get("forecast"))
     quarters = {}
+    SE = SEAS[SEAS["conflict_case"] == case].set_index("moy")["index_pct"] / 100  # this war's own seasonality, 2014-2026
     for j in range(1, 5):
-        rq = sel[f"q{j}"] / (3 * sel["r6"]); qq = rq.quantile([.1, .5, .9]).to_dict(); b3 = 3 * r6
+        sf = 1 + float(SE.reindex([3 * j - 2, 3 * j - 1, 3 * j]).fillna(0).mean()) if len(SE) else 1.0
+        sf = min(1.2, max(0.8, sf))  # cap: one-off events (e.g. Oct 2023) must not pass for a season
+        rq = sel[f"q{j}"] / (3 * sel["r6"]); qq = rq.quantile([.1, .5, .9]).to_dict(); b3 = 3 * r6 * sf
         mp = b3 * qq[.5] / 3
         lv = "RED" if mp >= 1000 else "AMBER" if mp >= 100 else "GREEN"
         pu = float((rq >= 1.5).mean())
         if lv == "GREEN" and pu >= 0.30: lv = "AMBER"
-        quarters[f"Q{j}"] = dict(p10=int(round(b3 * qq[.1])), p50=int(round(b3 * qq[.5])), p90=int(round(b3 * qq[.9])), month_p50=int(round(mp)), p_up=round(pu, 2), level=lv)
+        quarters[f"Q{j}"] = dict(season_factor=round(sf, 3), p10=int(round(b3 * qq[.1])), p50=int(round(b3 * qq[.5])), p90=int(round(b3 * qq[.9])), month_p50=int(round(mp)), p_up=round(pu, 2), level=lv)
     out[case]["quarters"] = quarters
     m = out[case]["month2027_p50"]
     lvl = "RED" if m >= 1000 else "AMBER" if m >= 100 else "GREEN"
@@ -93,7 +97,7 @@ Q = tr.groupby(["band", "momc"], observed=True)["ratio"].quantile([.1, .9]).unst
 te = te.join(Q, on=["band", "momc"]).dropna(subset=[0.1, 0.9])
 cover = float(((te["ratio"] >= te[0.1]) & (te["ratio"] <= te[0.9])).mean())
 print("out-of-time 80% coverage 2010-2024:", round(cover, 3), "n", len(te))
-meta = dict(oot_coverage=round(cover, 2), oot_n=int(len(te)), method="Analogue: conflicts in the world file (117 countries, 1989-2025) at the same recent level and momentum; deaths in the 12 months from month +4 to +15 after the last data month, relative to 12x the recent 6-month level.",
+meta = dict(oot_coverage=round(cover, 2), oot_n=int(len(te)), method="Analogue: conflicts in the world file (117 countries, 1989-2025) at the same recent level and momentum; deaths in the 12 months from month +4 to +15 after the last data month, relative to 12x the recent 6-month level. Quarters are also scaled by each war's own month-of-year pattern (2014-2026), capped at ±20%.",
             caveat="Scenario range from history, not a validated forecast. The models were tested only 1-3 months ahead. Shocks (a new war, a ceasefire, a decision to strike) are not in this range; the daily news tripwire is the guard for those.",
             data_end="2026-09", window="Jan-Dec 2027 (months +4 to +15 after Sep 2026)", n_conflicts=int(H["cid"].nunique()), n_obs=int(len(H)))
 (ROOT / "web/public/data/outlook2027.json").write_text(json.dumps(dict(meta=meta, cases=out), ensure_ascii=False, indent=1))
